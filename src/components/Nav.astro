@@ -2,27 +2,31 @@
 const baseRaw = import.meta.env.BASE_URL;
 const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
 const links = [
-  { href: `${base}`, label: "Home" },
-  { href: `${base}about/`, label: "About" },
-  { href: `${base}projects/`, label: "Projects" },
-  { href: `${base}resume/`, label: "Resume" },
-  { href: `${base}contact/`, label: "Contact" },
+  { path: "", label: "Home" },
+  { path: "about/", label: "About" },
+  { path: "projects/", label: "Projects" },
+  { path: "resume/", label: "Resume" },
+  { path: "contact/", label: "Contact" },
 ];
 
-const current = Astro.url.pathname.replace(/\/$/, "") || "/";
+const withoutBase = Astro.url.pathname.startsWith(base)
+  ? Astro.url.pathname.slice(base.length)
+  : Astro.url.pathname.replace(/^\//, "");
+const currentPath = withoutBase === "" ? "/" : `${withoutBase.replace(/\/$/, "")}/`;
 ---
 
 <header class="nav-wrap">
   <div class="container nav">
-    <a class="brand" href={base}>PN</a>
+    <a class="brand" href={base}>Pen N</a>
     <nav aria-label="Main navigation">
       <ul>
         {links.map((link) => {
-          const href = link.href.replace(/\/$/, "") || "/";
-          const active = current === href;
+          const href = `${base}${link.path}`;
+          const targetPath = link.path === "" ? "/" : `${link.path.replace(/\/$/, "")}/`;
+          const active = currentPath === targetPath;
           return (
             <li>
-              <a href={link.href} class={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
+              <a href={href} class={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
                 {link.label}
               </a>
             </li>
@@ -37,14 +41,14 @@ const current = Astro.url.pathname.replace(/\/$/, "") || "/";
   .nav-wrap {
     position: sticky;
     top: 0;
-    backdrop-filter: blur(8px);
-    background: color-mix(in srgb, #f7f6f3 82%, transparent);
+    backdrop-filter: blur(9px);
+    background: color-mix(in srgb, #f7f6f3 88%, transparent);
     border-bottom: 1px solid var(--line);
     z-index: 30;
   }
 
   .nav {
-    min-height: 72px;
+    min-height: 74px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -52,10 +56,11 @@ const current = Astro.url.pathname.replace(/\/$/, "") || "/";
   }
 
   .brand {
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     font-size: 0.95rem;
+    text-transform: uppercase;
   }
 
   ul {
@@ -64,7 +69,7 @@ const current = Astro.url.pathname.replace(/\/$/, "") || "/";
     padding: 0;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.3rem;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
@@ -72,7 +77,8 @@ const current = Astro.url.pathname.replace(/\/$/, "") || "/";
   a {
     text-decoration: none;
     color: var(--muted);
-    font-size: 0.96rem;
+    font-size: 0.94rem;
+    transition: color 160ms ease;
   }
 
   a:hover,
@@ -82,9 +88,14 @@ const current = Astro.url.pathname.replace(/\/$/, "") || "/";
 
   @media (max-width: 700px) {
     .nav {
-      padding: 0.6rem 0;
+      min-height: 62px;
+      padding: 0.7rem 0;
       align-items: flex-start;
       flex-direction: column;
+    }
+
+    ul {
+      gap: 0.9rem;
     }
   }
 </style>

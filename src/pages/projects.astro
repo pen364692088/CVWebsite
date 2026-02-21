@@ -5,19 +5,19 @@ import ProjectCard from "../components/ProjectCard.astro";
 const projects = [
   {
     title: "Client Portal Refresh",
-    description: "Modernized legacy pages into a cohesive, accessible portal while reducing render cost.",
-    stack: "Astro, TS, REST API",
+    description: "Modernized legacy pages into a cohesive, accessible portal while reducing render cost and support burden.",
+    stack: "Astro, TypeScript, REST API",
     href: "#",
   },
   {
     title: "Booking Funnel Optimization",
-    description: "Introduced UX improvements and instrumentation that improved conversion quality.",
+    description: "Introduced UX improvements and instrumentation that improved conversion quality and reduced abandonment.",
     stack: "React, A/B testing, Analytics",
     href: "#",
   },
   {
     title: "Knowledge Base Redesign",
-    description: "Reworked structure and search behavior to cut average support time.",
+    description: "Reworked content architecture and search behavior to cut average support resolution time.",
     stack: "Content modeling, Algolia",
     href: "#",
   },
@@ -25,15 +25,16 @@ const projects = [
 ---
 
 <BaseLayout title="Projects | Pen N" description="Project highlights and case studies">
-  <section>
+  <section style="max-width:72ch;">
     <p class="eyebrow fade-up">Projects</p>
     <h1 class="fade-up">Selected work</h1>
-    <p class="fade-up" style="max-width:65ch;">
-      A short list of projects where I contributed to product direction, interface architecture, and implementation.
+    <p class="fade-up">
+      A short set of projects where I contributed to product direction, interaction design,
+      and robust frontend implementation.
     </p>
   </section>
 
-  <section class="grid" style="margin-top:1.4rem;">
+  <section class="grid section-block">
     {projects.map((project) => <ProjectCard {...project} />)}
   </section>
 </BaseLayout>
