@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+---
+
+<BaseLayout title="Pen N | Portfolio" description="Portfolio website for Pen N">
+  <section class="hero">
+    <p class="eyebrow fade-up">Portfolio</p>
+    <h1 class="fade-up">Design-minded developer building fast, useful web experiences.</h1>
+    <p class="fade-up">
+      I focus on thoughtful interfaces, maintainable frontend architecture, and practical product thinking.
+      This site is a lightweight snapshot of my recent work and approach.
+    </p>
+    <div class="fade-up" style="display:flex;gap:.7rem;flex-wrap:wrap;">
+      <a class="btn" href="/projects">View projects</a>
+      <a class="btn ghost" href="/contact">Get in touch</a>
+    </div>
+  </section>
+
+  <section class="grid two" aria-label="Featured projects">
+    <ProjectCard
+      title="Operations Dashboard"
+      description="A responsive dashboard for field teams with a focus on data clarity and accessibility."
+      stack="Astro, TypeScript, Chart.js"
+    />
+    <ProjectCard
+      title="Internal Design System"
+      description="Built reusable components and contribution guidelines that reduced UI drift across products."
+      stack="Storybook, CSS, Design Tokens"
+    />
+  </section>
+</BaseLayout>

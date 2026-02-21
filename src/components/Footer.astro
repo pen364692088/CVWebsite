@@ -1,0 +1,33 @@
+<footer>
+  <div class="container footer-inner">
+    <p>© {new Date().getFullYear()} Pen N. Crafted with Astro.</p>
+    <a href="mailto:hello@placeholder.dev">hello@placeholder.dev</a>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 1.3rem 0 2rem;
+    margin-top: var(--space-2xl);
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+
+  a {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+</style>

@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+
+const projects = [
+  {
+    title: "Client Portal Refresh",
+    description: "Modernized legacy pages into a cohesive, accessible portal while reducing render cost.",
+    stack: "Astro, TS, REST API",
+    href: "#",
+  },
+  {
+    title: "Booking Funnel Optimization",
+    description: "Introduced UX improvements and instrumentation that improved conversion quality.",
+    stack: "React, A/B testing, Analytics",
+    href: "#",
+  },
+  {
+    title: "Knowledge Base Redesign",
+    description: "Reworked structure and search behavior to cut average support time.",
+    stack: "Content modeling, Algolia",
+    href: "#",
+  },
+];
+---
+
+<BaseLayout title="Projects | Pen N" description="Project highlights and case studies">
+  <section>
+    <p class="eyebrow fade-up">Projects</p>
+    <h1 class="fade-up">Selected work</h1>
+    <p class="fade-up" style="max-width:65ch;">
+      A short list of projects where I contributed to product direction, interface architecture, and implementation.
+    </p>
+  </section>
+
+  <section class="grid" style="margin-top:1.4rem;">
+    {projects.map((project) => <ProjectCard {...project} />)}
+  </section>
+</BaseLayout>

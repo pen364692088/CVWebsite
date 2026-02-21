@@ -1,0 +1,30 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  stack: string;
+  href?: string;
+}
+
+const { title, description, stack, href } = Astro.props;
+---
+
+<article class="card fade-up project-card">
+  <h3>{title}</h3>
+  <p>{description}</p>
+  <p class="stack">{stack}</p>
+  {href && (
+    <a class="btn ghost" href={href} target="_blank" rel="noreferrer">View Project</a>
+  )}
+</article>
+
+<style>
+  .project-card h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .stack {
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+  }
+</style>
