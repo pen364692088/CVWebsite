@@ -1,6 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
+
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
 ---
 
 <BaseLayout title="Pen N | Portfolio" description="Portfolio website for Pen N">
@@ -12,8 +15,8 @@ import ProjectCard from "../components/ProjectCard.astro";
       This site is a lightweight snapshot of my recent work and approach.
     </p>
     <div class="fade-up" style="display:flex;gap:.7rem;flex-wrap:wrap;">
-      <a class="btn" href="/projects">View projects</a>
-      <a class="btn ghost" href="/contact">Get in touch</a>
+      <a class="btn" href={`${base}projects/`}>View projects</a>
+      <a class="btn ghost" href={`${base}contact/`}>Get in touch</a>
     </div>
   </section>
 

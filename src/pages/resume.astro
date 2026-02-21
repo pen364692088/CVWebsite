@@ -1,5 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+const baseRaw = import.meta.env.BASE_URL;
+const base = baseRaw.endsWith("/") ? baseRaw : `${baseRaw}/`;
 ---
 
 <BaseLayout title="Resume | Pen N" description="Resume and experience overview">
@@ -10,7 +13,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <div class="card fade-up">
       <h2>Download CV</h2>
       <p>Please replace this placeholder with your actual CV file once available.</p>
-      <a class="btn" href="/cv.pdf" target="_blank" rel="noreferrer">Open CV (PDF)</a>
+      <a class="btn" href={`${base}cv.pdf`} target="_blank" rel="noreferrer">Open CV (PDF)</a>
     </div>
   </section>
 </BaseLayout>
