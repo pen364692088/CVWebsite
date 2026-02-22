@@ -26,11 +26,13 @@ npm run preview
 
 ## Link check command
 
-Use a quick local link sweep after build:
+Use the base-path-aware local verification flow:
 
 ```bash
-npm run build && npx linkinator ./dist --recurse
+npm run verify:local
 ```
+
+(Equivalent to build + a linkinator run against a temporary `/CVWebsite/`-mirrored tree so absolute links match GitHub Pages base path.)
 
 ## Notes
 

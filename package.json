@@ -6,6 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "linkcheck:local": "./scripts/linkcheck-local.sh",
+    "verify:local": "npm run build && npm run linkcheck:local",
     "astro": "astro"
   },
   "dependencies": {
