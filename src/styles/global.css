@@ -1,18 +1,37 @@
 :root {
-  --bg: #f5f4f1;
-  --surface: #ffffff;
-  --text: #20242b;
-  --muted: #66707d;
-  --line: #d9dee5;
-  --accent: #1c5b5f;
-  --accent-soft: #eaf2f2;
-  --radius: 16px;
+  /* Retro-futurism color system */
+  --bg: #0a0e1a;
+  --bg-secondary: #141929;
+  --surface: #1e2538;
+  --surface-hover: #2a3349;
+  --text: #e8eaed;
+  --text-secondary: #a8b2d1;
+  --muted: #6b7280;
+  --line: #374151;
+  --accent: #00d9ff;
+  --accent-hover: #00b8e6;
+  --accent-secondary: #ff00ff;
+  --accent-secondary-hover: #e600e6;
+  --accent-soft: rgba(0, 217, 255, 0.1);
+  --accent-secondary-soft: rgba(255, 0, 255, 0.1);
+  --success: #00ff88;
+  --warning: #ffaa00;
+  --error: #ff3366;
+  
+  /* Design tokens */
+  --radius: 12px;
+  --radius-sm: 8px;
   --space-xs: 0.5rem;
   --space-sm: 0.9rem;
   --space-md: 1.3rem;
   --space-lg: 2.2rem;
   --space-xl: 4rem;
   --space-2xl: 6rem;
+  
+  /* Animation */
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  --transition-slow: 300ms;
 }
 
 * {
@@ -195,5 +214,17 @@ p {
 
   .hero {
     padding-top: var(--space-xl);
+  }
+}
+
+/* Accessibility: reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
