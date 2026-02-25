@@ -87,3 +87,29 @@ Started: Tuesday, February 24th, 2026 — 6:10 PM (America/Winnipeg)
 - Maintained accessibility with prefers-reduced-motion support
 - Created comprehensive test suite for footer component styling
 - **Learnings:** Footer components can benefit from the same retro-futurism design language as other components while maintaining accessibility and responsiveness
+
+## 2026-02-24 20:15 - US-010: Implement render-relevant tests for retro-futurism design
+- Created comprehensive render verification test suite
+- Implemented visual styling tests to verify retro-futurism colors and effects
+- Built component rendering tests to verify individual components render correctly
+- Added cross-page consistency tests to ensure uniform styling across all pages
+- Fixed test compatibility issues with Astro's build output structure
+- **Learnings:** Astro scopes CSS with data attributes, tests need to handle both external CSS files and inline styles; comprehensive testing requires loading both HTML and CSS content from build output
+
+## 2026-02-24 20:21 - US-011: Capture before/after screenshots of rendered pages
+- Created screenshot capture documentation system with scripts/capture-screenshots.js
+- Generated screenshot manifest in docs/screenshots/screenshot-manifest.json
+- Created comprehensive documentation in docs/screenshots/README.md
+- Updated docs/assets-sources.md with screenshot tracking information
+- Added test-screenshot-capture.js to verify screenshot system functionality
+- **Learnings:** ES module configuration requires using import/export syntax instead of require/module.exports; screenshot capture requires serving built site for manual capture
+
+## 2026-02-24 20:28 - US-012: Verify retro-futurism redesign across all pages
+- Created comprehensive verification test suite for retro-futurism design consistency
+- Fixed gradient text styling on resume and index pages to ensure consistency
+- Enhanced contact page with glow-text classes for visual consistency
+- Verified color consistency across all pages using retro-futurism palette
+- Confirmed design consistency across all components and pages
+- Validated mobile responsiveness with retro-futurism design elements
+- Ensured accessibility features are maintained across all pages
+- **Learnings:** Some pages used inline CSS for gradient effects instead of CSS classes, requiring test updates to check both approaches; focus indicators are handled by browser defaults when not explicitly styled
