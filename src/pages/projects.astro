@@ -25,16 +25,131 @@ const projects = [
 ---
 
 <BaseLayout title="Projects | Pen N" description="Project highlights and case studies">
-  <section style="max-width:72ch;">
-    <p class="eyebrow fade-up">Projects</p>
-    <h1 class="fade-up">Selected work</h1>
-    <p class="fade-up">
-      A short set of projects where I contributed to product direction, interaction design,
-      and robust frontend implementation.
-    </p>
+  <section class="hero">
+    <div style="max-width:72ch;">
+      <p class="eyebrow fade-up">Projects</p>
+      <h1 class="fade-up">Selected work</h1>
+      <p class="fade-up">
+        A short set of projects where I contributed to product direction, interaction design,
+        and robust frontend implementation.
+      </p>
+    </div>
   </section>
 
   <section class="grid section-block">
     {projects.map((project) => <ProjectCard {...project} />)}
   </section>
 </BaseLayout>
+
+<style>
+  .hero {
+    padding: var(--space-2xl) 0 var(--space-xl);
+    display: grid;
+    gap: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, var(--accent-soft) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, var(--accent-secondary-soft) 0%, transparent 50%);
+    opacity: 0.6;
+    z-index: -1;
+    animation: hero-glow 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-glow {
+    0% { opacity: 0.4; }
+    100% { opacity: 0.8; }
+  }
+
+  .hero .eyebrow {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 20px var(--accent-soft);
+  }
+
+  .hero h1 {
+    background: linear-gradient(135deg, var(--text), var(--accent), var(--accent-secondary));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px var(--accent-soft);
+    position: relative;
+  }
+
+  .hero h1::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary), var(--accent));
+    animation: scanline 3s ease-in-out infinite;
+  }
+
+  @keyframes scanline {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .hero p {
+    color: var(--text-secondary);
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    position: relative;
+    padding-left: var(--space-sm);
+  }
+
+  .hero p::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent-secondary));
+    border-radius: 1px;
+  }
+
+  .grid {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  @media (min-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Accessibility: reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .hero::before {
+      animation: none;
+      opacity: 0.4;
+    }
+    
+    .hero h1::after {
+      animation: none;
+      opacity: 0.3;
+    }
+  }
+</style>
