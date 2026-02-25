@@ -29,7 +29,7 @@ console.log('✓ Retro-futurism card styling implemented');
 
 // Test 4: Verify retro-futurism button styling
 assert(cssContent.includes('.btn::before'), 'Missing button scanline effect');
-assert(cssContent.includes('background: linear-gradient(90deg, transparent, var(--accent-soft), transparent)'), 'Missing button scanline gradient');
+assert(cssContent.includes('background: linear-gradient(90deg, transparent, var(--accent), transparent)'), 'Missing button scanline gradient');
 console.log('✓ Retro-futurism button styling implemented');
 
 // Test 5: Verify retro-futurism heading styling
