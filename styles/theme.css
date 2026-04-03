@@ -1,0 +1,26 @@
+:root {
+  --night: #0b0d10;
+  --surface: #171a1f;
+  --surface-elevated: #1b1f25;
+  --mist: #6e737b;
+  --ivory: #d8d3c8;
+  --gold: #8c7751;
+  --ember: #c96a2b;
+  --rust: #5a2a24;
+  --line: rgba(216, 211, 200, 0.12);
+  --line-strong: rgba(140, 119, 81, 0.45);
+  --shadow-deep: 0 28px 80px rgba(0, 0, 0, 0.35);
+}
+
+@theme inline {
+  --color-night: var(--night);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-mist: var(--mist);
+  --color-ivory: var(--ivory);
+  --color-gold: var(--gold);
+  --color-ember: var(--ember);
+  --color-rust: var(--rust);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}

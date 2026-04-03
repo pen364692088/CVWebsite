@@ -1,16 +1,36 @@
 {
-  "name": "proper-plasma",
-  "type": "module",
-  "version": "0.0.1",
+  "name": "ashen-archive",
+  "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "linkcheck:local": "./scripts/linkcheck-local.sh",
-    "verify:local": "npm run build && npm run linkcheck:local",
-    "astro": "astro"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "verify:static": "node scripts/verify-static-export.mjs",
+    "verify:links": "bash scripts/linkcheck-local.sh",
+    "verify": "npm run lint && npm run typecheck && npm run build && npm run verify:static"
   },
   "dependencies": {
-    "astro": "^5.17.1"
+    "motion": "^12.23.24",
+    "next": "^15.3.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.3.3",
+    "linkinator": "^7.6.1",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.12",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

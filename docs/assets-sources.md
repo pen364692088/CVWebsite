@@ -1,63 +1,88 @@
 # Assets Sources Documentation
 
-This file tracks all visual assets and their sources for the retro-futurism redesign.
+This file tracks the current source-of-truth media used by the **Ashen Archive** redesign.
 
-## Screenshots
+## Real source assets
 
-### Before/After Documentation
+Original external source files used for the first rebuild:
 
-**Status**: Pending Capture
-**Generated**: 2026-02-24
+- Resume PDF:
+  `D:\成绩单\Resume\ZhouyuLiao-software-developer-resume.pdf`
 
-#### Pages to Document
+- Resume DOCX:
+  `D:\成绩单\Resume\ZhouyuLiao-software-developer-resume.docx`
 
-| Page | URL | Description | Before Screenshot | After Screenshot | Status |
-|------|-----|-------------|-------------------|------------------|--------|
-| Home | /index.html | Main landing page with hero section | home-before-2026-02-24.png | home-after-2026-02-24.png | Pending |
-| About | /about/index.html | About page with biography and skills | about-before-2026-02-24.png | about-after-2026-02-24.png | Pending |
-| Projects | /projects/index.html | Projects showcase with cards | projects-before-2026-02-24.png | projects-after-2026-02-24.png | Pending |
-| Contact | /contact/index.html | Contact form and information | contact-before-2026-02-24.png | contact-after-2026-02-24.png | Pending |
-| Resume | /resume/index.html | Resume/CV page | resume-before-2026-02-24.png | resume-after-2026-02-24.png | Pending |
+- CV image directory:
+  `D:\成绩单\CV\300ppi`
 
-### Capture Process
+- Work collection video:
+  `D:\成绩单\CV\Work Collection of TA.mp4`
 
-1. **Before Screenshots**: Capture current state of all pages before redesign implementation
-2. **After Screenshots**: Capture redesigned state after retro-futurism implementation
-3. **Requirements**: 1920x1080 viewport, PNG format, full page screenshots
+## Imported project assets
 
-### Screenshot Manifest
+Copied into the repository for stable build-time usage:
 
-Location: `docs/screenshots/screenshot-manifest.json`
+### Resume
 
-## Design Assets
+- `public/resume/zhouyu-liao-software-developer-resume.pdf`
+- `public/resume/preview-cover.jpg`
+- `public/resume/preview-page-2.jpg`
+- `public/resume/preview-page-3.jpg`
 
-### Color System
-- **Source**: Retro-futurism design system
-- **Implementation**: CSS custom properties in `src/styles/global.css`
-- **Accessibility**: WCAG AA compliant contrast ratios
+### Featured artifact
+
+- `public/media/work-collection-of-ta.mp4`
+- `public/artifacts/ember-reel-cover.jpg`
+- `public/artifacts/ember-reel-frame-1.jpg`
+- `public/artifacts/ember-reel-frame-2.jpg`
+- `public/artifacts/ember-reel-frame-3.jpg`
+
+### Supporting artifact placeholders
+
+- `public/artifacts/ritual-pipeline.svg`
+- `public/artifacts/mobile-systems.svg`
+
+These placeholders are intentionally replaceable and are only used for the semi-real supporting artifacts.
+
+## Design assets
+
+### Theme tokens
+
+Theme source of truth:
+
+- [`styles/theme.css`](/mnt/d/Project/AIProject/MyProject/CVWebsite/styles/theme.css)
+
+Core tokens:
+
+- near-black background
+- charcoal surfaces
+- bone white typography
+- dark gold accents
+- ember orange highlights
+- rust red secondary accent
 
 ### Typography
-- **Primary Font**: System fonts with retro-futurism styling
-- **Fallbacks**: Standard web-safe font stack
 
-### Icons & Graphics
-- **Status**: Using system icons and CSS-generated elements
-- **Future**: Consider retro-futurism icon set if needed
+Configured in:
 
-## Build Output
+- [`app/layout.tsx`](/mnt/d/Project/AIProject/MyProject/CVWebsite/app/layout.tsx)
 
-- **Framework**: Astro static site generator
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist/`
-- **Pages**: 5 static HTML pages with scoped CSS
+Current font pairing:
 
-## Testing Documentation
+- `Cormorant Garamond`
+- `IBM Plex Sans`
 
-- **Test Framework**: Node.js built-in assert
-- **Test Location**: `test/` directory
-- **Coverage**: Visual styling, component rendering, cross-page consistency
+## Build output
 
-## Update History
+- Framework: Next.js App Router
+- Build command: `npm run build`
+- Export output: `out/`
+- Deployment target: GitHub Pages under `/CVWebsite/`
 
-- **2026-02-24**: Initial documentation created for screenshot capture system
-- **Status**: Before screenshots pending, redesign in progress
+## Verification
+
+- Static export verification script:
+  [`scripts/verify-static-export.mjs`](/mnt/d/Project/AIProject/MyProject/CVWebsite/scripts/verify-static-export.mjs)
+
+- Local link check script:
+  [`scripts/linkcheck-local.sh`](/mnt/d/Project/AIProject/MyProject/CVWebsite/scripts/linkcheck-local.sh)
