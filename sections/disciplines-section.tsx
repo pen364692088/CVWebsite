@@ -13,15 +13,15 @@ export function DisciplinesSection({ copy }: { copy: Dictionary["disciplines"] }
         </div>
       </Reveal>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="discipline-list">
         {copy.items.map((item, index) => (
           <Reveal key={item.title} delay={index * 0.06}>
-            <article className="ritual-card h-full">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-gold/10 font-display text-lg text-gold">
+            <article className="discipline-item">
+              <div className="discipline-count">
                 {String(index + 1).padStart(2, "0")}
               </div>
-              <h3 className="font-display text-2xl text-ivory">{item.title}</h3>
-              <p className="mt-4 text-sm leading-7 text-mist">{item.body}</p>
+              <h3 className="font-display text-2xl text-ivory lg:text-[2rem]">{item.title}</h3>
+              <p className="text-sm leading-7 text-mist lg:max-w-xl">{item.body}</p>
             </article>
           </Reveal>
         ))}

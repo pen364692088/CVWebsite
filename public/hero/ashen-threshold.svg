@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200">
+  <defs>
+    <radialGradient id="skyGlow" cx="50%" cy="12%" r="55%">
+      <stop offset="0%" stop-color="#3e3427" stop-opacity=".75"/>
+      <stop offset="40%" stop-color="#171a1f" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#0b0d10" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="emberGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c96a2b" stop-opacity=".9"/>
+      <stop offset="35%" stop-color="#8c7751" stop-opacity=".42"/>
+      <stop offset="100%" stop-color="#c96a2b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stairs" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#262a31"/>
+      <stop offset="100%" stop-color="#0b0d10"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d8d3c8" stop-opacity=".08"/>
+      <stop offset="50%" stop-color="#d8d3c8" stop-opacity=".02"/>
+      <stop offset="100%" stop-color="#d8d3c8" stop-opacity=".08"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="1200" fill="#0b0d10"/>
+  <rect width="1600" height="1200" fill="url(#skyGlow)"/>
+
+  <g opacity=".55">
+    <path d="M0 1020C240 940 420 920 580 940C760 965 870 1030 1060 1035C1250 1040 1420 965 1600 910V1200H0Z" fill="#0f1216"/>
+    <path d="M0 1095C210 1035 410 1000 610 1015C830 1032 1020 1120 1210 1115C1365 1111 1490 1068 1600 1026V1200H0Z" fill="#090a0c"/>
+  </g>
+
+  <g opacity=".9">
+    <path d="M465 1020L600 590H1000L1135 1020Z" fill="#121519"/>
+    <path d="M570 1010L675 620H925L1030 1010Z" fill="#0d0f12"/>
+    <path d="M638 1000L718 690H882L962 1000Z" fill="#070809"/>
+  </g>
+
+  <g opacity=".95">
+    <path d="M495 340C495 215 600 114 730 114H870C1000 114 1105 215 1105 340V880H995V370C995 276 925 215 838 215H762C675 215 605 276 605 370V880H495Z" fill="#111419"/>
+    <path d="M560 880V392C560 296 633 225 723 225H877C967 225 1040 296 1040 392V880H560Z" fill="#0d1014"/>
+    <path d="M665 880V468C665 413 710 368 765 368H835C890 368 935 413 935 468V880H665Z" fill="#07080a"/>
+  </g>
+
+  <rect x="540" y="906" width="520" height="22" fill="url(#fog)" opacity=".55"/>
+  <rect x="482" y="860" width="636" height="16" fill="#1a1d23" opacity=".86"/>
+  <rect x="438" y="900" width="724" height="16" fill="#1a1d23" opacity=".82"/>
+  <rect x="392" y="940" width="816" height="18" fill="#171a1f" opacity=".75"/>
+  <rect x="332" y="987" width="936" height="22" fill="url(#stairs)" opacity=".95"/>
+  <rect x="246" y="1040" width="1108" height="26" fill="url(#stairs)" opacity=".92"/>
+
+  <g opacity=".92">
+    <path d="M800 742C823 770 836 804 836 838C836 909 804 957 800 957C796 957 764 909 764 838C764 804 777 770 800 742Z" fill="#c96a2b"/>
+    <circle cx="800" cy="838" r="112" fill="url(#emberGlow)" opacity=".9"/>
+    <circle cx="800" cy="894" r="16" fill="#d8d3c8" opacity=".18"/>
+  </g>
+
+  <g fill="#d8d3c8" opacity=".06">
+    <circle cx="1170" cy="280" r="2"/>
+    <circle cx="1245" cy="342" r="3"/>
+    <circle cx="1330" cy="248" r="2"/>
+    <circle cx="280" cy="322" r="3"/>
+    <circle cx="350" cy="240" r="2"/>
+    <circle cx="430" cy="292" r="2"/>
+    <circle cx="760" cy="300" r="2"/>
+    <circle cx="910" cy="260" r="2"/>
+  </g>
+
+  <path d="M162 782C310 724 454 715 602 742" stroke="#8c7751" stroke-opacity=".18" stroke-width="2" fill="none"/>
+  <path d="M998 742C1143 713 1270 729 1412 804" stroke="#8c7751" stroke-opacity=".18" stroke-width="2" fill="none"/>
+</svg>

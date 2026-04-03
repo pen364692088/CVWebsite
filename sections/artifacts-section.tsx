@@ -53,7 +53,7 @@ export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
           <Reveal key={artifact.slug} delay={index * 0.07}>
             <motion.button
               type="button"
-              className={`artifact-card ${artifact.featured ? "lg:row-span-2" : ""}`}
+              className={`group artifact-card ${artifact.featured ? "lg:row-span-2" : ""}`}
               whileHover={{ y: -4 }}
               onClick={() => setActiveArtifact(artifact)}
               aria-haspopup="dialog"
@@ -65,7 +65,7 @@ export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
                   alt={artifact.title}
                   fill
                   sizes="(min-width: 1280px) 32rem, (min-width: 1024px) 28rem, 100vw"
-                  className="object-cover transition duration-500 group-hover:scale-[1.02]"
+                  className="object-cover transition duration-500 group-hover:scale-[1.02] saturate-70 brightness-75 sepia-[0.15]"
                 />
               </div>
 

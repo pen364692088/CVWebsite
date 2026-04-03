@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "verify:static": "node scripts/verify-static-export.mjs",
     "verify:links": "bash scripts/linkcheck-local.sh",
+    "validate:playwright": "node scripts/validate-playwright.mjs",
     "verify": "npm run lint && npm run typecheck && npm run build && npm run verify:static"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "eslint": "^9.24.0",
     "eslint-config-next": "^15.3.3",
     "linkinator": "^7.6.1",
+    "playwright": "^1.55.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.8.3"

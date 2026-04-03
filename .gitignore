@@ -5,6 +5,7 @@ node_modules/
 .next/
 out/
 tsconfig.tsbuildinfo
+.playwright-artifacts/
 
 # logs
 npm-debug.log*

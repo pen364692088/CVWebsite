@@ -15,46 +15,49 @@ interface ContactSectionProps {
 export function ContactSection({ copy, contacts, resume }: ContactSectionProps) {
   return (
     <section id="contact" className="section-shell">
-      <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-6">
         <Reveal>
           <div className="space-y-5">
             <p className="section-kicker">{copy.eyebrow}</p>
             <h2 className="section-title">{copy.title}</h2>
             <p className="section-body">{copy.intro}</p>
+          </div>
+        </Reveal>
 
-            <div className="ritual-panel p-6">
-              <h3 className="font-display text-2xl text-ivory">{copy.cardTitle}</h3>
-              <p className="mt-3 text-sm leading-7 text-mist">{copy.cardBody}</p>
+        <Reveal delay={0.12}>
+          <div className="signal-sheet pt-5">
+            <div className="space-y-4">
+              <div>
+                <p className="section-kicker">{copy.cardTitle}</p>
+                <h3 className="font-display text-2xl text-ivory">{copy.cardTitle}</h3>
+              </div>
+              <p className="max-w-lg text-sm leading-7 text-mist">{copy.cardBody}</p>
 
-              <div className="mt-6 grid gap-3">
+              <div>
                 {contacts.map((item) =>
                   item.available ? (
                     <a
                       key={item.key}
                       href={item.key === "resume" ? assetPath(item.href) : item.href}
-                      className="contact-link"
+                      className="signal-link"
                       target={item.key === "resume" ? undefined : "_blank"}
                       rel={item.key === "resume" ? undefined : "noreferrer"}
                       download={item.key === "resume" ? true : undefined}
                     >
-                      <span className="text-sm uppercase tracking-[0.22em] text-gold/80">{item.key}</span>
+                      <span className="text-xs uppercase tracking-[0.22em] text-gold/80">{item.key}</span>
                       <span className="text-sm text-stone-200">{item.label}</span>
                     </a>
                   ) : (
-                    <div key={item.key} className="contact-link opacity-70">
-                      <span className="text-sm uppercase tracking-[0.22em] text-gold/80">{item.key}</span>
+                    <div key={item.key} className="signal-link opacity-70">
+                      <span className="text-xs uppercase tracking-[0.22em] text-gold/80">{item.key}</span>
                       <span className="text-sm text-mist">{copy.unavailableLabel}</span>
                     </div>
                   ),
                 )}
               </div>
             </div>
-          </div>
-        </Reveal>
 
-        <Reveal delay={0.12}>
-          <div className="ritual-panel p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-4">
               <div>
                 <p className="section-kicker">{copy.previewLabel}</p>
                 <h3 className="font-display text-2xl text-ivory">{copy.resumeTitle}</h3>
@@ -66,15 +69,15 @@ export function ContactSection({ copy, contacts, resume }: ContactSectionProps) 
 
             <p className="mt-3 text-sm leading-7 text-mist">{copy.resumeBody}</p>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="resume-preview-grid">
               {resume.previews.map((preview, index) => (
-                <div key={preview} className="artifact-image-frame aspect-[4/5]">
+                <div key={preview} className="resume-preview-card">
                   <Image
                     src={assetPath(preview)}
                     alt={`${copy.previewLabel} ${index + 1}`}
                     fill
                     sizes="(min-width: 768px) 20rem, 100vw"
-                    className="object-cover"
+                    className="object-cover saturate-60 brightness-65 sepia-[0.28]"
                   />
                 </div>
               ))}

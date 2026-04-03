@@ -16,19 +16,19 @@ export function AboutSection({ copy }: { copy: Dictionary["about"] }) {
         </Reveal>
 
         <Reveal delay={0.12}>
-          <div className="ritual-panel p-6 sm:p-8">
-            <div className="grid gap-3 sm:grid-cols-2">
+          <div className="archive-sheet pt-5">
+            <div className="dossier-list">
               {copy.dossier.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="text-xs uppercase tracking-[0.22em] text-gold/80">{item.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-stone-200">{item.value}</p>
+                <div key={item.label} className="dossier-row">
+                  <p className="text-xs uppercase tracking-[0.22em] text-gold/78">{item.label}</p>
+                  <p className="text-sm leading-7 text-stone-200">{item.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="dossier-tag-grid">
               {copy.tags.map((tag) => (
-                <span key={tag} className="tag-pill">
+                <span key={tag} className="dossier-tag">
                   {tag}
                 </span>
               ))}
