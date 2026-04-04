@@ -24,9 +24,10 @@ interface AtmosphereLayerImageProps {
   motionX: MotionValue<number>;
   motionY: MotionValue<number>;
   reducedMotion: boolean;
+  compactViewport: boolean;
 }
 
-function AtmosphereLayerImage({ layer, motionX, motionY, reducedMotion }: AtmosphereLayerImageProps) {
+function AtmosphereLayerImage({ layer, motionX, motionY, reducedMotion, compactViewport }: AtmosphereLayerImageProps) {
   const x = useSpring(useTransform(motionX, [-1, 1], [-18 * layer.depth, 18 * layer.depth]), {
     stiffness: 72,
     damping: 20,
@@ -56,7 +57,15 @@ function AtmosphereLayerImage({ layer, motionX, motionY, reducedMotion }: Atmosp
             }
       }
     >
-      <Image src={assetPath(layer.src)} alt={layer.alt} fill priority={layer.id === "matte-scene"} sizes="100vw" className="object-cover" />
+      <Image
+        src={assetPath(layer.src)}
+        alt={layer.alt}
+        fill
+        priority={layer.id === "matte-scene"}
+        sizes="100vw"
+        className="object-cover"
+        style={{ objectPosition: compactViewport ? layer.mobileObjectPosition ?? layer.objectPosition : layer.objectPosition }}
+      />
     </motion.div>
   );
 }
@@ -128,6 +137,7 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
                 motionX={pointerX}
                 motionY={pointerY}
                 reducedMotion={!!reducedMotion}
+                compactViewport={isCompactViewport}
               />
             ))}
             <motion.div
@@ -271,6 +281,7 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
                           fill
                           sizes="(min-width: 1280px) 22rem, (min-width: 768px) 30vw, 92vw"
                           className="object-cover"
+                          style={{ objectPosition: artifact.coverPosition }}
                         />
                       </div>
                       <div className="artifact-plaque">

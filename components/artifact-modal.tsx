@@ -31,6 +31,7 @@ interface ArtifactModalProps {
       label: string;
       poster?: string;
     }>;
+    mediaPosition?: string[];
   } | null;
   dictionary: Dictionary["artifacts"];
   activeLens: ArchiveLens;
@@ -206,7 +207,7 @@ export function ArtifactModal({ artifact, dictionary, activeLens, onClose }: Art
               <div className="space-y-4">
                 <h3 className="font-display text-xl text-ivory">{dictionary.mediaLabel}</h3>
                 <div className="grid gap-4">
-                  {artifact.media.map((item) =>
+                  {artifact.media.map((item, index) =>
                     item.kind === "video" ? (
                       <div key={item.src} className="media-frame">
                         <video
@@ -227,6 +228,7 @@ export function ArtifactModal({ artifact, dictionary, activeLens, onClose }: Art
                           fill
                           sizes="(min-width: 1024px) 28rem, 100vw"
                           className="rounded-[inherit] object-cover"
+                          style={{ objectPosition: artifact.mediaPosition?.[index] }}
                         />
                       </div>
                     ),

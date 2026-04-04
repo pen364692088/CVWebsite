@@ -17,6 +17,7 @@ interface ArtifactsSectionProps {
     caseNumber: string;
     featured: boolean;
     cover: string;
+    coverPosition?: string;
     lenses: ArchiveLens[];
     title: string;
     category: string;
@@ -99,6 +100,7 @@ export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle,
                     fill
                     sizes="(min-width: 1280px) 32rem, (min-width: 1024px) 28rem, 100vw"
                     className="object-cover transition duration-500 group-hover:scale-[1.02] saturate-70 brightness-75 sepia-[0.15]"
+                    style={{ objectPosition: artifact.coverPosition }}
                   />
                 </div>
 

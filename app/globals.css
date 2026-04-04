@@ -432,7 +432,7 @@ select:focus-visible,
 }
 
 .abyss-layer-matte-scene img {
-  filter: contrast(1.08) brightness(0.82);
+  filter: contrast(1.08) brightness(0.9);
 }
 
 .abyss-layer-rear-smoke img,
@@ -447,7 +447,7 @@ select:focus-visible,
   bottom: auto;
   z-index: 2;
   width: min(32vw, 30rem);
-  opacity: 0.15;
+  opacity: 0.22;
 }
 
 .abyss-moon-haze {
@@ -1290,7 +1290,7 @@ footer {
     width: min(50vw, 12rem);
     top: 8%;
     left: 2%;
-    opacity: 0.12;
+    opacity: 0.16;
   }
 
   .hero-proof-list {

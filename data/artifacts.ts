@@ -31,8 +31,10 @@ export interface Artifact {
   slug: string;
   featured: boolean;
   cover: string;
+  coverPosition?: string;
   lenses: SigilLens[];
   media: ArtifactMedia[];
+  mediaPosition?: string[];
   content: Record<Locale, ArtifactCopy>;
 }
 
@@ -40,30 +42,34 @@ export interface ArtifactView extends ArtifactCopy {
   slug: string;
   featured: boolean;
   cover: string;
+  coverPosition?: string;
   lenses: SigilLens[];
   media: ArtifactMedia[];
+  mediaPosition?: string[];
 }
 
 const artifacts: Artifact[] = [
   {
     slug: "egocore",
     featured: false,
-    cover: "/artifacts/egocore-cover.jpg",
+    cover: "/artifacts/egocore-cover-v2.jpg",
+    coverPosition: "50% 34%",
     lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/egocore-cover.jpg",
-        alt: "Painterly ritual cover for EgoCore with a watchful helm and moonlit sigil ring.",
+        src: "/artifacts/egocore-cover-v2.jpg",
+        alt: "Ritual cover for EgoCore with an armored watcher standing inside ruined stone arches.",
         label: "EgoCore cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/egocore-diagram.jpg",
-        alt: "Public-safe diagram showing EgoCore as a runtime host, orchestration layer, and governance shell.",
-        label: "EgoCore runtime diagram",
+        src: "/artifacts/egocore-dossier-v2.jpg",
+        alt: "Public-safe dossier board for EgoCore combining a sentinel figure, weapon detail, and archive linkage marks.",
+        label: "EgoCore dossier board",
       },
     ],
+    mediaPosition: ["50% 34%", "50% 42%"],
     content: {
       en: {
         title: "EgoCore",
@@ -180,22 +186,24 @@ const artifacts: Artifact[] = [
   {
     slug: "ashen-archive",
     featured: true,
-    cover: "/artifacts/ashen-archive-cover.jpg",
+    cover: "/artifacts/ashen-archive-cover-v2.jpg",
+    coverPosition: "50% 42%",
     lenses: ["moon", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-cover.jpg",
-        alt: "Painterly ritual cover for Ashen Archive with an upright blade, candles, and ember glow.",
+        src: "/artifacts/ashen-archive-cover-v2.jpg",
+        alt: "Ritual cover for Ashen Archive with an upright blade, pale hands, and a restrained ember glow.",
         label: "Ashen Archive cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-diagram.jpg",
-        alt: "Public-safe diagram showing the site as a scene-led archive interface with ritual cards and reading sigils.",
-        label: "Ashen Archive interface diagram",
+        src: "/artifacts/ashen-archive-dossier-v2.jpg",
+        alt: "Public-safe dossier board for Ashen Archive with the castle matte, ritual blade, and archive linkage markers.",
+        label: "Ashen Archive dossier board",
       },
     ],
+    mediaPosition: ["50% 42%", "50% 44%"],
     content: {
       en: {
         title: "Ashen Archive",
@@ -312,22 +320,24 @@ const artifacts: Artifact[] = [
   {
     slug: "openemotion",
     featured: false,
-    cover: "/artifacts/openemotion-cover.jpg",
+    cover: "/artifacts/openemotion-cover-v2.jpg",
+    coverPosition: "50% 36%",
     lenses: ["tower", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/openemotion-cover.jpg",
-        alt: "Painterly ritual cover for OpenEmotion with a bound tome, clasp, and quiet ember core.",
+        src: "/artifacts/openemotion-cover-v2.jpg",
+        alt: "Ritual cover for OpenEmotion with a worn tome resting in darkness and a dim ember trace below.",
         label: "OpenEmotion cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/openemotion-diagram.jpg",
-        alt: "Public-safe diagram showing OpenEmotion as a reflective self-model, memory, and appraisal core.",
-        label: "OpenEmotion reflective core diagram",
+        src: "/artifacts/openemotion-dossier-v2.jpg",
+        alt: "Public-safe dossier board for OpenEmotion with a sealed tome, manuscript page, and reflective archive linkage marks.",
+        label: "OpenEmotion dossier board",
       },
     ],
+    mediaPosition: ["50% 36%", "50% 40%"],
     content: {
       en: {
         title: "OpenEmotion",
@@ -448,8 +458,10 @@ export function getArtifacts(locale: Locale): ArtifactView[] {
     slug: artifact.slug,
     featured: artifact.featured,
     cover: artifact.cover,
+    coverPosition: artifact.coverPosition,
     lenses: artifact.lenses,
     media: artifact.media,
+    mediaPosition: artifact.mediaPosition,
     ...artifact.content[locale],
   }));
 }

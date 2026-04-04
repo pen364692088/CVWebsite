@@ -7,6 +7,8 @@ export interface AtmosphereLayer {
   mobileOpacity: number;
   blendMode?: "normal" | "screen" | "soft-light";
   scale?: number;
+  objectPosition?: string;
+  mobileObjectPosition?: string;
 }
 
 export interface ParticlePreset {
@@ -22,24 +24,16 @@ export interface ParticlePreset {
 
 export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
   {
-    id: "moon-texture",
-    src: "/hero/abyss-castle-moon-unsplash.jpg",
-    alt: "Moonlit castle texture used as a distant atmospheric layer.",
-    depth: 0.06,
-    opacity: 0.16,
-    mobileOpacity: 0.1,
-    blendMode: "screen",
-    scale: 1.06,
-  },
-  {
     id: "matte-scene",
-    src: "/hero/abyss-hero-matte.jpg",
-    alt: "Original abyss matte painting with moonlit keep, smoke, dragon trace, and ember-lit approach.",
+    src: "/hero/abyss-hero-matte-v2.jpg",
+    alt: "Abyss matte scene with a moonlit gothic keep, distant dragon trace, and ember-lit ravine.",
     depth: 0.12,
     opacity: 1,
     mobileOpacity: 1,
     blendMode: "normal",
     scale: 1.02,
+    objectPosition: "66% 45%",
+    mobileObjectPosition: "61% 42%",
   },
   {
     id: "rear-smoke",
@@ -53,13 +47,15 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
   },
   {
     id: "front-smoke",
-    src: "/atmosphere/smoke-band.jpg",
+    src: "/atmosphere/smoke-band-v2.jpg",
     alt: "Generated raster foreground smoke used to frame the ritual cards and lower terrain.",
     depth: 0.28,
     opacity: 0.56,
     mobileOpacity: 0.38,
     blendMode: "screen",
     scale: 1.08,
+    objectPosition: "center 60%",
+    mobileObjectPosition: "center 58%",
   },
 ];
 
