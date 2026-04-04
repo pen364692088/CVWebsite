@@ -18,10 +18,10 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/hero/abyss-hero-matte.svg",
-  "out/artifacts/egocore-cover.svg",
-  "out/artifacts/ashen-archive-cover.svg",
-  "out/artifacts/openemotion-cover.svg",
+  "out/hero/abyss-hero-matte.jpg",
+  "out/artifacts/egocore-cover.jpg",
+  "out/artifacts/ashen-archive-cover.jpg",
+  "out/artifacts/openemotion-cover.jpg",
 ];
 
 for (const file of expectedFiles) {

@@ -33,8 +33,8 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
   },
   {
     id: "matte-scene",
-    src: "/hero/abyss-hero-matte.svg",
-    alt: "Original abyss matte painting with castle silhouette, moon, dragon trace, and ember-lit foreground.",
+    src: "/hero/abyss-hero-matte.jpg",
+    alt: "Original abyss matte painting with moonlit keep, smoke, dragon trace, and ember-lit approach.",
     depth: 0.12,
     opacity: 1,
     mobileOpacity: 1,

@@ -48,13 +48,13 @@ const artifacts: Artifact[] = [
   {
     slug: "egocore",
     featured: false,
-    cover: "/artifacts/egocore-cover.svg",
+    cover: "/artifacts/egocore-cover.jpg",
     lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/egocore-cover.svg",
-        alt: "Obsidian runtime relic used as the cover art for EgoCore.",
+        src: "/artifacts/egocore-cover.jpg",
+        alt: "Painterly ritual cover for EgoCore with a watchful helm and moonlit sigil ring.",
         label: "EgoCore cover relic",
       },
       {
@@ -180,13 +180,13 @@ const artifacts: Artifact[] = [
   {
     slug: "ashen-archive",
     featured: true,
-    cover: "/artifacts/ashen-archive-cover.svg",
+    cover: "/artifacts/ashen-archive-cover.jpg",
     lenses: ["moon", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-cover.svg",
-        alt: "Burning archive relic used as the cover art for Ashen Archive.",
+        src: "/artifacts/ashen-archive-cover.jpg",
+        alt: "Painterly ritual cover for Ashen Archive with an upright blade, candles, and ember glow.",
         label: "Ashen Archive cover relic",
       },
       {
@@ -312,13 +312,13 @@ const artifacts: Artifact[] = [
   {
     slug: "openemotion",
     featured: false,
-    cover: "/artifacts/openemotion-cover.svg",
+    cover: "/artifacts/openemotion-cover.jpg",
     lenses: ["tower", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/openemotion-cover.svg",
-        alt: "Moonlit vessel used as the cover art for OpenEmotion.",
+        src: "/artifacts/openemotion-cover.jpg",
+        alt: "Painterly ritual cover for OpenEmotion with a bound tome, clasp, and quiet ember core.",
         label: "OpenEmotion cover relic",
       },
       {
