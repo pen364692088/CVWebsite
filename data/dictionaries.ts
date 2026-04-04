@@ -1,6 +1,5 @@
+import type { ArchiveLens, SigilLens } from "@/lib/archive";
 import type { Locale } from "@/lib/i18n";
-
-type SigilId = "moon" | "tower" | "ember";
 
 export interface Dictionary {
   metadata: {
@@ -9,23 +8,31 @@ export interface Dictionary {
   };
   nav: {
     title: string;
+    identity: string;
     languageLabel: string;
     items: Array<{ id: string; label: string }>;
   };
   hero: {
     eyebrow: string;
-    title: string;
-    subtitle: string;
+    archiveLabel: string;
+    identity: string;
+    studioCredit: string;
+    role: string;
     body: string;
+    proofChips: string[];
     enterLabel: string;
     projectLabel: string;
     availability: string;
+    focusLabel: string;
+    lensSummary: Record<ArchiveLens, { title: string; body: string }>;
   };
   about: {
     eyebrow: string;
     title: string;
     body: string;
     service: string;
+    recordId: string;
+    seal: string;
     tags: string[];
     dossier: Array<{ label: string; value: string }>;
   };
@@ -33,7 +40,7 @@ export interface Dictionary {
     eyebrow: string;
     title: string;
     intro: string;
-    items: Array<{ title: string; body: string }>;
+    items: Array<{ title: string; body: string; lenses: SigilLens[] }>;
   };
   artifacts: {
     eyebrow: string;
@@ -43,12 +50,13 @@ export interface Dictionary {
     caseLabel: string;
     categoryLabel: string;
     roleLabel: string;
+    evidenceLabel: string;
+    lensLabel: string;
     openLabel: string;
-    lockedLabel: string;
-    lockedBody: string;
-    unlockTitle: string;
-    unlockBody: string;
-    unlockCta: string;
+    shelfLabel: string;
+    shelfTitle: string;
+    shelfBody: string;
+    shelfCta: string;
     whatLabel: string;
     contributionLabel: string;
     techLabel: string;
@@ -61,18 +69,10 @@ export interface Dictionary {
     title: string;
     intro: string;
     instructions: string;
-    statusLabel: string;
-    progressLabel: string;
-    trayLabel: string;
-    socketLabel: string;
-    selectLabel: string;
-    clearSelectionLabel: string;
-    replayLabel: string;
-    failedLabel: string;
-    successTitle: string;
-    successBody: string;
-    unlockedCta: string;
-    sigils: Array<{ id: SigilId; label: string; socket: string }>;
+    currentLensLabel: string;
+    sigilLabel: string;
+    focusCta: string;
+    options: Array<{ id: ArchiveLens; label: string; title: string; body: string }>;
   };
   contact: {
     eyebrow: string;
@@ -99,527 +99,709 @@ export interface Dictionary {
 export const dictionaries: Record<Locale, Dictionary> = {
   en: {
     metadata: {
-      title: "Ashen Archive | 流月工作室",
-      description: "Dark fantasy archive portfolio for Liuyue Studio, focused on Unity systems, technical art, VFX, and production support.",
+      title: "Ashen Archive | Zhouyu Liao",
+      description:
+        "Portfolio archive for Zhouyu Liao / 流月工作室, focused on Unity systems, technical art, VFX, tooling, and production-facing implementation.",
     },
     nav: {
       title: "Ashen Archive",
+      identity: "Zhouyu Liao",
       languageLabel: "Language",
       items: [
         { id: "about", label: "Archive Record" },
         { id: "disciplines", label: "Disciplines" },
         { id: "artifacts", label: "Artifacts" },
-        { id: "fire", label: "Relic Unlock" },
+        { id: "fire", label: "Reading Sigils" },
         { id: "contact", label: "Send a Signal" },
       ],
     },
     hero: {
-      eyebrow: "A Dark Fantasy Studio Archive",
-      title: "Ashen Archive",
-      subtitle: "Unity Systems, Technical Art, VFX, and Playable Fragments",
+      eyebrow: "Personal Archive, Studio-Backed",
+      archiveLabel: "Ashen Archive",
+      identity: "Zhouyu Liao",
+      studioCredit: "Working under 流月工作室",
+      role: "Unity systems, technical art, VFX, and tooling for atmosphere-led game projects.",
       body:
-        "Liuyue Studio builds game-facing systems and visual implementation work that stay atmospheric, readable, and safe for production.",
-      enterLabel: "Open the record",
-      projectLabel: "View artifacts",
-      availability: "Small-team collaboration, technical art support, and implementation-focused production work.",
+        "I build gameplay systems, technical art support, and real-time visual implementation that stay readable, maintainable, and safe under production constraints.",
+      proofChips: ["Unity feature ownership", "Technical art and tooling", "VFX / shader implementation"],
+      enterLabel: "Read the record",
+      projectLabel: "See selected artifacts",
+      availability: "Best fit: prototypes, feature implementation, technical art cleanup, and small-team collaboration.",
+      focusLabel: "Current reading lens",
+      lensSummary: {
+        all: {
+          title: "Start with the strongest proof, then drill deeper.",
+          body: "One featured reel and two smaller case records show how systems, technical art, and VFX work together in practice.",
+        },
+        moon: {
+          title: "Unity Systems in view",
+          body: "This reading favors feature ownership, gameplay modules, iteration safety, and runtime stability.",
+        },
+        tower: {
+          title: "Technical Art and Tooling in view",
+          body: "This reading brings pipeline cleanup, artist support, and production-safe implementation detail forward.",
+        },
+        ember: {
+          title: "VFX and Shader Work in view",
+          body: "This reading emphasizes atmosphere, readable feedback, and real-time visual polish without losing frame budget.",
+        },
+      },
     },
     about: {
       eyebrow: "Archive Record",
-      title: "A studio record for atmosphere-led implementation work.",
+      title: "A personal archive framed like a working catalog.",
       body:
-        "Liuyue Studio operates between visual drama and production discipline, with practice across Unity gameplay systems, artist tooling, VFX integration, and runtime optimization.",
+        "Ashen Archive is still a portfolio, but it is organized like a quiet museum record so the work can be scanned by responsibility instead of by mood alone.",
       service:
-        "The studio is structured for compact collaboration: playable systems, technical art cleanup, tool support, and presentation work that should feel authored without becoming fragile.",
-      tags: ["Unity Systems Studio", "Technical Art Direction", "Realtime VFX & Shaders", "Tools & Production Support"],
+        "The core offering is direct: gameplay systems, technical art support, VFX / shader implementation, and small tools that reduce friction for compact teams.",
+      recordId: "Record A-01 · Primary Archive",
+      seal: "ZL",
+      tags: ["Unity gameplay systems", "Technical art workflows", "Realtime VFX & shaders", "Tools & optimization"],
       dossier: [
-        { label: "Studio role", value: "Unity Systems / Technical Art Studio" },
-        { label: "Founder / Lead", value: "Zhouyu Liao · Creative-Technologist" },
+        { label: "Primary role", value: "Unity Developer / Technical Artist" },
+        { label: "Working label", value: "流月工作室" },
         { label: "Location", value: "Winnipeg, Canada" },
-        { label: "Practice", value: "Unity gameplay, technical art, VFX, tooling" },
+        { label: "Focus", value: "Unity systems, technical art, VFX, tooling" },
         { label: "Collaboration", value: "Prototype, feature, and production support" },
       ],
     },
     disciplines: {
       eyebrow: "Disciplines",
-      title: "Four directions, one craft language.",
-      intro: "The work stays grounded in production: readable systems, controlled spectacle, and pipelines that survive iteration.",
+      title: "Four capability lanes, each tied to real delivery.",
+      intro: "The archive reads faster when the work is split by responsibility: what gets built, who it serves, and what constraint it had to survive.",
       items: [
         {
-          title: "Unity Development",
-          body: "Gameplay-facing modules, feature ownership, and systems that continue evolving under production pressure.",
+          title: "Unity Systems",
+          body: "Gameplay modules, feature ownership, and player-facing implementation that can ship, iterate, and hand off cleanly.",
+          lenses: ["moon"],
         },
         {
           title: "Technical Art",
-          body: "Bridging visual ambition with runtime constraints, tool support, and engine-ready implementation detail.",
+          body: "The bridge between visual targets and runtime constraints, including materials, support workflows, and engine-safe polish.",
+          lenses: ["tower"],
         },
         {
           title: "VFX / Shader Work",
-          body: "Realtime effects and material treatment that reinforce mood without sacrificing clarity or frame budget.",
+          body: "Realtime effects and material treatment that reinforce feedback and atmosphere without compromising readability.",
+          lenses: ["ember"],
         },
         {
           title: "Tools & Optimization",
-          body: "Small utilities, validation flows, and performance discipline that help compact teams ship with less friction.",
+          body: "Small utilities, validation rules, and cleanup passes that reduce repeated setup and keep production from getting fragile.",
+          lenses: ["moon", "tower"],
         },
       ],
     },
     artifacts: {
       eyebrow: "Artifacts",
-      title: "Selected relics from production and experimentation.",
-      intro: "Each project is catalogued like a museum record: one featured studio reel, then quieter cases shaped by systems, tools, and technical art support.",
+      title: "Selected work, arranged as catalog entries.",
+      intro: "Each case shows category, role, technologies, proof points, and the production problem it had to solve.",
       featuredLabel: "Featured",
       caseLabel: "Case",
       categoryLabel: "Category",
       roleLabel: "Role",
+      evidenceLabel: "Proof",
+      lensLabel: "Reading lens",
       openLabel: "Open artifact",
-      lockedLabel: "Hidden shelf sealed",
-      lockedBody: "Restore the three sigils to pull open the archivist drawer.",
-      unlockTitle: "Hidden shelf opened",
-      unlockBody: "The reliquary opens and the featured studio reel is pulled closest to hand.",
-      unlockCta: "Open featured artifact",
+      shelfLabel: "Current shelf",
+      shelfTitle: "Browse the archive as a proof set.",
+      shelfBody: "The featured reel carries the broadest range. The supporting cases show how the same practice turns into systems work and production support.",
+      shelfCta: "Open lead artifact",
       whatLabel: "Archive note",
-      contributionLabel: "Studio contribution",
+      contributionLabel: "Contribution",
       techLabel: "Technologies",
       solvedLabel: "Problem solved",
       mediaLabel: "Media",
       closeLabel: "Close details",
     },
     game: {
-      eyebrow: "Relic Unlock",
-      title: "Return the three sigils to their sockets.",
-      intro: "The archive drawer is held shut by a sealed relic. Select a sigil from the tray and place it into the matching socket around the core.",
-      instructions: "Pick a sigil from the tray, then place it into the matching socket. On desktop you can also drag a sigil into place.",
-      statusLabel: "Seal state",
-      progressLabel: "Sigils restored",
-      trayLabel: "Sigil tray",
-      socketLabel: "Socket",
-      selectLabel: "Selected sigil",
-      clearSelectionLabel: "Clear selection",
-      replayLabel: "Reset relic",
-      failedLabel: "That sigil rejects this socket.",
-      successTitle: "The seal breaks.",
-      successBody: "The reliquary opens, the fire catches, and the hidden archive drawer slides forward.",
-      unlockedCta: "Jump to Artifacts",
-      sigils: [
-        { id: "moon", label: "Moon Crest", socket: "Moon Socket" },
-        { id: "tower", label: "Tower Mark", socket: "Tower Socket" },
-        { id: "ember", label: "Ember Seal", socket: "Ember Socket" },
+      eyebrow: "Reading Sigils",
+      title: "Use the sigils to change how the archive is read.",
+      intro: "This is no longer a puzzle. Each sigil reorders the archive around one type of contribution so the evidence becomes easier to scan.",
+      instructions: "Choose a sigil to focus the page on Unity systems, technical art / tooling, or VFX / shader work.",
+      currentLensLabel: "Current focus",
+      sigilLabel: "Sigil",
+      focusCta: "Jump to matching artifact",
+      options: [
+        {
+          id: "all",
+          label: "Whole Archive",
+          title: "Read everything together",
+          body: "Balanced overview across systems, technical art, and VFX.",
+        },
+        {
+          id: "moon",
+          label: "Moon Crest",
+          title: "Unity Systems",
+          body: "Gameplay systems, feature ownership, iteration safety, and runtime stability.",
+        },
+        {
+          id: "tower",
+          label: "Tower Mark",
+          title: "Technical Art / Tooling",
+          body: "Pipelines, artist support, editor helpers, and production-safe implementation.",
+        },
+        {
+          id: "ember",
+          label: "Ember Seal",
+          title: "VFX / Shader",
+          body: "Realtime effects, material work, atmosphere, and readable feedback.",
+        },
       ],
     },
     contact: {
       eyebrow: "Send a Signal",
-      title: "Open the studio dossier, not a resume.",
-      intro: "This archive is positioned as a compact studio record. The clearest next step is still a direct message.",
+      title: "If you need someone who can get ideas into the engine, start here.",
+      intro:
+        "The fastest next step is still a direct message. Email and GitHub are public; deeper case notes and additional material can follow once the project goals are clear.",
       cardTitle: "Signal Routes",
-      cardBody: "Email and GitHub are open now. LinkedIn and the formal studio dossier remain request-based until the public material is finalized.",
-      dossierTitle: "Studio Dossier",
-      dossierBody: "A short collaboration-facing dossier for studios, contracts, and project partners. It summarizes practice, scope, and working model rather than personal hiring history.",
-      capabilitiesTitle: "Capabilities",
+      cardBody:
+        "Use these when you want to talk scope, constraints, timeline, or whether a feature belongs in Unity systems, technical art, or VFX.",
+      dossierTitle: "Capabilities and Working Notes",
+      dossierBody:
+        "This replaces a resume-heavy presentation. It summarizes how I usually help: building systems, cleaning up implementation paths, and shipping atmosphere without making the project fragile.",
+      capabilitiesTitle: "Core capabilities",
       capabilities: [
-        "Unity gameplay systems and implementation support",
-        "Technical art workflows, tooling, and VFX integration",
-        "Presentation polish, shader work, and production cleanup",
+        "Unity gameplay systems and feature implementation",
+        "Technical art support, tooling, and pipeline cleanup",
+        "Realtime VFX / shader work with production-aware polish",
       ],
-      collaborationTitle: "Collaboration Notes",
-      collaborationBody: "Best suited for prototypes, feature implementation, technical art cleanup, and small-team production support with a strong atmosphere requirement.",
-      dossierRouteLabel: "Studio dossier",
-      dossierActionLabel: "Open studio dossier",
-      dossierUnavailableLabel: "Dossier available on request",
+      collaborationTitle: "Best collaboration fit",
+      collaborationBody:
+        "Indie teams, prototypes, vertical slices, feature implementation, technical art cleanup, and production-facing support where visual ambition still has to survive schedule and budget.",
+      dossierRouteLabel: "Case notes",
+      dossierActionLabel: "Open case notes",
+      dossierUnavailableLabel: "Additional notes available on request",
       unavailableLabel: "Available on request",
     },
     footer: {
-      line: "Ashen Archive by 流月工作室. Built for calm motion, clear systems, and durable presentation.",
+      line: "Ashen Archive by Zhouyu Liao, with 流月工作室 as the working label. Built for calm motion and clear proof.",
     },
   },
   "zh-CN": {
     metadata: {
-      title: "Ashen Archive | 流月工作室",
-      description: "流月工作室的黑暗奇幻档案馆作品站，聚焦 Unity 系统、技术美术、特效与制作支持。",
+      title: "Ashen Archive | 周宇辽",
+      description: "周宇辽 / 流月工作室的作品档案馆，聚焦 Unity 系统、技术美术、特效、工具与面向制作的问题解决。",
     },
     nav: {
       title: "Ashen Archive",
+      identity: "周宇辽",
       languageLabel: "语言",
       items: [
         { id: "about", label: "档案记录" },
         { id: "disciplines", label: "能力方向" },
-        { id: "artifacts", label: "馆藏遗物" },
-        { id: "fire", label: "遗物解封" },
+        { id: "artifacts", label: "馆藏条目" },
+        { id: "fire", label: "符印视角" },
         { id: "contact", label: "发送信号" },
       ],
     },
     hero: {
-      eyebrow: "黑暗奇幻工作室档案馆",
-      title: "Ashen Archive",
-      subtitle: "Unity Systems, Technical Art, VFX, and Playable Fragments",
-      body: "流月工作室专注于面向游戏生产的系统与视觉实现，在氛围、可读性与工程稳定性之间寻找平衡。",
-      enterLabel: "打开档案",
-      projectLabel: "查看馆藏",
-      availability: "适合小团队协作、技术美术支持与偏实现导向的制作工作。",
+      eyebrow: "个人档案，工作室背书",
+      archiveLabel: "Ashen Archive",
+      identity: "周宇辽",
+      studioCredit: "以流月工作室为工作标签",
+      role: "Unity 系统、技术美术、特效与工具实现。",
+      body: "我负责把玩法系统、技术美术支持与实时视觉实现做进引擎，并确保它们在迭代、性能预算和交接阶段依然稳得住。",
+      proofChips: ["Unity 功能负责", "技术美术与工具", "特效 / Shader 实现"],
+      enterLabel: "查看档案",
+      projectLabel: "看代表作品",
+      availability: "更适合原型、功能实现、技术美术清理，以及小团队协作型项目。",
+      focusLabel: "当前阅读视角",
+      lensSummary: {
+        all: {
+          title: "先看最强证据，再向下细读。",
+          body: "一个精选合集加两个较小案例，分别对应系统、技术美术与特效方向的真实工作能力。",
+        },
+        moon: {
+          title: "Unity 系统视角",
+          body: "这一视角优先展示功能负责、玩法模块、迭代安全性与运行稳定性。",
+        },
+        tower: {
+          title: "技术美术 / 工具视角",
+          body: "这一视角会把流程清理、艺术支持、工具化与可落地实现放到前面。",
+        },
+        ember: {
+          title: "特效 / Shader 视角",
+          body: "这一视角强调氛围表现、反馈可读性与实时视觉打磨，同时守住性能预算。",
+        },
+      },
     },
     about: {
       eyebrow: "档案记录",
-      title: "一份关于氛围导向实现工作的工作室档案。",
-      body: "流月工作室定位在视觉戏剧性与生产纪律之间，实践范围覆盖 Unity 玩法系统、艺术工具、特效接入与运行时优化。",
-      service: "工作室面向紧凑型合作：可玩系统、技术美术整理、工具支持，以及需要作者感但不能脆弱的表现层。",
-      tags: ["Unity 系统工作室", "技术美术方向", "实时特效与 Shader", "工具与制作支持"],
+      title: "这仍然是作品集，只是被整理成一份更好扫描的档案。",
+      body: "Ashen Archive 不是单纯讲氛围的设定页，而是把个人作品经验按职责和证据重新编排，方便快速判断我能交付什么。",
+      service: "核心能力很直接：玩法系统、技术美术支持、特效 / Shader 实现，以及能减少团队摩擦的小工具与流程整理。",
+      recordId: "记录 A-01 · 主档案",
+      seal: "ZY",
+      tags: ["Unity 玩法系统", "技术美术流程", "实时特效与 Shader", "工具与优化"],
       dossier: [
-        { label: "工作室角色", value: "Unity 系统 / 技术美术工作室" },
-        { label: "创始人 / 负责人", value: "周宇辽 · Creative-Technologist" },
-        { label: "地点", value: "加拿大温尼伯" },
-        { label: "实践方向", value: "Unity 玩法、技术美术、特效、工具" },
-        { label: "合作模式", value: "原型、功能实现与制作支持" },
+        { label: "主要角色", value: "Unity 开发 / 技术美术" },
+        { label: "工作标签", value: "流月工作室" },
+        { label: "所在地", value: "加拿大温尼伯" },
+        { label: "关注方向", value: "Unity 系统、技术美术、特效、工具" },
+        { label: "合作方式", value: "原型、功能实现、制作支持" },
       ],
     },
     disciplines: {
       eyebrow: "能力方向",
-      title: "四个方向，同一种工艺语言。",
-      intro: "所有工作都围绕真实制作展开：系统清晰、表现克制、流程经得起迭代。",
+      title: "四条能力线，分别对应真实交付。",
+      intro: "把工作按职责拆开之后，页面会更容易阅读：做了什么、服务谁、要扛什么约束，一眼能看清。",
       items: [
         {
-          title: "Unity 开发",
-          body: "面向玩法的模块与系统实现，强调在生产压力下仍可持续演进。",
+          title: "Unity 系统",
+          body: "面向玩法与功能的模块实现，要求能上线、能迭代、也能顺利交接。",
+          lenses: ["moon"],
         },
         {
           title: "技术美术",
-          body: "在视觉追求、性能约束与工具支持之间搭建可落地的技术桥梁。",
+          body: "在视觉目标和运行约束之间搭桥，包括材质、流程支持与引擎内打磨。",
+          lenses: ["tower"],
         },
         {
           title: "特效 / Shader",
-          body: "强调氛围与反馈，同时守住可读性与帧预算的实时视觉表达。",
+          body: "实时特效与材质处理既要强化氛围，也要保证反馈清晰和性能可控。",
+          lenses: ["ember"],
         },
         {
           title: "工具与优化",
-          body: "通过小型工具、校验流程与性能纪律，降低紧凑团队的制作摩擦。",
+          body: "用小工具、校验规则和清理工作减少重复劳动，让制作流程没那么脆弱。",
+          lenses: ["moon", "tower"],
         },
       ],
     },
     artifacts: {
-      eyebrow: "馆藏遗物",
-      title: "来自项目与试验的精选条目。",
-      intro: "每个项目都按馆藏记录陈列：一件重点工作室作品，其余作为系统、工具与技术美术支持的补充档案。",
+      eyebrow: "馆藏条目",
+      title: "按馆藏条目整理的代表作品。",
+      intro: "每个案例都会明确给出类别、职责、技术栈、证据点，以及它实际解决了什么问题。",
       featuredLabel: "精选",
-      caseLabel: "馆藏编号",
+      caseLabel: "条目",
       categoryLabel: "类别",
       roleLabel: "职责",
-      openLabel: "查看遗物",
-      lockedLabel: "隐藏抽屉已封印",
-      lockedBody: "把三枚符印归位后，档案员抽屉才会开启。",
-      unlockTitle: "隐藏抽屉已开启",
-      unlockBody: "封印解除后，重点工作室作品被推到最前方，方便直接查看。",
-      unlockCta: "打开精选作品",
+      evidenceLabel: "证据",
+      lensLabel: "阅读视角",
+      openLabel: "打开条目",
+      shelfLabel: "当前展柜",
+      shelfTitle: "把整站当成一组证据来读。",
+      shelfBody: "精选合集负责拉齐整体能力范围，两个辅助案例则把同一套能力拆成系统实现与制作支持来读。",
+      shelfCta: "打开当前主条目",
       whatLabel: "档案说明",
-      contributionLabel: "工作室负责内容",
+      contributionLabel: "我的工作",
       techLabel: "使用技术",
       solvedLabel: "解决的问题",
-      mediaLabel: "媒体资料",
+      mediaLabel: "图像 / 视频",
       closeLabel: "关闭详情",
     },
     game: {
-      eyebrow: "遗物解封",
-      title: "让三枚符印回到各自的槽位。",
-      intro: "作品抽屉被一件封印遗物锁住了。从下方符印托盘中选择符印，并把它放到核心周围对应的槽位里。",
-      instructions: "先从托盘中选中一枚符印，再放入匹配的槽位。桌面端也可直接拖拽到对应位置。",
-      statusLabel: "封印状态",
-      progressLabel: "已归位符印",
-      trayLabel: "符印托盘",
-      socketLabel: "槽位",
-      selectLabel: "当前选中",
-      clearSelectionLabel: "清除选择",
-      replayLabel: "重置遗物",
-      failedLabel: "这枚符印无法嵌入该槽位。",
-      successTitle: "封印已破裂。",
-      successBody: "遗物解封、火光点亮，隐藏档案抽屉向前滑出。",
-      unlockedCta: "跳转到馆藏区",
-      sigils: [
-        { id: "moon", label: "月纹", socket: "月纹槽位" },
-        { id: "tower", label: "塔印", socket: "塔印槽位" },
-        { id: "ember", label: "余烬印", socket: "余烬槽位" },
+      eyebrow: "符印视角",
+      title: "用符印切换这份档案的阅读方式。",
+      intro: "这里不再是小游戏，而是一个阅读控制器。每个符印都会按贡献类型重新排列页面内容，让重点更快浮出来。",
+      instructions: "选择一个符印，把页面聚焦到 Unity 系统、技术美术 / 工具，或特效 / Shader 方向。",
+      currentLensLabel: "当前焦点",
+      sigilLabel: "符印",
+      focusCta: "跳到对应条目",
+      options: [
+        {
+          id: "all",
+          label: "完整档案",
+          title: "整体阅读",
+          body: "同时查看系统、技术美术和特效三个方向的能力分布。",
+        },
+        {
+          id: "moon",
+          label: "月纹",
+          title: "Unity 系统",
+          body: "偏向玩法系统、功能负责、迭代安全性与运行稳定性。",
+        },
+        {
+          id: "tower",
+          label: "塔印",
+          title: "技术美术 / 工具",
+          body: "偏向流程整理、艺术支持、编辑器工具与可落地实现。",
+        },
+        {
+          id: "ember",
+          label: "余烬印",
+          title: "特效 / Shader",
+          body: "偏向实时特效、材质处理、氛围塑造与反馈可读性。",
+        },
       ],
     },
     contact: {
       eyebrow: "发送信号",
-      title: "打开的是工作室档案，不是个人简历。",
-      intro: "这个站点现在被定义为一份紧凑的工作室档案。最清晰的下一步仍然是直接沟通。",
-      cardTitle: "信号路径",
-      cardBody: "邮箱和 GitHub 已可直接使用。LinkedIn 与正式工作室档案目前保留为按需提供。",
-      dossierTitle: "工作室档案",
-      dossierBody: "这是一份面向合作与项目沟通的简短工作室资料，强调能力范围、合作方式与工作模型，而不是个人求职履历。",
-      capabilitiesTitle: "能力摘要",
-      capabilities: ["Unity 玩法系统与实现支持", "技术美术流程、工具与特效接入", "表现打磨、Shader 处理与制作整理"],
-      collaborationTitle: "合作说明",
-      collaborationBody: "更适合原型开发、功能实现、技术美术整理，以及强调氛围控制的小团队制作支持。",
-      dossierRouteLabel: "工作室档案",
-      dossierActionLabel: "打开工作室档案",
-      dossierUnavailableLabel: "工作室档案可按需提供",
-      unavailableLabel: "可私下提供",
+      title: "如果你需要的是能把想法做进引擎里的人，就从这里开始。",
+      intro: "最有效的下一步仍然是直接联系。邮箱和 GitHub 公开可见，更多案例细节和补充资料可以在明确项目目标后再提供。",
+      cardTitle: "联系路径",
+      cardBody: "当你想讨论范围、约束、排期，或一个功能究竟更偏 Unity 系统、技术美术还是特效实现时，可以直接从这里开始。",
+      dossierTitle: "能力说明与工作方式",
+      dossierBody: "这里不再强调简历，而是说明我通常如何参与项目：搭系统、理顺实现路径、在不让项目变脆弱的前提下把氛围做出来。",
+      capabilitiesTitle: "核心能力",
+      capabilities: ["Unity 玩法系统与功能实现", "技术美术支持、工具与流程清理", "面向制作约束的特效 / Shader 打磨"],
+      collaborationTitle: "适合的合作方式",
+      collaborationBody: "更适合独立团队、原型、垂直切片、功能实现、技术美术清理，以及需要兼顾氛围目标和制作现实的项目。",
+      dossierRouteLabel: "补充案例",
+      dossierActionLabel: "打开补充说明",
+      dossierUnavailableLabel: "补充资料可在沟通后提供",
+      unavailableLabel: "可在沟通后提供",
     },
     footer: {
-      line: "Ashen Archive，由流月工作室构建。强调克制动效、清晰系统与可持续展示。",
+      line: "Ashen Archive 由周宇辽建立，以流月工作室为工作标签。页面只保留克制动效和更清晰的证据表达。",
     },
   },
   ja: {
     metadata: {
-      title: "Ashen Archive | 流月工作室",
-      description: "流月工作室によるダークファンタジー調アーカイブ。Unity システム、テクニカルアート、VFX、制作支援を展示します。",
+      title: "Ashen Archive | Zhouyu Liao",
+      description:
+        "Zhouyu Liao / 流月工作室 のポートフォリオアーカイブ。Unity システム、テクニカルアート、VFX、ツール、実装支援に焦点を当てています。",
     },
     nav: {
       title: "Ashen Archive",
+      identity: "Zhouyu Liao",
       languageLabel: "言語",
       items: [
         { id: "about", label: "Archive Record" },
         { id: "disciplines", label: "Disciplines" },
         { id: "artifacts", label: "Artifacts" },
-        { id: "fire", label: "Relic Unlock" },
+        { id: "fire", label: "Reading Sigils" },
         { id: "contact", label: "Send a Signal" },
       ],
     },
     hero: {
-      eyebrow: "ダークファンタジー・スタジオアーカイブ",
-      title: "Ashen Archive",
-      subtitle: "Unity Systems, Technical Art, VFX, and Playable Fragments",
+      eyebrow: "個人アーカイブ / スタジオ補助",
+      archiveLabel: "Ashen Archive",
+      identity: "Zhouyu Liao",
+      studioCredit: "作業ラベル: 流月工作室",
+      role: "Unity システム、テクニカルアート、VFX、ツール実装。",
       body:
-        "流月工作室は、ゲーム制作向けのシステムとビジュアル実装を、雰囲気・可読性・安定性の均衡で形にします。",
-      enterLabel: "記録を開く",
-      projectLabel: "Artifacts を見る",
-      availability: "小規模チームとの協業、技術美術支援、実装寄りの制作支援に対応します。",
+        "ゲームプレイシステム、テクニカルアート支援、リアルタイム表現の実装を担当し、反復や性能制約の中でも壊れにくい形へまとめます。",
+      proofChips: ["Unity 機能実装", "テクニカルアート / ツール", "VFX / Shader 実装"],
+      enterLabel: "記録を見る",
+      projectLabel: "代表ケースを見る",
+      availability: "プロトタイプ、機能実装、テクニカルアート整理、小規模チーム支援に適しています。",
+      focusLabel: "現在の読解レンズ",
+      lensSummary: {
+        all: {
+          title: "まず全体像、その後で深掘り。",
+          body: "代表リールと 2 つの補助ケースで、システム、テクニカルアート、VFX の関係を読み取れます。",
+        },
+        moon: {
+          title: "Unity Systems を前面に",
+          body: "機能担当、ゲームプレイモジュール、反復耐性、ランタイム安定性を優先して読ませます。",
+        },
+        tower: {
+          title: "Technical Art / Tooling を前面に",
+          body: "パイプライン整理、アーティスト支援、実装の安全性を重視した読み方です。",
+        },
+        ember: {
+          title: "VFX / Shader を前面に",
+          body: "雰囲気づくり、視認性の高いフィードバック、リアルタイム表現の磨き込みに焦点を当てます。",
+        },
+      },
     },
     about: {
       eyebrow: "Archive Record",
-      title: "雰囲気主導の実装仕事を記録するスタジオ档案。",
+      title: "これは履歴書ではなく、読みやすい形に整理した個人アーカイブです。",
       body:
-        "流月工作室は、ビジュアルの劇性と制作規律のあいだで機能する小さなスタジオです。Unity ゲームプレイ、アーティストツール、VFX、実行時最適化を横断します。",
+        "Ashen Archive は雰囲気だけを語るページではなく、何を作り、どの責任を持ち、どんな制約に耐えたかを読み取りやすく並べたポートフォリオです。",
       service:
-        "想定する協業は、プレイアブルな仕組み、技術美術の整理、ツール支援、そして壊れにくい演出レイヤーの実装です。",
-      tags: ["Unity Systems Studio", "Technical Art Practice", "Realtime VFX & Shaders", "Tools & Production Support"],
+        "中心にあるのは、ゲームプレイシステム、テクニカルアート支援、VFX / Shader 実装、小さなツールによる制作摩擦の削減です。",
+      recordId: "Record A-01 · Primary Archive",
+      seal: "ZL",
+      tags: ["Unity システム", "テクニカルアート", "リアルタイム VFX", "ツール / 最適化"],
       dossier: [
-        { label: "Studio role", value: "Unity Systems / Technical Art Studio" },
-        { label: "Founder / Lead", value: "Zhouyu Liao · Creative-Technologist" },
-        { label: "Location", value: "Winnipeg, Canada" },
-        { label: "Practice", value: "Unity gameplay, technical art, VFX, tooling" },
-        { label: "Collaboration", value: "Prototype, feature, production support" },
+        { label: "主な役割", value: "Unity Developer / Technical Artist" },
+        { label: "作業ラベル", value: "流月工作室" },
+        { label: "拠点", value: "Winnipeg, Canada" },
+        { label: "重点領域", value: "Unity システム、テクニカルアート、VFX、ツール" },
+        { label: "協業形態", value: "プロトタイプ、機能実装、制作支援" },
       ],
     },
     disciplines: {
       eyebrow: "Disciplines",
-      title: "四つの方向、ひとつの制作言語。",
-      intro: "すべての仕事は実際の制作に根ざしています。可読性、抑制、そして反復に耐える運用性です。",
+      title: "4 つの能力線を、実際の成果に結びつけて提示します。",
+      intro: "雰囲気ではなく責任ごとに分けることで、何が作れるのか、誰を助けるのか、どんな制約を扱えるのかが早く伝わります。",
       items: [
         {
-          title: "Unity Development",
-          body: "制作圧の中でも継続改善できる、ゲームプレイ寄りのモジュールとシステム実装。",
+          title: "Unity Systems",
+          body: "ゲームプレイ向けのモジュール、機能担当、引き継ぎまで見据えた実装。",
+          lenses: ["moon"],
         },
         {
           title: "Technical Art",
-          body: "ビジュアル要求、性能制約、ツール支援をつなぐための実装設計。",
+          body: "ビジュアル目標と実行制約の間をつなぐ、素材・ワークフロー・実装整理。",
+          lenses: ["tower"],
         },
         {
           title: "VFX / Shader Work",
-          body: "雰囲気を保ちながら、可読性とフレーム予算を守るリアルタイム表現設計。",
+          body: "空気感と視認性を両立させるリアルタイム表現とマテリアル調整。",
+          lenses: ["ember"],
         },
         {
           title: "Tools & Optimization",
-          body: "小さなツール、検証フロー、性能規律で小規模チームの摩擦を下げる支援。",
+          body: "小さなユーティリティ、検証ルール、整理作業で制作の脆さを減らします。",
+          lenses: ["moon", "tower"],
         },
       ],
     },
     artifacts: {
       eyebrow: "Artifacts",
-      title: "制作と試行から残した収蔵記録。",
-      intro: "各プロジェクトを博物館の索引カードのように整理しています。中心にはスタジオの代表リール、その周囲にシステム、ツール、技術美術支援の記録を配置しました。",
+      title: "代表作を、館内の目録のように整理しました。",
+      intro: "各ケースには、分類、役割、技術、証拠、そして実際に解決した課題を明記しています。",
       featuredLabel: "Featured",
       caseLabel: "Case",
       categoryLabel: "Category",
       roleLabel: "Role",
+      evidenceLabel: "Proof",
+      lensLabel: "Reading lens",
       openLabel: "Open artifact",
-      lockedLabel: "隠し棚は封印中",
-      lockedBody: "三つの符印を戻すと、アーキビストの引き出しが開きます。",
-      unlockTitle: "隠し棚が開きました",
-      unlockBody: "封印が解かれ、代表リールがもっとも近い位置へ引き出されます。",
-      unlockCta: "代表 Artifact を開く",
+      shelfLabel: "Current shelf",
+      shelfTitle: "証拠セットとしてアーカイブを読む。",
+      shelfBody: "代表リールで全体像を示し、補助ケースでシステム実装と制作支援の具体性を補います。",
+      shelfCta: "Open lead artifact",
       whatLabel: "Archive note",
-      contributionLabel: "Studio contribution",
+      contributionLabel: "Contribution",
       techLabel: "Technologies",
       solvedLabel: "Problem solved",
       mediaLabel: "Media",
       closeLabel: "Close details",
     },
     game: {
-      eyebrow: "Relic Unlock",
-      title: "三つの符印を、それぞれの受け口へ戻す。",
-      intro: "アーカイブの引き出しは封印遺物によって閉ざされています。下の符印トレイから印を選び、中央の周囲にある対応スロットへ戻してください。",
-      instructions: "まずトレイから符印を選び、対応する受け口へ置きます。デスクトップではドラッグでも配置できます。",
-      statusLabel: "封印状態",
-      progressLabel: "復元済み符印",
-      trayLabel: "符印トレイ",
-      socketLabel: "受け口",
-      selectLabel: "選択中の符印",
-      clearSelectionLabel: "選択解除",
-      replayLabel: "遺物をリセット",
-      failedLabel: "その符印はこの受け口に適合しません。",
-      successTitle: "封印が砕けました。",
-      successBody: "遺物が開き、火が灯り、隠し引き出しが前へ滑り出します。",
-      unlockedCta: "Artifacts へ移動",
-      sigils: [
-        { id: "moon", label: "月章", socket: "月章の受け口" },
-        { id: "tower", label: "塔印", socket: "塔印の受け口" },
-        { id: "ember", label: "灰火印", socket: "灰火印の受け口" },
+      eyebrow: "Reading Sigils",
+      title: "シジルでアーカイブの読み方を切り替えます。",
+      intro: "ここはミニゲームではありません。各シジルが、どの種類の貢献を前面に出すかを切り替える読解コントローラです。",
+      instructions: "Unity システム、テクニカルアート / ツール、VFX / Shader のどこを優先して読みたいか選んでください。",
+      currentLensLabel: "Current focus",
+      sigilLabel: "Sigil",
+      focusCta: "Jump to matching artifact",
+      options: [
+        {
+          id: "all",
+          label: "Whole Archive",
+          title: "全体を読む",
+          body: "システム、テクニカルアート、VFX をまとめて把握します。",
+        },
+        {
+          id: "moon",
+          label: "Moon Crest",
+          title: "Unity Systems",
+          body: "機能担当、ゲームプレイシステム、反復耐性、安定性を優先。",
+        },
+        {
+          id: "tower",
+          label: "Tower Mark",
+          title: "Technical Art / Tooling",
+          body: "パイプライン整理、アーティスト支援、エディタ補助を優先。",
+        },
+        {
+          id: "ember",
+          label: "Ember Seal",
+          title: "VFX / Shader",
+          body: "リアルタイム表現、マテリアル処理、雰囲気とフィードバックを優先。",
+        },
       ],
     },
     contact: {
       eyebrow: "Send a Signal",
-      title: "ここで開くのは履歴書ではなく、スタジオ档案です。",
-      intro: "このサイトは現在、コンパクトなスタジオ記録として構成されています。次の一歩として最も明快なのは直接連絡です。",
+      title: "アイデアをエンジンに落とし込める人材が必要なら、ここから始めてください。",
+      intro:
+        "最短の次の一歩はやはり直接連絡です。Email と GitHub は公開し、より詳細なケースノートは目的が明確になった段階で共有できます。",
       cardTitle: "Signal Routes",
-      cardBody: "Email と GitHub は公開済みです。LinkedIn と正式なスタジオ資料は、現時点では request ベースで扱います。",
-      dossierTitle: "Studio Dossier",
-      dossierBody: "これは協業や案件相談のための短いスタジオ資料です。個人の採用履歴ではなく、能力範囲・作業モデル・連携の前提を示します。",
-      capabilitiesTitle: "Capabilities",
+      cardBody: "スコープ、制約、スケジュール、あるいはその課題が Unity システム、テクニカルアート、VFX のどこに属するかを話したい場合に使ってください。",
+      dossierTitle: "Capabilities and Working Notes",
+      dossierBody: "履歴書を前面に出す代わりに、どうやって関わるかを簡潔に示します。システムを作り、実装経路を整え、雰囲気を壊れにくい形で届けます。",
+      capabilitiesTitle: "Core capabilities",
       capabilities: [
-        "Unity gameplay systems and implementation support",
-        "Technical art workflow, tooling, and VFX integration",
-        "Presentation polish, shader treatment, and production cleanup",
+        "Unity ゲームプレイシステムと機能実装",
+        "テクニカルアート支援、ツール、パイプライン整理",
+        "制作制約を意識した VFX / Shader 実装",
       ],
-      collaborationTitle: "Collaboration Notes",
-      collaborationBody: "プロトタイプ、機能実装、技術美術の整理、そして強い雰囲気設計が必要な小規模制作支援に向いています。",
-      dossierRouteLabel: "Studio dossier",
-      dossierActionLabel: "Open studio dossier",
-      dossierUnavailableLabel: "Dossier available on request",
+      collaborationTitle: "Best collaboration fit",
+      collaborationBody:
+        "インディー、小規模チーム、プロトタイプ、縦切りスライス、機能実装、テクニカルアート整理のような案件に向いています。",
+      dossierRouteLabel: "Case notes",
+      dossierActionLabel: "Open case notes",
+      dossierUnavailableLabel: "Additional notes available on request",
       unavailableLabel: "Available on request",
     },
     footer: {
-      line: "Ashen Archive by 流月工作室. Calm motion, clear systems, durable presentation.",
+      line: "Ashen Archive by Zhouyu Liao, working under 流月工作室. Calm motion, clearer proof, less noise.",
     },
   },
   ko: {
     metadata: {
-      title: "Ashen Archive | 流月工作室",
-      description: "流月工作室의 다크 판타지 아카이브. Unity 시스템, 테크니컬 아트, VFX, 제작 지원 작업을 전시합니다.",
+      title: "Ashen Archive | Zhouyu Liao",
+      description:
+        "Zhouyu Liao / 流月工作室의 포트폴리오 아카이브입니다. Unity 시스템, 테크니컬 아트, VFX, 툴링, 제작 지원에 초점을 둡니다.",
     },
     nav: {
       title: "Ashen Archive",
+      identity: "Zhouyu Liao",
       languageLabel: "언어",
       items: [
         { id: "about", label: "Archive Record" },
         { id: "disciplines", label: "Disciplines" },
         { id: "artifacts", label: "Artifacts" },
-        { id: "fire", label: "Relic Unlock" },
+        { id: "fire", label: "Reading Sigils" },
         { id: "contact", label: "Send a Signal" },
       ],
     },
     hero: {
-      eyebrow: "다크 판타지 스튜디오 아카이브",
-      title: "Ashen Archive",
-      subtitle: "Unity Systems, Technical Art, VFX, and Playable Fragments",
+      eyebrow: "개인 아카이브 / 스튜디오 백업",
+      archiveLabel: "Ashen Archive",
+      identity: "Zhouyu Liao",
+      studioCredit: "작업 라벨: 流月工作室",
+      role: "Unity 시스템, 테크니컬 아트, VFX, 툴 구현.",
       body:
-        "流月工作室는 게임 제작을 위한 시스템과 비주얼 구현을 분위기, 가독성, 안정성의 균형 속에서 구축합니다.",
-      enterLabel: "기록 열기",
-      projectLabel: "Artifacts 보기",
-      availability: "소규모 팀 협업, 테크니컬 아트 지원, 구현 중심 제작 업무에 적합합니다.",
+        "게임플레이 시스템, 테크니컬 아트 지원, 실시간 비주얼 구현을 맡아 반복 제작과 성능 제약 속에서도 안정적으로 유지되는 형태로 다듬습니다.",
+      proofChips: ["Unity 기능 구현", "테크니컬 아트 / 툴", "VFX / Shader 구현"],
+      enterLabel: "기록 보기",
+      projectLabel: "대표 작업 보기",
+      availability: "프로토타입, 기능 구현, 테크니컬 아트 정리, 소규모 팀 협업에 잘 맞습니다.",
+      focusLabel: "현재 읽기 렌즈",
+      lensSummary: {
+        all: {
+          title: "먼저 전체를 보고, 그다음 세부를 읽습니다.",
+          body: "대표 릴 하나와 보조 케이스 둘을 통해 시스템, 테크니컬 아트, VFX의 연결 방식을 빠르게 파악할 수 있습니다.",
+        },
+        moon: {
+          title: "Unity Systems 중심",
+          body: "기능 책임, 게임플레이 모듈, 반복 안정성, 런타임 신뢰성을 우선해서 보여줍니다.",
+        },
+        tower: {
+          title: "Technical Art / Tooling 중심",
+          body: "파이프라인 정리, 아티스트 지원, 제작 친화적 구현을 전면에 둡니다.",
+        },
+        ember: {
+          title: "VFX / Shader 중심",
+          body: "분위기, 읽기 쉬운 피드백, 실시간 비주얼 폴리시를 프레임 예산 안에서 강조합니다.",
+        },
+      },
     },
     about: {
       eyebrow: "Archive Record",
-      title: "분위기 중심 구현 작업을 기록하는 스튜디오 아카이브.",
+      title: "이 사이트는 이력서가 아니라, 더 읽기 쉬운 방식으로 정리한 개인 아카이브입니다.",
       body:
-        "流月工作室는 시각적 드라마와 제작 규율 사이에서 움직이는 소규모 스튜디오입니다. Unity 게임플레이, 아티스트 툴, VFX, 런타임 최적화를 가로지릅니다.",
+        "Ashen Archive는 분위기 설정집이 아니라 무엇을 만들고 어떤 책임을 맡았으며 어떤 제약을 해결했는지 빠르게 읽히도록 정리한 포트폴리오입니다.",
       service:
-        "플레이어블 시스템, 테크니컬 아트 정리, 툴 지원, 그리고 무너지지 않는 표현 레이어 구현을 중심으로 협업합니다.",
-      tags: ["Unity Systems Studio", "Technical Art Practice", "Realtime VFX & Shaders", "Tools & Production Support"],
+        "핵심 제공 가치는 명확합니다. 게임플레이 시스템, 테크니컬 아트 지원, VFX / Shader 구현, 그리고 반복 마찰을 줄이는 작은 도구와 정리 작업입니다.",
+      recordId: "Record A-01 · Primary Archive",
+      seal: "ZL",
+      tags: ["Unity 시스템", "테크니컬 아트", "실시간 VFX", "툴 / 최적화"],
       dossier: [
-        { label: "Studio role", value: "Unity Systems / Technical Art Studio" },
-        { label: "Founder / Lead", value: "Zhouyu Liao · Creative-Technologist" },
-        { label: "Location", value: "Winnipeg, Canada" },
-        { label: "Practice", value: "Unity gameplay, technical art, VFX, tooling" },
-        { label: "Collaboration", value: "Prototype, feature, production support" },
+        { label: "주 역할", value: "Unity Developer / Technical Artist" },
+        { label: "작업 라벨", value: "流月工作室" },
+        { label: "위치", value: "Winnipeg, Canada" },
+        { label: "집중 영역", value: "Unity 시스템, 테크니컬 아트, VFX, 툴" },
+        { label: "협업 방식", value: "프로토타입, 기능 구현, 제작 지원" },
       ],
     },
     disciplines: {
       eyebrow: "Disciplines",
-      title: "네 갈래의 방향, 하나의 제작 언어.",
-      intro: "모든 작업은 실제 제작에 기반합니다. 읽히는 시스템, 절제된 표현, 반복에 견디는 운용성입니다.",
+      title: "네 가지 역량 축을 실제 전달 가치에 맞춰 정리했습니다.",
+      intro: "분위기 대신 책임 단위로 나누면 무엇을 만들고 누구를 돕고 어떤 제약을 감당하는지가 더 빨리 드러납니다.",
       items: [
         {
-          title: "Unity Development",
-          body: "제작 압박 속에서도 계속 확장할 수 있는 게임플레이 중심 모듈과 시스템 구현.",
+          title: "Unity Systems",
+          body: "게임플레이 모듈, 기능 책임, 인수인계까지 고려한 플레이어블 구현.",
+          lenses: ["moon"],
         },
         {
           title: "Technical Art",
-          body: "비주얼 목표, 성능 제약, 도구 지원을 연결하는 구현 설계.",
+          body: "비주얼 목표와 런타임 제약 사이를 잇는 머티리얼, 워크플로, 구현 정리.",
+          lenses: ["tower"],
         },
         {
           title: "VFX / Shader Work",
-          body: "분위기를 유지하면서도 가독성과 프레임 예산을 지키는 실시간 표현 설계.",
+          body: "분위기와 가독성을 함께 챙기는 실시간 이펙트와 머티리얼 조정.",
+          lenses: ["ember"],
         },
         {
           title: "Tools & Optimization",
-          body: "작은 도구, 검증 흐름, 성능 규율로 소규모 팀의 마찰을 줄이는 지원.",
+          body: "작은 유틸리티, 검증 규칙, 정리 작업으로 제작 과정의 취약함을 줄입니다.",
+          lenses: ["moon", "tower"],
         },
       ],
     },
     artifacts: {
       eyebrow: "Artifacts",
-      title: "제작과 실험에서 남겨둔 전시 기록.",
-      intro: "각 프로젝트를 박물관 색인 카드처럼 정리했습니다. 중심에는 스튜디오 대표 릴을 두고, 그 주변에 시스템, 툴, 테크니컬 아트 지원 사례를 배치했습니다.",
+      title: "대표 작업을 박물관 식 카탈로그처럼 정리했습니다.",
+      intro: "각 케이스는 분류, 역할, 기술, 증거, 그리고 실제로 해결한 문제를 함께 보여줍니다.",
       featuredLabel: "Featured",
       caseLabel: "Case",
       categoryLabel: "Category",
       roleLabel: "Role",
+      evidenceLabel: "Proof",
+      lensLabel: "Reading lens",
       openLabel: "Open artifact",
-      lockedLabel: "숨겨진 서랍이 봉인됨",
-      lockedBody: "세 개의 문양을 제자리에 돌려놓으면 보관 서랍이 열립니다.",
-      unlockTitle: "숨겨진 서랍이 열렸습니다",
-      unlockBody: "봉인이 풀리며 대표 스튜디오 릴이 가장 가까운 위치로 끌려옵니다.",
-      unlockCta: "대표 Artifact 열기",
+      shelfLabel: "Current shelf",
+      shelfTitle: "아카이브를 증거 세트처럼 읽습니다.",
+      shelfBody: "대표 릴이 전체 범위를 보여주고, 보조 케이스가 시스템 구현과 제작 지원의 구체성을 보완합니다.",
+      shelfCta: "Open lead artifact",
       whatLabel: "Archive note",
-      contributionLabel: "Studio contribution",
+      contributionLabel: "Contribution",
       techLabel: "Technologies",
       solvedLabel: "Problem solved",
       mediaLabel: "Media",
       closeLabel: "Close details",
     },
     game: {
-      eyebrow: "Relic Unlock",
-      title: "세 개의 문양을 각자의 소켓으로 돌려놓으세요.",
-      intro: "아카이브 서랍은 봉인 유물에 의해 잠겨 있습니다. 아래 트레이에서 문양을 고르고, 중심 주변의 대응 소켓에 되돌려 놓으세요.",
-      instructions: "먼저 트레이에서 문양을 고른 뒤 대응하는 소켓에 놓습니다. 데스크톱에서는 드래그로도 배치할 수 있습니다.",
-      statusLabel: "봉인 상태",
-      progressLabel: "복원된 문양",
-      trayLabel: "문양 트레이",
-      socketLabel: "소켓",
-      selectLabel: "선택된 문양",
-      clearSelectionLabel: "선택 해제",
-      replayLabel: "유물 초기화",
-      failedLabel: "이 문양은 해당 소켓에 맞지 않습니다.",
-      successTitle: "봉인이 깨졌습니다.",
-      successBody: "유물이 열리고 불빛이 살아나며 숨겨진 서랍이 앞으로 밀려 나옵니다.",
-      unlockedCta: "Artifacts로 이동",
-      sigils: [
-        { id: "moon", label: "월문", socket: "월문 소켓" },
-        { id: "tower", label: "탑인", socket: "탑인 소켓" },
-        { id: "ember", label: "여화인", socket: "여화인 소켓" },
+      eyebrow: "Reading Sigils",
+      title: "시길로 아카이브 읽는 방식을 바꿉니다.",
+      intro: "여기는 더 이상 미니게임이 아닙니다. 각 시길은 어떤 종류의 기여를 전면에 둘지 정하는 읽기 컨트롤러입니다.",
+      instructions: "Unity 시스템, 테크니컬 아트 / 툴링, VFX / Shader 중 어느 관점으로 먼저 읽을지 선택하세요.",
+      currentLensLabel: "Current focus",
+      sigilLabel: "Sigil",
+      focusCta: "Jump to matching artifact",
+      options: [
+        {
+          id: "all",
+          label: "Whole Archive",
+          title: "전체 읽기",
+          body: "시스템, 테크니컬 아트, VFX를 균형 있게 훑어봅니다.",
+        },
+        {
+          id: "moon",
+          label: "Moon Crest",
+          title: "Unity Systems",
+          body: "기능 책임, 게임플레이 시스템, 반복 안정성, 런타임 신뢰성에 초점을 둡니다.",
+        },
+        {
+          id: "tower",
+          label: "Tower Mark",
+          title: "Technical Art / Tooling",
+          body: "파이프라인 정리, 아티스트 지원, 에디터 도구를 우선합니다.",
+        },
+        {
+          id: "ember",
+          label: "Ember Seal",
+          title: "VFX / Shader",
+          body: "실시간 이펙트, 머티리얼 작업, 분위기와 피드백을 우선합니다.",
+        },
       ],
     },
     contact: {
       eyebrow: "Send a Signal",
-      title: "여기서 여는 것은 이력서가 아니라 스튜디오 도서입니다.",
-      intro: "이 사이트는 이제 간결한 스튜디오 기록으로 정리되어 있습니다. 가장 분명한 다음 단계는 직접 연락입니다.",
+      title: "아이디어를 엔진 안으로 넣어야 한다면 여기서 시작하면 됩니다.",
+      intro:
+        "가장 빠른 다음 단계는 직접 연락하는 것입니다. Email과 GitHub는 공개되어 있고, 더 자세한 케이스 노트는 프로젝트 목표가 정리되면 추가로 공유할 수 있습니다.",
       cardTitle: "Signal Routes",
-      cardBody: "이메일과 GitHub는 공개되어 있습니다. LinkedIn과 정식 스튜디오 도서는 현재 요청 기반으로만 제공합니다.",
-      dossierTitle: "Studio Dossier",
-      dossierBody: "협업과 프로젝트 상담을 위한 짧은 스튜디오 자료입니다. 개인 채용 이력보다 능력 범위, 작업 모델, 협업 전제를 설명합니다.",
-      capabilitiesTitle: "Capabilities",
+      cardBody: "범위, 제약, 일정, 혹은 어떤 작업이 Unity 시스템인지 테크니컬 아트인지 VFX인지 같이 정리하고 싶을 때 사용하세요.",
+      dossierTitle: "Capabilities and Working Notes",
+      dossierBody: "이 섹션은 이력서 대신 제가 보통 어떻게 기여하는지 보여줍니다. 시스템을 만들고, 구현 경로를 정리하고, 프로젝트를 취약하게 만들지 않으면서 분위기를 밀어 올립니다.",
+      capabilitiesTitle: "Core capabilities",
       capabilities: [
-        "Unity gameplay systems and implementation support",
-        "Technical art workflow, tooling, and VFX integration",
-        "Presentation polish, shader treatment, and production cleanup",
+        "Unity 게임플레이 시스템과 기능 구현",
+        "테크니컬 아트 지원, 툴링, 파이프라인 정리",
+        "제작 제약을 고려한 VFX / Shader 구현",
       ],
-      collaborationTitle: "Collaboration Notes",
-      collaborationBody: "프로토타입, 기능 구현, 테크니컬 아트 정리, 그리고 강한 분위기 제어가 필요한 소규모 제작 지원에 적합합니다.",
-      dossierRouteLabel: "Studio dossier",
-      dossierActionLabel: "Open studio dossier",
-      dossierUnavailableLabel: "Dossier available on request",
+      collaborationTitle: "Best collaboration fit",
+      collaborationBody: "인디 팀, 프로토타입, 버티컬 슬라이스, 기능 구현, 테크니컬 아트 정리 같은 작업과 잘 맞습니다.",
+      dossierRouteLabel: "Case notes",
+      dossierActionLabel: "Open case notes",
+      dossierUnavailableLabel: "Additional notes available on request",
       unavailableLabel: "Available on request",
     },
     footer: {
-      line: "Ashen Archive by 流月工作室. Calm motion, clear systems, durable presentation.",
+      line: "Ashen Archive by Zhouyu Liao, working under 流月工作室. Calm motion, clearer proof, less noise.",
     },
   },
 };

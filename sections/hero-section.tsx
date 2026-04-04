@@ -5,13 +5,20 @@ import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 
 import type { Dictionary } from "@/data/dictionaries";
-import { SITE, assetPath } from "@/lib/site";
+import type { ArchiveLens } from "@/lib/archive";
+import { assetPath } from "@/lib/site";
 
 import { Reveal } from "@/components/reveal";
 
-export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
+interface HeroSectionProps {
+  copy: Dictionary["hero"];
+  activeLens: ArchiveLens;
+}
+
+export function HeroSection({ copy, activeLens }: HeroSectionProps) {
   const reducedMotion = useReducedMotion();
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const focus = copy.lensSummary[activeLens];
 
   return (
     <section
@@ -31,18 +38,29 @@ export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <p className="hero-brandline text-sm uppercase tracking-[0.24em]">{SITE.studioName}</p>
+            <p className="hero-archive-label">{copy.archiveLabel}</p>
           </Reveal>
 
           <Reveal delay={0.1}>
             <div className="space-y-4">
-              <h1 className="font-display text-[clamp(4.4rem,10vw,8.4rem)] leading-[0.88] text-ivory">{copy.title}</h1>
-              <p className="hero-subtitle">{copy.subtitle}</p>
+              <h1 className="hero-identity">{copy.identity}</h1>
+              <p className="hero-brandline text-sm uppercase tracking-[0.24em]">{copy.studioCredit}</p>
+              <p className="hero-subtitle">{copy.role}</p>
             </div>
           </Reveal>
 
           <Reveal delay={0.16}>
             <p className="hero-body">{copy.body}</p>
+          </Reveal>
+
+          <Reveal delay={0.2}>
+            <ul className="hero-proof-list" aria-label="Core proof points">
+              {copy.proofChips.map((item) => (
+                <li key={item} className="hero-proof-chip">
+                  {item}
+                </li>
+              ))}
+            </ul>
           </Reveal>
 
           <Reveal delay={0.22}>
@@ -104,6 +122,12 @@ export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
               >
                 <span className="hero-fire-core" />
               </motion.div>
+
+              <div className="hero-focus-card">
+                <p className="artifact-meta-label">{copy.focusLabel}</p>
+                <h2 className="hero-focus-title">{focus.title}</h2>
+                <p className="hero-focus-body">{focus.body}</p>
+              </div>
             </motion.div>
           </div>
         </Reveal>

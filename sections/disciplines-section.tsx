@@ -1,8 +1,14 @@
 import type { Dictionary } from "@/data/dictionaries";
+import type { ArchiveLens } from "@/lib/archive";
 
 import { Reveal } from "@/components/reveal";
 
-export function DisciplinesSection({ copy }: { copy: Dictionary["disciplines"] }) {
+interface DisciplinesSectionProps {
+  copy: Dictionary["disciplines"];
+  activeLens: ArchiveLens;
+}
+
+export function DisciplinesSection({ copy, activeLens }: DisciplinesSectionProps) {
   return (
     <section id="disciplines" className="section-shell">
       <Reveal>
@@ -16,7 +22,11 @@ export function DisciplinesSection({ copy }: { copy: Dictionary["disciplines"] }
       <div className="discipline-list">
         {copy.items.map((item, index) => (
           <Reveal key={item.title} delay={index * 0.06}>
-            <article className="discipline-item">
+            <article
+              className={`discipline-item ${
+                activeLens === "all" ? "discipline-item-active" : item.lenses.includes(activeLens) ? "discipline-item-active" : "discipline-item-muted"
+              }`}
+            >
               <div className="discipline-count">
                 {String(index + 1).padStart(2, "0")}
               </div>

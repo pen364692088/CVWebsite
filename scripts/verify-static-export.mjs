@@ -28,9 +28,17 @@ for (const file of expectedFiles) {
 const rootHtml = read("out/index.html");
 assert(rootHtml.includes("Choosing your entry path."), "Root locale gateway text missing");
 
+const expectedIdentity = {
+  en: "Zhouyu Liao",
+  "zh-CN": "周宇辽",
+  ja: "Zhouyu Liao",
+  ko: "Zhouyu Liao",
+};
+
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes("Ashen Archive"), `Missing site title in ${locale}`);
+  assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);

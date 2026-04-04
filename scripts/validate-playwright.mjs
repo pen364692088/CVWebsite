@@ -142,18 +142,21 @@ async function run() {
           name: "desktop-en",
           locale: "en-US",
           expectedPath: "/en/",
+          expectedIdentity: "Zhouyu Liao",
           viewport: { width: 1440, height: 1080 },
         },
         {
           name: "tablet-ja",
           locale: "ja-JP",
           expectedPath: "/ja/",
+          expectedIdentity: "Zhouyu Liao",
           viewport: { width: 834, height: 1194 },
         },
         {
           name: "mobile-zh",
           locale: "zh-CN",
           expectedPath: "/zh-CN/",
+          expectedIdentity: "周宇辽",
           device: devices["iPhone 12"],
         },
       ];
@@ -177,10 +180,13 @@ async function run() {
 
         const hero = page.locator("h1");
         await hero.waitFor({ state: "visible" });
-        assert((await hero.textContent())?.includes("Ashen Archive"), `Missing brand signal for ${scenario.name}`);
+        assert((await hero.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
+        const archiveLabel = page.locator(".hero-archive-label");
+        await archiveLabel.waitFor({ state: "visible" });
+        assert((await archiveLabel.textContent())?.includes("Ashen Archive"), `Missing archive title for ${scenario.name}`);
         const brandline = page.locator(".hero-brandline");
         await brandline.waitFor({ state: "visible" });
-        assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio brand for ${scenario.name}`);
+        assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
         const artifactButton = page.locator('button[aria-haspopup="dialog"]').first();
@@ -195,7 +201,7 @@ async function run() {
           await delay(150);
         }
 
-        assert((await page.locator(".dossier-panel").count()) === 1, `Missing studio dossier panel for ${scenario.name}`);
+        assert((await page.locator("#contact .dossier-panel").count()) === 1, `Missing contact dossier panel for ${scenario.name}`);
         await page.screenshot({
           path: path.join(outputDir, `${scenario.name}.png`),
           fullPage: true,
@@ -212,15 +218,23 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        const gameBoard = gamePage.locator(".relic-stage").first();
-        await gameBoard.scrollIntoViewIfNeeded();
-        await gamePage.getByRole("button", { name: "Sigil tray: Moon Crest" }).click();
-        await gamePage.getByRole("button", { name: "Socket: Moon Socket" }).click();
-        await gamePage.getByRole("button", { name: "Sigil tray: Tower Mark" }).click();
-        await gamePage.getByRole("button", { name: "Socket: Tower Socket" }).click();
-        await gamePage.getByRole("button", { name: "Sigil tray: Ember Seal" }).click();
-        await gamePage.getByRole("button", { name: "Socket: Ember Socket" }).click();
-        await gamePage.getByRole("heading", { name: "The seal breaks." }).waitFor();
+        await gamePage.locator("#fire").scrollIntoViewIfNeeded();
+        await gamePage.getByRole("button", { name: /Moon Crest/i }).click();
+
+        const currentFocus = gamePage.locator("#fire .relic-status-bar .artifact-meta-value").first();
+        await currentFocus.waitFor({ state: "visible" });
+        assert((await currentFocus.textContent())?.includes("Unity Systems"), "Sigil filter did not update current focus");
+
+        const heroFocus = gamePage.locator(".hero-focus-title");
+        await heroFocus.waitFor({ state: "visible" });
+        assert((await heroFocus.textContent())?.includes("Unity Systems"), "Hero focus card did not respond to sigil filter");
+
+        const firstArtifactTitle = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
+        await firstArtifactTitle.scrollIntoViewIfNeeded();
+        assert(
+          (await firstArtifactTitle.textContent())?.includes("Mobile Systems, Quietly Tuned"),
+          "Artifact ordering did not shift toward the selected lens",
+        );
       } finally {
         await gameContext.close();
       }

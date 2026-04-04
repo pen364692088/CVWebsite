@@ -2,66 +2,52 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
+import type { ArtifactView } from "@/data/artifacts";
 import type { Dictionary } from "@/data/dictionaries";
-import { ARCHIVE_UNLOCK_EVENT, ARCHIVE_UNLOCK_KEY } from "@/lib/archive";
+import type { ArchiveLens } from "@/lib/archive";
 import { assetPath } from "@/lib/site";
 
 import { ArtifactModal } from "@/components/artifact-modal";
 import { Reveal } from "@/components/reveal";
 
-interface ArtifactView {
-  slug: string;
-  featured: boolean;
-  cover: string;
-  title: string;
-  category: string;
-  role: string;
-  summary: string;
-  tags: string[];
-  what: string;
-  contribution: string[];
-  technologies: string[];
-  solved: string;
-  media: Array<{
-    kind: "image" | "video";
-    src: string;
-    alt: string;
-    label: string;
-    poster?: string;
-  }>;
-}
-
 interface ArtifactsSectionProps {
   copy: Dictionary["artifacts"];
   artifacts: ArtifactView[];
+  activeLens: ArchiveLens;
+  activeLensTitle: string;
 }
 
 function getCaseNumber(index: number) {
   return `A-${String(index + 1).padStart(2, "0")}`;
 }
 
-export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
+function getArtifactPriority(artifact: ArtifactView, activeLens: ArchiveLens) {
+  if (activeLens === "all") {
+    return artifact.featured ? 20 : 10;
+  }
+
+  if (!artifact.lenses.includes(activeLens)) {
+    return artifact.featured ? 5 : 0;
+  }
+
+  return 100 - artifact.lenses.length * 10 + (artifact.featured ? 5 : 0);
+}
+
+export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle }: ArtifactsSectionProps) {
   const [activeArtifact, setActiveArtifact] = useState<(ArtifactView & { caseNumber: string }) | null>(null);
-  const [archiveUnlocked, setArchiveUnlocked] = useState(false);
 
-  const featuredArtifact = artifacts.find((artifact) => artifact.featured) ?? artifacts[0];
+  const sortedArtifacts = useMemo(
+    () =>
+      [...artifacts].sort((left, right) => {
+        return getArtifactPriority(right, activeLens) - getArtifactPriority(left, activeLens);
+      }),
+    [activeLens, artifacts],
+  );
 
-  useEffect(() => {
-    function syncUnlockState() {
-      setArchiveUnlocked(window.localStorage.getItem(ARCHIVE_UNLOCK_KEY) === "true");
-    }
-
-    syncUnlockState();
-    window.addEventListener(ARCHIVE_UNLOCK_EVENT, syncUnlockState);
-    window.addEventListener("storage", syncUnlockState);
-
-    return () => {
-      window.removeEventListener(ARCHIVE_UNLOCK_EVENT, syncUnlockState);
-      window.removeEventListener("storage", syncUnlockState);
-    };
-  }, []);
+  const leadArtifact =
+    sortedArtifacts.find((artifact) => activeLens === "all" || artifact.lenses.includes(activeLens)) ?? sortedArtifacts[0];
 
   return (
     <section id="artifacts" className="section-shell">
@@ -74,14 +60,15 @@ export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
       </Reveal>
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr_0.85fr]">
-        {artifacts.map((artifact, index) => {
-          const caseNumber = getCaseNumber(index);
+        {sortedArtifacts.map((artifact, index) => {
+          const caseNumber = getCaseNumber(artifacts.findIndex((item) => item.slug === artifact.slug));
+          const isFocused = activeLens === "all" || artifact.lenses.includes(activeLens);
 
           return (
             <Reveal key={artifact.slug} delay={index * 0.07} className={artifact.featured ? "lg:row-span-2" : ""}>
               <motion.button
                 type="button"
-                className="group artifact-card h-full"
+                className={`group artifact-card h-full ${isFocused ? "artifact-card-active" : "artifact-card-muted"}`}
                 whileHover={{ y: -4 }}
                 onClick={() => setActiveArtifact({ ...artifact, caseNumber })}
                 aria-haspopup="dialog"
@@ -122,6 +109,15 @@ export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
                     </div>
                   </div>
 
+                  <div className="artifact-proof-block">
+                    <p className="artifact-meta-label">{copy.evidenceLabel}</p>
+                    <ul className="artifact-proof-list">
+                      {artifact.evidence.slice(0, 2).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+
                   <div className="flex flex-wrap gap-2">
                     {artifact.tags.map((tag) => (
                       <span key={tag} className="tag-pill">
@@ -138,42 +134,49 @@ export function ArtifactsSection({ copy, artifacts }: ArtifactsSectionProps) {
         })}
       </div>
 
-      <Reveal delay={0.22}>
-        <aside className="artifact-annex" aria-live="polite">
-          <div className="space-y-3">
-            <p className="section-kicker">{archiveUnlocked ? copy.unlockTitle : copy.lockedLabel}</p>
-            <h3 className="font-display text-3xl text-ivory">
-              {archiveUnlocked ? featuredArtifact.title : copy.lockedLabel}
-            </h3>
-            <p className="max-w-2xl text-sm leading-7 text-mist">
-              {archiveUnlocked ? copy.unlockBody : copy.lockedBody}
-            </p>
-          </div>
+      {leadArtifact ? (
+        <Reveal delay={0.22}>
+          <aside className="artifact-annex" aria-live="polite">
+            <div className="space-y-3">
+              <p className="section-kicker">{copy.shelfLabel}</p>
+              <h3 className="font-display text-3xl text-ivory">
+                {activeLens === "all" ? copy.shelfTitle : leadArtifact.title}
+              </h3>
+              <p className="max-w-2xl text-sm leading-7 text-mist">
+                {activeLens === "all" ? copy.shelfBody : leadArtifact.solved}
+              </p>
+            </div>
 
-          <div className="flex flex-wrap gap-3">
-            {archiveUnlocked ? (
+            <div className="artifact-meta-grid">
+              <div>
+                <p className="artifact-meta-label">{copy.lensLabel}</p>
+                <p className="artifact-meta-value">{activeLensTitle}</p>
+              </div>
+              <div>
+                <p className="artifact-meta-label">{copy.roleLabel}</p>
+                <p className="artifact-meta-value">{leadArtifact.role}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 className="primary-button"
                 onClick={() =>
                   setActiveArtifact({
-                    ...featuredArtifact,
-                    caseNumber: getCaseNumber(artifacts.findIndex((artifact) => artifact.slug === featuredArtifact.slug)),
+                    ...leadArtifact,
+                    caseNumber: getCaseNumber(artifacts.findIndex((artifact) => artifact.slug === leadArtifact.slug)),
                   })
                 }
               >
-                {copy.unlockCta}
+                {copy.shelfCta}
               </button>
-            ) : (
-              <span className="secondary-button" aria-disabled="true">
-                {copy.lockedLabel}
-              </span>
-            )}
-          </div>
-        </aside>
-      </Reveal>
+            </div>
+          </aside>
+        </Reveal>
+      ) : null}
 
-      <ArtifactModal artifact={activeArtifact} dictionary={copy} onClose={() => setActiveArtifact(null)} />
+      <ArtifactModal artifact={activeArtifact} dictionary={copy} activeLens={activeLens} onClose={() => setActiveArtifact(null)} />
     </section>
   );
 }

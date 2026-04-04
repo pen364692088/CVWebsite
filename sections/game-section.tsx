@@ -1,15 +1,16 @@
 import type { Dictionary } from "@/data/dictionaries";
-import type { Locale } from "@/lib/i18n";
+import type { ArchiveLens } from "@/lib/archive";
 
 import { LightTheFireGame } from "@/components/light-the-fire-game";
 import { Reveal } from "@/components/reveal";
 
 interface GameSectionProps {
   copy: Dictionary["game"];
-  locale: Locale;
+  activeLens: ArchiveLens;
+  onLensChange: (lens: ArchiveLens) => void;
 }
 
-export function GameSection({ copy, locale }: GameSectionProps) {
+export function GameSection({ copy, activeLens, onLensChange }: GameSectionProps) {
   return (
     <section id="fire" className="section-shell">
       <Reveal>
@@ -21,7 +22,7 @@ export function GameSection({ copy, locale }: GameSectionProps) {
       </Reveal>
 
       <Reveal delay={0.1}>
-        <LightTheFireGame copy={copy} locale={locale} />
+        <LightTheFireGame copy={copy} activeLens={activeLens} onLensChange={onLensChange} />
       </Reveal>
     </section>
   );

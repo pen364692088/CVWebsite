@@ -200,6 +200,21 @@ select:focus-visible,
   color: rgba(216, 211, 200, 0.7);
 }
 
+.artifact-proof-block {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.artifact-proof-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1rem;
+  color: rgba(216, 211, 200, 0.82);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
 .artifact-annex {
   margin-top: 2rem;
   display: flex;
@@ -210,6 +225,18 @@ select:focus-visible,
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-soft);
   padding: 1.5rem 0 0.25rem;
+}
+
+.artifact-card-active {
+  opacity: 1;
+}
+
+.artifact-card-muted {
+  opacity: 0.58;
+}
+
+.artifact-card-muted .artifact-image-frame img {
+  filter: grayscale(1) sepia(0.08) brightness(0.52);
 }
 
 .primary-button,
@@ -367,10 +394,57 @@ select:focus-visible,
   padding-inline: clamp(1.25rem, 2vw, 2.5rem);
 }
 
+.header-mark {
+  display: inline-grid;
+  gap: 0.22rem;
+  text-decoration: none;
+}
+
+.header-title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ivory);
+}
+
+.header-identity {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.62);
+}
+
+.hero-archive-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.88);
+}
+
+.hero-archive-label::before {
+  content: "";
+  display: inline-block;
+  width: 3rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(201, 106, 43, 0.72), rgba(201, 106, 43, 0.05));
+}
+
 .hero-copy {
   position: relative;
   z-index: 2;
   width: min(100%, 32rem);
+}
+
+.hero-identity {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(3.9rem, 9vw, 7rem);
+  line-height: 0.9;
+  color: var(--ivory);
 }
 
 .hero-brandline {
@@ -400,6 +474,28 @@ select:focus-visible,
   font-size: clamp(1rem, 1vw + 0.82rem, 1.08rem);
   line-height: 1.85;
   color: rgba(216, 211, 200, 0.68);
+}
+
+.hero-proof-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-proof-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(140, 119, 81, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.82);
 }
 
 .hero-availability {
@@ -547,6 +643,33 @@ select:focus-visible,
   box-shadow: 0 0 20px rgba(201, 106, 43, 0.32);
 }
 
+.hero-focus-card {
+  position: absolute;
+  right: clamp(1rem, 3vw, 1.8rem);
+  bottom: clamp(1rem, 3vw, 1.8rem);
+  z-index: 4;
+  width: min(24rem, calc(100% - 2rem));
+  border: 1px solid rgba(216, 211, 200, 0.1);
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(14, 16, 19, 0.9), rgba(8, 10, 12, 0.94));
+  padding: 1rem 1.05rem 1.05rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+.hero-focus-title {
+  margin-top: 0.35rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  color: var(--ivory);
+}
+
+.hero-focus-body {
+  margin-top: 0.45rem;
+  font-size: 0.95rem;
+  line-height: 1.72;
+  color: rgba(216, 211, 200, 0.8);
+}
+
 .record-sheet {
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-soft);
@@ -627,6 +750,19 @@ select:focus-visible,
   align-items: start;
   padding-block: 1.4rem;
   border-bottom: 1px solid var(--line-soft);
+  transition:
+    opacity var(--motion-fast) ease,
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+
+.discipline-item-active {
+  opacity: 1;
+  border-color: rgba(140, 119, 81, 0.3);
+}
+
+.discipline-item-muted {
+  opacity: 0.5;
 }
 
 .discipline-count {
@@ -732,6 +868,19 @@ select:focus-visible,
   border: 1px solid rgba(216, 211, 200, 0.05);
   border-radius: calc(var(--radius-panel) - 0.2rem);
   pointer-events: none;
+}
+
+.sigil-filter-stage {
+  min-height: 20rem;
+  padding: 1.2rem;
+}
+
+.sigil-filter-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .sigil-stage-ring {
@@ -895,6 +1044,37 @@ select:focus-visible,
     background-color var(--motion-fast) ease;
 }
 
+.sigil-filter-token {
+  min-width: 100%;
+  min-height: 7.6rem;
+  align-items: flex-start;
+}
+
+.sigil-token-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+}
+
+.sigil-token-copy {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.sigil-token-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(140, 119, 81, 0.86);
+}
+
+.sigil-token-title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.22rem;
+  color: var(--ivory);
+}
+
 .sigil-token:hover {
   border-color: rgba(140, 119, 81, 0.42);
   transform: translateY(-1px);
@@ -909,6 +1089,10 @@ select:focus-visible,
   font-size: 0.92rem;
   line-height: 1.5;
   color: rgba(216, 211, 200, 0.9);
+}
+
+.relic-annotation {
+  align-content: start;
 }
 
 @keyframes sigil-reject {
@@ -973,6 +1157,12 @@ select:focus-visible,
   .relic-tray-header {
     grid-template-columns: 1fr;
   }
+
+  .hero-focus-card {
+    position: static;
+    width: 100%;
+    margin-top: 1rem;
+  }
 }
 
 @media (max-width: 767px) {
@@ -986,6 +1176,15 @@ select:focus-visible,
 
   .hero-grid {
     gap: 1rem;
+  }
+
+  .header-title {
+    font-size: 0.96rem;
+    letter-spacing: 0.18em;
+  }
+
+  .header-identity {
+    font-size: 0.66rem;
   }
 
   .hero-tableau {
@@ -1054,15 +1253,12 @@ select:focus-visible,
     min-height: 24rem;
   }
 
-  .relic-core {
-    height: 5.5rem;
-    width: 5.5rem;
+  .hero-identity {
+    font-size: clamp(3rem, 16vw, 4rem);
   }
 
-  .sigil-socket {
-    min-height: 6.2rem;
-    width: min(8.8rem, 38vw);
-    padding: 0.7rem;
+  .sigil-filter-grid {
+    grid-template-columns: 1fr;
   }
 
   .sigil-token {

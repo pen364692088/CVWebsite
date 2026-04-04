@@ -20,10 +20,10 @@ export function AboutSection({ copy }: { copy: Dictionary["about"] }) {
             <div className="record-header">
               <div className="space-y-2">
                 <p className="section-kicker">{copy.eyebrow}</p>
-                <p className="record-id">Record A-01 · Active Studio Catalog</p>
+                <p className="record-id">{copy.recordId}</p>
               </div>
               <div className="record-seal" aria-hidden="true">
-                LY
+                {copy.seal}
               </div>
             </div>
 

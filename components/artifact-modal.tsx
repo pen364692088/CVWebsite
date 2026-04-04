@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
+import type { ArtifactContribution } from "@/data/artifacts";
 import type { Dictionary } from "@/data/dictionaries";
+import type { ArchiveLens } from "@/lib/archive";
 import { assetPath } from "@/lib/site";
 
 interface ArtifactModalProps {
@@ -17,8 +19,9 @@ interface ArtifactModalProps {
     role: string;
     summary: string;
     tags: string[];
+    evidence: string[];
     what: string;
-    contribution: string[];
+    contribution: ArtifactContribution[];
     technologies: string[];
     solved: string;
     media: Array<{
@@ -30,14 +33,23 @@ interface ArtifactModalProps {
     }>;
   } | null;
   dictionary: Dictionary["artifacts"];
+  activeLens: ArchiveLens;
   onClose: () => void;
 }
 
-export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalProps) {
+export function ArtifactModal({ artifact, dictionary, activeLens, onClose }: ArtifactModalProps) {
   const reducedMotion = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  const visibleContribution = useMemo(() => {
+    if (!artifact) return [];
+    if (activeLens === "all") return artifact.contribution;
+
+    const filtered = artifact.contribution.filter((item) => item.lens === activeLens);
+    return filtered.length > 0 ? filtered : artifact.contribution;
+  }, [activeLens, artifact]);
 
   useEffect(() => {
     if (!artifact) return;
@@ -146,6 +158,15 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
                   </div>
                 </div>
 
+                <div className="artifact-proof-block">
+                  <p className="artifact-meta-label">{dictionary.evidenceLabel}</p>
+                  <ul className="artifact-proof-list">
+                    {artifact.evidence.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
                 <div className="flex flex-wrap gap-2">
                   {artifact.tags.map((tag) => (
                     <span key={tag} className="tag-pill">
@@ -162,8 +183,8 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
                   <div className="detail-block">
                     <h3>{dictionary.contributionLabel}</h3>
                     <ul className="space-y-2 text-sm leading-6 text-mist">
-                      {artifact.contribution.map((item) => (
-                        <li key={item}>{item}</li>
+                      {visibleContribution.map((item) => (
+                        <li key={item.lens + item.text}>{item.text}</li>
                       ))}
                     </ul>
                   </div>

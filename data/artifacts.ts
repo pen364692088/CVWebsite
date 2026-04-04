@@ -1,3 +1,4 @@
+import type { SigilLens } from "@/lib/archive";
 import type { Locale } from "@/lib/i18n";
 
 export interface ArtifactMedia {
@@ -8,14 +9,20 @@ export interface ArtifactMedia {
   poster?: string;
 }
 
+export interface ArtifactContribution {
+  lens: SigilLens;
+  text: string;
+}
+
 export interface ArtifactCopy {
   title: string;
   category: string;
   role: string;
   summary: string;
   tags: string[];
+  evidence: string[];
   what: string;
-  contribution: string[];
+  contribution: ArtifactContribution[];
   technologies: string[];
   solved: string;
 }
@@ -24,8 +31,17 @@ export interface Artifact {
   slug: string;
   featured: boolean;
   cover: string;
+  lenses: SigilLens[];
   media: ArtifactMedia[];
   content: Record<Locale, ArtifactCopy>;
+}
+
+export interface ArtifactView extends ArtifactCopy {
+  slug: string;
+  featured: boolean;
+  cover: string;
+  lenses: SigilLens[];
+  media: ArtifactMedia[];
 }
 
 const artifacts: Artifact[] = [
@@ -33,6 +49,7 @@ const artifacts: Artifact[] = [
     slug: "ember-reel",
     featured: true,
     cover: "/artifacts/ember-reel-cover.jpg",
+    lenses: ["moon", "tower", "ember"],
     media: [
       {
         kind: "video",
@@ -64,69 +81,119 @@ const artifacts: Artifact[] = [
       en: {
         title: "Ember Reel",
         category: "Featured Reel",
-        role: "Studio Showcase / Technical Art / VFX",
+        role: "Unity Systems / Technical Art / VFX",
         summary:
-          "A featured studio reel built from technical art fragments spanning real-time VFX, lighting passes, shaders, and playable presentation work.",
+          "A real featured reel built from shipped fragments and portfolio captures, used here as the strongest proof of range across systems, technical art, and real-time visuals.",
         tags: ["Technical Art", "VFX", "Realtime Visuals"],
+        evidence: [
+          "Real captured video rather than placeholder art",
+          "Shows engine-side integration, lighting, and material response",
+          "Works as the quickest overview of how visual and technical work meet",
+        ],
         what:
-          "A curated highlight reel that frames Liuyue Studio's range across production-facing technical art, visual implementation, and short in-engine presentation moments.",
+          "This reel is the fastest way to understand the overlap between implementation, presentation polish, and atmosphere-driven visual work.",
         contribution: [
-          "Built and integrated real-time visual effects with a focus on readability and atmosphere.",
-          "Balanced shader treatment, lighting support, and scene polish against strict runtime budgets.",
-          "Curated shorter fragments into a studio-facing reel suitable for collaborators, art leads, and project partners.",
+          {
+            lens: "moon",
+            text: "Integrated gameplay-facing visual logic so effects and moments read clearly in motion instead of as isolated shots.",
+          },
+          {
+            lens: "tower",
+            text: "Balanced materials, lighting, and scene setup against runtime constraints to keep the work presentable and production-safe.",
+          },
+          {
+            lens: "ember",
+            text: "Built and tuned real-time effects that support mood while preserving readability and frame budget.",
+          },
         ],
         technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
         solved:
-          "Condensed broad technical art output into a single artifact that communicates both visual taste and production discipline.",
+          "Condensed a broad range of implementation work into one artifact that proves both visual taste and practical engine-side discipline.",
       },
       "zh-CN": {
         title: "余烬作品集",
-        category: "精选卷宗",
-        role: "工作室展示 / 技术美术 / 特效",
-        summary: "一份以技术美术为核心的工作室精选合集，涵盖实时特效、灯光处理、Shader 与可玩画面表现。",
+        category: "精选合集",
+        role: "Unity 系统 / 技术美术 / 特效",
+        summary: "这是站内最强的真实证据条目，由真实视频与作品帧组成，用来快速说明我在系统、技术美术与实时视觉上的交叉能力。",
         tags: ["技术美术", "特效", "实时视觉"],
-        what: "这是用于展示流月工作室技术美术能力范围的精选作品集合，强调制作可落地性与视觉控制力。",
+        evidence: ["使用真实视频而非占位图", "能看出引擎内接入、灯光和材质反应", "最适合作为整体能力范围的首个入口"],
+        what: "如果只看一个条目，这个合集最能说明实现能力、画面控制和氛围表达是如何在引擎里汇合的。",
         contribution: [
-          "制作并接入强调可读性与氛围感的实时视觉特效。",
-          "在性能预算约束下平衡 Shader 处理、灯光支持与整体画面打磨。",
-          "把分散的工作成果整理成面向合作沟通的短片段式工作室展示。",
+          {
+            lens: "moon",
+            text: "把面向玩法的视觉逻辑接进运行流程，让效果在实际运动中可读，而不是只停留在单帧画面。",
+          },
+          {
+            lens: "tower",
+            text: "在运行约束内协调材质、灯光和场景搭建，让展示质量和制作稳定性同时成立。",
+          },
+          {
+            lens: "ember",
+            text: "制作并调校实时特效，让氛围表达成立，同时不牺牲反馈清晰度和帧预算。",
+          },
         ],
         technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX 流程"],
-        solved: "把分散在不同项目中的技术美术成果压缩成一个叙事明确、便于快速判断能力边界的核心作品。",
+        solved: "把分散在不同项目里的实现成果压缩成一个能同时说明审美判断和工程执行力的核心证据条目。",
       },
       ja: {
         title: "Ember Reel",
-        category: "注目リール",
-        role: "スタジオショーケース / テクニカルアート / VFX",
+        category: "Featured Reel",
+        role: "Unity Systems / Technical Art / VFX",
         summary:
-          "リアルタイム VFX、ライティング、シェーダー、プレイアブル演出を束ねた、スタジオ代表リールです。",
-        tags: ["テクニカルアート", "VFX", "リアルタイム表現"],
-        what:
-          "流月工作室の技術美術、ビジュアル実装、短いインエンジン演出断片をまとめて示すための代表リールです。",
-        contribution: [
-          "可読性と空気感の両立を意識したリアルタイム VFX を制作・実装。",
-          "シェーダー、ライティング、シーンの磨き込みを実行負荷と両立。",
-          "断片的な成果物を、協業向けに読みやすいスタジオリールへ再構成。",
+          "実際のキャプチャと動画で構成した代表リールで、システム、テクニカルアート、リアルタイム表現の重なりを最も速く伝えます。",
+        tags: ["Technical Art", "VFX", "Realtime Visuals"],
+        evidence: [
+          "抽象プレースホルダーではなく実動画を使用",
+          "エンジン内実装、ライティング、マテリアル反応が読み取れる",
+          "全体像を短時間で把握するための最適な入口",
         ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX パイプライン"],
-        solved: "幅広い技術美術の出力を、一つの代表アーカイブとして短く読み取りやすく整理しました。",
+        what: "実装、演出、空気感づくりがエンジンの中でどう交わるかを最も速く示す代表アーカイブです。",
+        contribution: [
+          {
+            lens: "moon",
+            text: "ゲームプレイ側の視認性を保つよう、動きの中で読めるビジュアルロジックとして統合しました。",
+          },
+          {
+            lens: "tower",
+            text: "マテリアル、ライティング、シーン構成を実行制約の中で整理し、見栄えと安全性を両立させました。",
+          },
+          {
+            lens: "ember",
+            text: "雰囲気を支えつつ読みやすさも保つリアルタイム VFX を制作・調整しました。",
+          },
+        ],
+        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
+        solved: "幅のある実装実績を一つの代表物へ圧縮し、視覚的判断力と技術的規律を同時に示しました。",
       },
       ko: {
         title: "Ember Reel",
-        category: "대표 릴",
-        role: "스튜디오 쇼케이스 / 테크니컬 아트 / VFX",
+        category: "Featured Reel",
+        role: "Unity Systems / Technical Art / VFX",
         summary:
-          "실시간 VFX, 라이팅, 셰이더, 플레이어블 연출을 묶어 보여주는 스튜디오 대표 테크니컬 아트 릴입니다.",
-        tags: ["테크니컬 아트", "VFX", "실시간 비주얼"],
-        what:
-          "流月工作室의 테크니컬 아트, 비주얼 구현, 짧은 인엔진 프레젠테이션 단위를 한 번에 보여주기 위한 대표 릴입니다.",
-        contribution: [
-          "가독성과 분위기를 함께 고려한 실시간 VFX를 제작하고 엔진에 통합했습니다.",
-          "셰이더 처리, 라이팅 보강, 씬 폴리시를 런타임 예산 안에서 조율했습니다.",
-          "흩어진 작업 결과를 협업용 스튜디오 릴 형태로 재구성했습니다.",
+          "실제 캡처와 영상으로 구성한 대표 릴로, 시스템과 테크니컬 아트, 실시간 비주얼이 만나는 지점을 가장 빠르게 보여줍니다.",
+        tags: ["Technical Art", "VFX", "Realtime Visuals"],
+        evidence: [
+          "추상 플레이스홀더가 아니라 실제 영상 사용",
+          "엔진 내 통합, 라이팅, 머티리얼 반응을 읽을 수 있음",
+          "전체 역량 범위를 가장 빠르게 파악하는 진입점",
         ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX 파이프라인"],
-        solved: "다양한 테크니컬 아트 결과물을 하나의 대표 아카이브로 압축해 빠르게 읽히도록 정리했습니다.",
+        what: "구현, 연출, 분위기 조성이 엔진 안에서 어떻게 겹치는지 가장 짧게 보여주는 대표 아카이브입니다.",
+        contribution: [
+          {
+            lens: "moon",
+            text: "효과가 정적인 샷이 아니라 실제 플레이 흐름 안에서 읽히도록 비주얼 로직을 통합했습니다.",
+          },
+          {
+            lens: "tower",
+            text: "머티리얼, 라이팅, 씬 구성을 런타임 제약 안에서 정리해 보기 좋고 안전한 상태로 맞췄습니다.",
+          },
+          {
+            lens: "ember",
+            text: "분위기를 살리면서도 가독성과 프레임 예산을 유지하는 실시간 VFX를 제작하고 조정했습니다.",
+          },
+        ],
+        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
+        solved: "넓은 범위의 구현 작업을 하나의 대표 아티팩트로 압축해 시각적 판단력과 엔진 측 규율을 함께 증명했습니다.",
       },
     },
   },
@@ -134,81 +201,136 @@ const artifacts: Artifact[] = [
     slug: "ritual-pipeline",
     featured: false,
     cover: "/artifacts/ritual-pipeline.svg",
+    lenses: ["tower", "ember"],
     media: [
       {
         kind: "image",
         src: "/artifacts/ritual-pipeline.svg",
-        alt: "Abstract dark fantasy placeholder illustrating workflow tooling and pipeline structure.",
-        label: "Pipeline concept visual",
+        alt: "Archive-style diagram standing in for pipeline tooling, workflow cleanup, and technical art support.",
+        label: "Pipeline diagram placeholder",
       },
     ],
     content: {
       en: {
         title: "Ritual Pipeline",
-        category: "Workflow Relic",
+        category: "Workflow Record",
         role: "Technical Art Support / Tooling",
         summary:
-          "A semi-real case study shaped from production-facing technical art support, artist tooling, and cross-discipline pipeline maintenance.",
+          "A semi-real case built from recurring technical art and tooling work: the kind that rarely becomes a trailer shot, but decides whether visual teams move smoothly or stall.",
         tags: ["Artist Tools", "Pipelines", "Optimization"],
+        evidence: [
+          "Maps day-to-day production friction instead of only final visuals",
+          "Explains how tooling and rules reduce setup cost",
+          "Shows support work that lets artists keep moving",
+        ],
         what:
-          "A workflow-facing archive note built from day-to-day studio support for artists, lighting, VFX, and environment production.",
+          "This case stands in for the pipeline-facing work that makes visuals more repeatable: validation, editor helpers, documentation, and cleanup between art goals and engine reality.",
         contribution: [
-          "Mapped repetitive production pain points and translated them into smaller artist-facing tools.",
-          "Reduced manual setup cost by documenting best practices and standardizing repeatable workflows.",
-          "Acted as the bridge between visual ambition and platform-safe implementation constraints.",
+          {
+            lens: "tower",
+            text: "Turned repeated production pain points into smaller artist-facing helpers and clearer workflow rules.",
+          },
+          {
+            lens: "tower",
+            text: "Reduced manual setup cost by documenting safer defaults and standardizing recurring steps.",
+          },
+          {
+            lens: "ember",
+            text: "Protected visual targets by making effect setup and scene handoff less fragile for art and lighting passes.",
+          },
         ],
         technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
         solved:
-          "Made visual iteration less fragile by replacing scattered tribal knowledge with clearer tools and production rules.",
+          "Replaced scattered tribal knowledge with a more stable production path, so visual iteration stopped depending on memory and repeated cleanup.",
       },
       "zh-CN": {
         title: "仪式管线",
-        category: "流程遗物",
+        category: "流程档案",
         role: "技术美术支持 / 工具开发",
-        summary: "基于真实工作经历整理出的半真实案例，聚焦技术美术支持、艺术工具与跨团队制作流程。",
+        summary: "这是一个半真实案例，代表那些不会变成宣传片镜头、却决定美术团队到底顺不顺的技术美术与工具工作。",
         tags: ["艺术工具", "制作流程", "优化"],
-        what: "这是围绕工作室日常技术美术支持整理出的流程档案，重点是为美术、灯光、特效与场景团队降低流程摩擦。",
+        evidence: ["关注的是日常制作摩擦，不只是最终画面", "说明工具和规则如何降低重复配置成本", "体现支持型工作如何让美术继续往前推进"],
+        what: "它代表的是让视觉实现更可重复的那类工作：校验、编辑器辅助、文档整理，以及在美术目标和引擎现实之间做清理和接线。",
         contribution: [
-          "梳理重复出现的制作痛点，并转化为更小、更实用的艺术向工具。",
-          "通过流程文档与规范化操作，降低重复配置与沟通成本。",
-          "在视觉追求与平台性能限制之间提供可落地的技术折中方案。",
+          {
+            lens: "tower",
+            text: "把反复出现的制作痛点转成更小、更直接面向美术的辅助工具和工作规范。",
+          },
+          {
+            lens: "tower",
+            text: "通过记录更安全的默认流程与标准步骤，降低重复配置和返工成本。",
+          },
+          {
+            lens: "ember",
+            text: "通过更稳的接入方式保护视觉目标，让特效和灯光迭代不那么容易被流程问题拖慢。",
+          },
         ],
         technologies: ["Python 工具", "编辑器扩展", "资产校验", "流程文档"],
-        solved: "把依赖个人经验的零散流程沉淀为更稳定的工具与规则，减少视觉迭代中的不确定性。",
+        solved: "把依赖个人记忆的零散经验替换成更稳定的制作路径，让视觉迭代不再频繁卡在基础配置和返工上。",
       },
       ja: {
         title: "Ritual Pipeline",
-        category: "ワークフロー記録",
-        role: "テクニカルアート支援 / ツーリング",
+        category: "Workflow Record",
+        role: "Technical Art Support / Tooling",
         summary:
-          "実務経験をもとに再構成した、技術美術支援・アーティストツール・制作パイプライン改善のケースです。",
-        tags: ["アーティストツール", "パイプライン", "最適化"],
-        what:
-          "アート、ライティング、VFX、環境制作に対する日常支援を、スタジオの運用改善記録としてまとめた事例です。",
-        contribution: [
-          "繰り返し発生する制作上の負荷を整理し、小さなアーティスト向けツールへ変換。",
-          "ベストプラクティスの文書化と標準化でセットアップ負荷を削減。",
-          "表現要求とプラットフォーム制約の間で、実装可能な落とし所を設計。",
+          "派手な映像にはなりにくいが、ビジュアル制作の流れを左右する技術美術支援とツール整備を代表する半実例です。",
+        tags: ["Artist Tools", "Pipelines", "Optimization"],
+        evidence: [
+          "完成画だけでなく日々の制作摩擦を扱う",
+          "ツールとルールでセットアップ負荷を下げる",
+          "アーティストが止まらないための支援を示す",
         ],
-        technologies: ["Python ツール", "エディタ拡張", "アセット検証", "ドキュメント整備"],
-        solved: "属人的だった制作知識を再利用しやすい形へ置き換え、ビジュアル改善の安定性を高めました。",
+        what:
+          "バリデーション、エディタ補助、文書化、ワークフロー整理など、ビジュアル制作を再現しやすくする裏側の仕事を代表しています。",
+        contribution: [
+          {
+            lens: "tower",
+            text: "繰り返し発生する制作上の痛点を、小さな支援ツールと明確な手順へ置き換えました。",
+          },
+          {
+            lens: "tower",
+            text: "安全なデフォルトと標準手順を整え、手作業セットアップを減らしました。",
+          },
+          {
+            lens: "ember",
+            text: "エフェクトやライティングの引き継ぎが壊れにくいようにし、ビジュアル目標を守りました。",
+          },
+        ],
+        technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
+        solved:
+          "属人的な知識に頼らずに回る制作経路を整え、ビジュアル改善が基礎設定のやり直しで止まらないようにしました。",
       },
       ko: {
         title: "Ritual Pipeline",
-        category: "워크플로 기록",
-        role: "테크니컬 아트 지원 / 툴링",
+        category: "Workflow Record",
+        role: "Technical Art Support / Tooling",
         summary:
-          "실무 경험을 기반으로 재구성한 반실제 케이스로, 테크니컬 아트 지원과 아티스트 툴, 파이프라인 개선에 초점을 둡니다.",
-        tags: ["아티스트 툴", "파이프라인", "최적화"],
-        what:
-          "아트, 라이팅, VFX, 환경 제작을 지원하던 일상적인 스튜디오 업무를 운영 개선 기록으로 정리한 아티팩트입니다.",
-        contribution: [
-          "반복적으로 발생하던 제작 병목을 정리해 작은 아티스트용 도구로 전환했습니다.",
-          "문서화와 표준화를 통해 반복 셋업 비용을 줄였습니다.",
-          "시각적 목표와 플랫폼 제약 사이에서 구현 가능한 균형점을 제시했습니다.",
+          "트레일러 장면으로는 잘 드러나지 않지만, 비주얼 팀이 매끄럽게 움직일지 멈출지를 결정하는 테크니컬 아트 지원과 툴링 작업을 대표하는 반실제 사례입니다.",
+        tags: ["Artist Tools", "Pipelines", "Optimization"],
+        evidence: [
+          "완성 화면보다 일상적인 제작 마찰을 다룸",
+          "툴과 규칙으로 셋업 비용을 줄이는 방식을 보여줌",
+          "아티스트가 멈추지 않게 하는 지원 작업을 증명",
         ],
-        technologies: ["Python 툴링", "에디터 유틸리티", "에셋 검증", "문서화 시스템"],
-        solved: "개인 경험에 의존하던 제작 지식을 도구와 규칙으로 바꿔 시각 반복 작업의 안정성을 높였습니다.",
+        what:
+          "검증, 에디터 보조, 문서화, 워크플로 정리처럼 비주얼 제작을 더 반복 가능하게 만드는 뒤쪽 작업을 대표하는 케이스입니다.",
+        contribution: [
+          {
+            lens: "tower",
+            text: "반복적으로 발생하던 제작 병목을 작은 지원 도구와 명확한 작업 규칙으로 바꿨습니다.",
+          },
+          {
+            lens: "tower",
+            text: "안전한 기본값과 표준 절차를 정리해 수동 셋업 비용을 줄였습니다.",
+          },
+          {
+            lens: "ember",
+            text: "이펙트와 라이팅 핸드오프를 덜 취약하게 만들어 비주얼 목표가 흐트러지지 않게 했습니다.",
+          },
+        ],
+        technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
+        solved:
+          "개인 기억에 의존하던 제작 지식을 더 안정적인 경로로 바꿔, 비주얼 반복 작업이 기본 설정과 재정리 때문에 멈추지 않도록 했습니다.",
       },
     },
   },
@@ -216,12 +338,13 @@ const artifacts: Artifact[] = [
     slug: "mobile-systems",
     featured: false,
     cover: "/artifacts/mobile-systems.svg",
+    lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
         src: "/artifacts/mobile-systems.svg",
-        alt: "Abstract dark fantasy placeholder representing gameplay systems, live operations, and optimization.",
-        label: "Gameplay systems concept visual",
+        alt: "Archive-style diagram representing gameplay systems, modular implementation, and feature maintenance.",
+        label: "Gameplay systems diagram placeholder",
       },
     ],
     content: {
@@ -230,77 +353,132 @@ const artifacts: Artifact[] = [
         category: "Playable System Record",
         role: "Unity Systems / Feature Ownership",
         summary:
-          "A semi-real snapshot of gameplay system implementation for mobile projects where stability, iteration speed, and feature ownership mattered.",
+          "A semi-real record based on mobile production work where the hard part was not spectacle, but keeping features stable, maintainable, and fast to iterate on.",
         tags: ["Unity", "Gameplay Systems", "Live Support"],
+        evidence: [
+          "Centers on feature ownership and module boundaries",
+          "Shows implementation decisions under live update pressure",
+          "Useful proof for teams that care about maintainability, not only visuals",
+        ],
         what:
-          "A gameplay-facing archive entry inspired by studio work on mobile projects, focused on feature ownership and reliable iteration.",
+          "This case focuses on gameplay-facing implementation: the day-to-day work of turning requirements into modules that can survive content changes and production schedules.",
         contribution: [
-          "Implemented independent modules and systems based on feature requirements and production schedules.",
-          "Worked with design and art to keep iteration practical without losing implementation quality.",
-          "Protected runtime stability while shipping feature updates under live production pressure.",
+          {
+            lens: "moon",
+            text: "Implemented independent systems and feature modules based on production scope, schedule, and player-facing requirements.",
+          },
+          {
+            lens: "moon",
+            text: "Protected runtime stability during repeated updates by keeping module ownership and boundaries clear.",
+          },
+          {
+            lens: "tower",
+            text: "Worked with design and art to keep implementation practical, readable, and easier to hand off or extend.",
+          },
         ],
         technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
         solved:
-          "Kept player-facing systems maintainable under constant iteration by making each module easier to own, test, and refine.",
+          "Made player-facing systems easier to own, test, and revise under continuous iteration, instead of letting feature growth turn the project brittle.",
       },
       "zh-CN": {
         title: "静默调校的移动系统",
         category: "玩法系统档案",
         role: "Unity 系统 / 功能负责",
-        summary: "一个基于移动项目经历整理的半真实案例，重点是 Unity 系统开发、稳定迭代与模块责任制。",
+        summary: "这是一个基于移动项目经验整理的半真实案例，重点不在炫技，而在于如何让功能稳定、易维护、且方便持续迭代。",
         tags: ["Unity", "玩法系统", "长期维护"],
-        what: "这个档案条目以移动项目制作经验为原型，强调工作室在系统模块独立交付与持续迭代上的能力。",
+        evidence: ["强调功能负责和模块边界", "体现持续更新压力下的实现判断", "更适合证明可维护性，而不是只展示画面氛围"],
+        what: "这个案例关注的是面向玩法的实现工作，也就是把需求拆成能活过排期变化和内容反复的模块与系统。",
         contribution: [
-          "根据需求与排期独立完成对应功能模块与系统实现。",
-          "与策划和美术协作，保证迭代效率的同时不牺牲实现质量。",
-          "在持续更新压力下维持线上系统的稳定与性能表现。",
+          {
+            lens: "moon",
+            text: "根据项目范围、排期和玩家侧需求，独立实现对应系统与功能模块。",
+          },
+          {
+            lens: "moon",
+            text: "通过更清晰的模块归属和边界，保证持续更新中的运行稳定性。",
+          },
+          {
+            lens: "tower",
+            text: "与策划和美术协作，让实现方式更实际、可读，也更容易后续接手和扩展。",
+          },
         ],
         technologies: ["Unity", "C#", "功能模块", "性能分析"],
-        solved: "通过更清晰的模块边界与维护方式，让玩家可见系统在高频迭代中仍然保持稳定和可扩展。",
+        solved: "让玩家可见的系统在高频迭代中依然容易维护、测试和修改，不至于随着功能堆积而变得脆弱。",
       },
       ja: {
-        title: "静かに磨いたモバイルシステム",
-        category: "ゲームプレイ記録",
+        title: "Mobile Systems, Quietly Tuned",
+        category: "Playable System Record",
         role: "Unity Systems / Feature Ownership",
         summary:
-          "モバイル開発経験をもとにした半実例で、Unity システム実装・安定運用・継続改善に焦点を当てています。",
-        tags: ["Unity", "ゲームプレイシステム", "継続運用"],
-        what:
-          "モバイル案件でのスタジオ経験をもとに、機能モジュールの自走力と安定した反復改善を示すアーカイブ記録です。",
-        contribution: [
-          "要件とスケジュールに合わせて機能モジュールやシステムを自律的に実装。",
-          "企画・アートと連携し、反復速度と実装品質の両立を維持。",
-          "継続的なアップデートの中でも安定性と性能を守る実装判断を行いました。",
+          "派手さよりも、機能の安定性、保守性、反復速度が問われるモバイル案件の実装経験をもとにした半実例です。",
+        tags: ["Unity", "Gameplay Systems", "Live Support"],
+        evidence: [
+          "機能担当とモジュール境界に焦点",
+          "継続更新下での実装判断を示す",
+          "ビジュアルより保守性を重視するチームへの証拠になる",
         ],
-        technologies: ["Unity", "C#", "機能モジュール", "パフォーマンス計測"],
-        solved: "頻繁な更新下でも、プレイヤー向けシステムを保守しやすく改善しやすい形に保ちました。",
+        what:
+          "要件を、変更やスケジュールに耐えられるモジュールへ落とし込む、ゲームプレイ実装の日常業務を代表するケースです。",
+        contribution: [
+          {
+            lens: "moon",
+            text: "スコープ、日程、プレイヤー要件に合わせて機能モジュールとシステムを実装しました。",
+          },
+          {
+            lens: "moon",
+            text: "モジュール境界を明確に保ち、継続更新中のランタイム安定性を守りました。",
+          },
+          {
+            lens: "tower",
+            text: "企画とアートの要件を踏まえ、実装を実用的で読みやすく、拡張しやすい形に整理しました。",
+          },
+        ],
+        technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
+        solved:
+          "プレイヤー向けシステムを、継続反復の中でも保守しやすく修正しやすい構造に保ちました。",
       },
       ko: {
-        title: "조용하게 다듬은 모바일 시스템",
-        category: "플레이어블 시스템 기록",
+        title: "Mobile Systems, Quietly Tuned",
+        category: "Playable System Record",
         role: "Unity Systems / Feature Ownership",
         summary:
-          "모바일 게임 개발 경험을 바탕으로 한 반실제 사례로, Unity 시스템 구현과 안정적 반복 개선에 초점을 둡니다.",
-        tags: ["Unity", "게임플레이 시스템", "라이브 운영"],
-        what:
-          "모바일 프로젝트 기반의 스튜디오 작업에서 기능 모듈 소유권과 안정적인 반복 개선 능력을 보여주는 기록형 아티팩트입니다.",
-        contribution: [
-          "요구사항과 일정에 맞춰 기능 모듈과 시스템을 독립적으로 구현했습니다.",
-          "기획 및 아트와 협업해 반복 속도와 구현 품질을 함께 유지했습니다.",
-          "지속 업데이트 환경에서도 안정성과 성능을 지키는 구현 결정을 내렸습니다.",
+          "화려한 연출보다 기능 안정성, 유지보수성, 반복 속도가 중요한 모바일 제작 경험을 바탕으로 한 반실제 기록입니다.",
+        tags: ["Unity", "Gameplay Systems", "Live Support"],
+        evidence: [
+          "기능 책임과 모듈 경계에 초점",
+          "지속 업데이트 압박 아래의 구현 판단을 보여줌",
+          "비주얼보다 유지보수를 중시하는 팀에 유효한 증거",
         ],
-        technologies: ["Unity", "C#", "기능 모듈", "성능 프로파일링"],
-        solved: "잦은 업데이트 속에서도 플레이어가 체감하는 시스템을 유지보수와 확장에 강한 구조로 다듬었습니다.",
+        what:
+          "요구사항을 변경과 일정 압박에도 버틸 수 있는 모듈로 바꾸는, 게임플레이 구현의 일상적 업무를 대표하는 케이스입니다.",
+        contribution: [
+          {
+            lens: "moon",
+            text: "프로덕션 범위, 일정, 플레이어 요구에 맞춰 시스템과 기능 모듈을 독립적으로 구현했습니다.",
+          },
+          {
+            lens: "moon",
+            text: "모듈 경계를 명확히 유지해 반복 업데이트 중에도 런타임 안정성을 지켰습니다.",
+          },
+          {
+            lens: "tower",
+            text: "기획과 아트 요구를 함께 고려해 구현을 실용적이고 읽기 쉬우며 확장 가능한 형태로 정리했습니다.",
+          },
+        ],
+        technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
+        solved:
+          "플레이어가 체감하는 시스템을 지속적인 반복 속에서도 유지보수와 수정이 쉬운 구조로 다듬었습니다.",
       },
     },
   },
 ];
 
-export function getArtifacts(locale: Locale) {
+export function getArtifacts(locale: Locale): ArtifactView[] {
   return artifacts.map((artifact) => ({
     slug: artifact.slug,
     featured: artifact.featured,
     cover: artifact.cover,
+    lenses: artifact.lenses,
     media: artifact.media,
     ...artifact.content[locale],
   }));
