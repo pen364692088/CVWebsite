@@ -1,7 +1,5 @@
-import Image from "next/image";
-
 import type { Dictionary } from "@/data/dictionaries";
-import type { ContactLink, ResumeAsset } from "@/data/profile";
+import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import { assetPath } from "@/lib/site";
 
 import { Reveal } from "@/components/reveal";
@@ -9,10 +7,22 @@ import { Reveal } from "@/components/reveal";
 interface ContactSectionProps {
   copy: Dictionary["contact"];
   contacts: ContactLink[];
-  resume: ResumeAsset;
+  dossier: StudioDossierAsset;
 }
 
-export function ContactSection({ copy, contacts, resume }: ContactSectionProps) {
+function getRouteValue(item: ContactLink, copy: Dictionary["contact"], dossierAvailable: boolean) {
+  if (item.key === "dossier") {
+    return dossierAvailable ? copy.dossierActionLabel : copy.dossierUnavailableLabel;
+  }
+
+  if (!item.available) {
+    return copy.unavailableLabel;
+  }
+
+  return item.label;
+}
+
+export function ContactSection({ copy, contacts, dossier }: ContactSectionProps) {
   return (
     <section id="contact" className="section-shell">
       <div className="space-y-6">
@@ -34,54 +44,69 @@ export function ContactSection({ copy, contacts, resume }: ContactSectionProps) 
               </div>
 
               <ul className="signal-route-list">
-                {contacts.map((item) => (
-                  <li key={item.key}>
-                    {item.available ? (
-                      <a
-                        href={item.key === "resume" ? assetPath(item.href) : item.href}
-                        className="signal-route"
-                        target={item.key === "resume" ? undefined : "_blank"}
-                        rel={item.key === "resume" ? undefined : "noreferrer"}
-                        download={item.key === "resume" ? true : undefined}
-                      >
-                        <span className="signal-route-key">{item.key}</span>
-                        <span className="signal-route-value">{item.label}</span>
-                      </a>
-                    ) : (
-                      <div className="signal-route signal-route-disabled" aria-disabled="true">
-                        <span className="signal-route-key">{item.key}</span>
-                        <span className="signal-route-value">{copy.unavailableLabel}</span>
-                      </div>
-                    )}
-                  </li>
-                ))}
+                {contacts.map((item) => {
+                  const routeLabel = item.key === "dossier" ? copy.dossierRouteLabel : item.key;
+                  const routeAvailable = item.key === "dossier" ? dossier.available : item.available;
+                  const routeHref = item.key === "dossier" ? dossier.href : item.href;
+                  const routeValue = getRouteValue(item, copy, dossier.available);
+
+                  return (
+                    <li key={item.key}>
+                      {routeAvailable ? (
+                        <a
+                          href={item.key === "dossier" ? assetPath(routeHref) : routeHref}
+                          className="signal-route"
+                          target={item.key === "dossier" ? undefined : "_blank"}
+                          rel={item.key === "dossier" ? undefined : "noreferrer"}
+                          download={item.key === "dossier" ? true : undefined}
+                        >
+                          <span className="signal-route-key">{routeLabel}</span>
+                          <span className="signal-route-value">{routeValue}</span>
+                        </a>
+                      ) : (
+                        <div className="signal-route signal-route-disabled" aria-disabled="true">
+                          <span className="signal-route-key">{routeLabel}</span>
+                          <span className="signal-route-value">{routeValue}</span>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
-            <div className="resume-folio">
+            <div className="dossier-folio">
               <div className="space-y-3">
-                <p className="section-kicker">{copy.previewLabel}</p>
-                <h3 className="font-display text-2xl text-ivory">{copy.resumeTitle}</h3>
-                <p className="max-w-xl text-sm leading-7 text-mist">{copy.resumeBody}</p>
+                <p className="section-kicker">{copy.dossierTitle}</p>
+                <h3 className="font-display text-2xl text-ivory">{copy.dossierTitle}</h3>
+                <p className="max-w-xl text-sm leading-7 text-mist">{copy.dossierBody}</p>
               </div>
 
-              <a className="primary-button w-fit" href={assetPath(resume.pdf)} download>
-                {copy.downloadLabel}
-              </a>
+              <div className="dossier-panel">
+                <div>
+                  <p className="artifact-meta-label">{copy.capabilitiesTitle}</p>
+                  <ul className="dossier-listing">
+                    {copy.capabilities.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
 
-              <div className="resume-preview-grid">
-                {resume.previews.map((preview, index) => (
-                  <div key={preview} className="resume-preview-card">
-                    <Image
-                      src={assetPath(preview)}
-                      alt={`${copy.previewLabel} ${index + 1}`}
-                      fill
-                      sizes="(min-width: 768px) 20rem, 100vw"
-                      className="object-cover saturate-60 brightness-65 sepia-[0.28]"
-                    />
-                  </div>
-                ))}
+                <div>
+                  <p className="artifact-meta-label">{copy.collaborationTitle}</p>
+                  <p className="mt-2 text-sm leading-7 text-mist">{copy.collaborationBody}</p>
+                </div>
               </div>
+
+              {dossier.available ? (
+                <a className="primary-button w-fit" href={assetPath(dossier.href)} download>
+                  {copy.dossierActionLabel}
+                </a>
+              ) : (
+                <span className="secondary-button w-fit" aria-disabled="true">
+                  {copy.dossierUnavailableLabel}
+                </span>
+              )}
             </div>
           </div>
         </Reveal>

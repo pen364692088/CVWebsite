@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 
 import type { Dictionary } from "@/data/dictionaries";
-import { assetPath } from "@/lib/site";
+import { SITE, assetPath } from "@/lib/site";
 
 import { Reveal } from "@/components/reveal";
 
@@ -31,7 +31,7 @@ export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <p className="hero-brandline text-sm uppercase tracking-[0.24em]">Zhouyu Liao</p>
+            <p className="hero-brandline text-sm uppercase tracking-[0.24em]">{SITE.studioName}</p>
           </Reveal>
 
           <Reveal delay={0.1}>

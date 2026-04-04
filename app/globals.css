@@ -682,32 +682,30 @@ select:focus-visible,
   color: rgba(216, 211, 200, 0.88);
 }
 
-.resume-folio {
+.dossier-folio {
   display: grid;
   gap: 1.25rem;
 }
 
-.resume-preview-grid {
+.dossier-panel {
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+  border-top: 1px solid rgba(140, 119, 81, 0.24);
+  border-bottom: 1px solid rgba(216, 211, 200, 0.06);
+  padding: 1rem 0;
 }
 
-.resume-preview-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-media);
-  border: 1px solid rgba(216, 211, 200, 0.08);
-  aspect-ratio: 4 / 5;
-  background: rgba(255, 255, 255, 0.02);
+.dossier-listing {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.7rem;
+  padding-left: 1rem;
+  list-style: disc;
 }
 
-.resume-preview-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(11, 13, 16, 0.08), rgba(11, 13, 16, 0.36));
-  pointer-events: none;
+.dossier-listing li {
+  color: rgba(216, 211, 200, 0.86);
+  line-height: 1.7;
 }
 
 .relic-layout {
@@ -736,55 +734,90 @@ select:focus-visible,
   pointer-events: none;
 }
 
-.relic-axis {
+.sigil-stage-ring {
   position: absolute;
   left: 50%;
-  top: 12%;
+  top: 50%;
   z-index: 1;
-  height: 76%;
-  width: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(216, 211, 200, 0.04), rgba(216, 211, 200, 0.34), rgba(216, 211, 200, 0.04));
-}
-
-.relic-ring-shell {
-  position: absolute;
-  left: 50%;
-  top: 50%;
+  height: 68%;
+  width: 68%;
   transform: translate(-50%, -50%);
-}
-
-.relic-ring {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  z-index: 2;
-  border: 1px solid rgba(216, 211, 200, 0.1);
+  border: 1px solid rgba(216, 211, 200, 0.08);
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(140, 119, 81, 0.08);
 }
 
-.relic-ring-selected {
-  border-color: rgba(201, 106, 43, 0.36);
+.sigil-stage-ring-inner {
+  height: 38%;
+  width: 38%;
+  border-color: rgba(140, 119, 81, 0.22);
 }
 
-.relic-ring-unlocked {
-  border-color: rgba(201, 106, 43, 0.5);
-}
-
-.relic-glyph {
+.sigil-socket {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 999px;
-  background: rgba(216, 211, 200, 0.18);
+  z-index: 2;
+  display: flex;
+  min-height: 7.4rem;
+  width: min(11rem, 34vw);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transform: translate(-50%, -50%);
+  border-radius: 1.35rem;
+  border: 1px solid rgba(216, 211, 200, 0.1);
+  background: rgba(12, 13, 15, 0.68);
+  padding: 0.8rem;
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
-.relic-glyph-target {
-  background: rgba(201, 106, 43, 0.9);
-  box-shadow: 0 0 12px rgba(201, 106, 43, 0.28);
+.sigil-socket:hover {
+  border-color: rgba(140, 119, 81, 0.4);
+  transform: translate(-50%, calc(-50% - 2px));
+}
+
+.sigil-socket-filled {
+  border-color: rgba(201, 106, 43, 0.44);
+  background: rgba(25, 17, 13, 0.72);
+}
+
+.sigil-socket-reject {
+  border-color: rgba(201, 106, 43, 0.72);
+  animation: sigil-reject 280ms ease;
+}
+
+.sigil-socket-shell,
+.sigil-socket-token {
+  display: inline-flex;
+  height: 3.5rem;
+  width: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 211, 200, 0.08);
+}
+
+.sigil-socket-shell {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sigil-socket-token {
+  background: rgba(201, 106, 43, 0.12);
+}
+
+.sigil-socket-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.7);
+  text-align: center;
+}
+
+.sigil-glyph {
+  height: 2rem;
+  width: 2rem;
 }
 
 .relic-core {
@@ -830,34 +863,67 @@ select:focus-visible,
   grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr);
 }
 
-.relic-control-row {
+.relic-tray-header {
   display: grid;
   gap: 0.8rem;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   border-bottom: 1px solid var(--line-soft);
   padding-bottom: 0.9rem;
 }
 
-.relic-select {
-  display: inline-flex;
-  min-height: 2.8rem;
-  align-items: center;
-  justify-content: flex-start;
-  border-radius: var(--radius-action);
-  border: 1px solid rgba(140, 119, 81, 0.28);
-  background: rgba(255, 255, 255, 0.02);
-  padding-inline: 0.95rem;
-  color: rgba(216, 211, 200, 0.88);
+.sigil-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
 }
 
-.relic-select-active {
+.sigil-token {
+  display: inline-flex;
+  min-height: 4.8rem;
+  min-width: 11rem;
+  align-items: center;
+  gap: 0.9rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(216, 211, 200, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.9rem 1rem;
+  text-align: left;
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+
+.sigil-token:hover {
+  border-color: rgba(140, 119, 81, 0.42);
+  transform: translateY(-1px);
+}
+
+.sigil-token-selected {
   border-color: rgba(201, 106, 43, 0.44);
   background: rgba(201, 106, 43, 0.08);
 }
 
-.relic-rotate {
-  min-width: 8.6rem;
+.sigil-token-text {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(216, 211, 200, 0.9);
+}
+
+@keyframes sigil-reject {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+
+  30% {
+    transform: translate(calc(-50% - 5px), -50%);
+  }
+
+  70% {
+    transform: translate(calc(-50% + 5px), -50%);
+  }
 }
 
 @media (min-width: 900px) {
@@ -904,7 +970,7 @@ select:focus-visible,
 
   .artifact-meta-grid,
   .relic-status-bar,
-  .relic-control-row {
+  .relic-tray-header {
     grid-template-columns: 1fr;
   }
 }
@@ -954,7 +1020,7 @@ select:focus-visible,
   .dossier-row,
   .artifact-meta-grid,
   .relic-status-bar,
-  .relic-control-row {
+  .relic-tray-header {
     grid-template-columns: 1fr;
   }
 
@@ -967,8 +1033,7 @@ select:focus-visible,
     gap: 0.35rem;
   }
 
-  .dossier-tag-grid,
-  .resume-preview-grid {
+  .dossier-tag-grid {
     grid-template-columns: 1fr;
   }
 
@@ -992,6 +1057,16 @@ select:focus-visible,
   .relic-core {
     height: 5.5rem;
     width: 5.5rem;
+  }
+
+  .sigil-socket {
+    min-height: 6.2rem;
+    width: min(8.8rem, 38vw);
+    padding: 0.7rem;
+  }
+
+  .sigil-token {
+    min-width: 100%;
   }
 }
 

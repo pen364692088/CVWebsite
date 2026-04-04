@@ -18,7 +18,6 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/resume/zhouyu-liao-software-developer-resume.pdf",
   "out/media/work-collection-of-ta.mp4",
 ];
 
@@ -32,6 +31,7 @@ assert(rootHtml.includes("Choosing your entry path."), "Root locale gateway text
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes("Ashen Archive"), `Missing site title in ${locale}`);
+  assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
   assert(html.includes("work-collection-of-ta.mp4"), `Missing featured media in ${locale}`);

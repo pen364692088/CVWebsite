@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { contactLinks, resumeAsset } from "@/data/profile";
+import { contactLinks, studioDossierAsset } from "@/data/profile";
 import { dictionaries } from "@/data/dictionaries";
 import { getArtifacts } from "@/data/artifacts";
 import { SiteFooter } from "@/components/site-footer";
@@ -34,7 +34,7 @@ export default async function LocalePage({ params }: LocalePageProps) {
         <DisciplinesSection copy={dictionary.disciplines} />
         <ArtifactsSection copy={dictionary.artifacts} artifacts={artifacts} />
         <GameSection copy={dictionary.game} locale={locale} />
-        <ContactSection copy={dictionary.contact} contacts={contactLinks} resume={resumeAsset} />
+        <ContactSection copy={dictionary.contact} contacts={contactLinks} dossier={studioDossierAsset} />
       </main>
       <SiteFooter dictionary={dictionary} />
     </div>

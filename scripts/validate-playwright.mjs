@@ -178,6 +178,9 @@ async function run() {
         const hero = page.locator("h1");
         await hero.waitFor({ state: "visible" });
         assert((await hero.textContent())?.includes("Ashen Archive"), `Missing brand signal for ${scenario.name}`);
+        const brandline = page.locator(".hero-brandline");
+        await brandline.waitFor({ state: "visible" });
+        assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio brand for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
         const artifactButton = page.locator('button[aria-haspopup="dialog"]').first();
@@ -191,6 +194,8 @@ async function run() {
           await page.locator(section).scrollIntoViewIfNeeded();
           await delay(150);
         }
+
+        assert((await page.locator(".dossier-panel").count()) === 1, `Missing studio dossier panel for ${scenario.name}`);
         await page.screenshot({
           path: path.join(outputDir, `${scenario.name}.png`),
           fullPage: true,
@@ -209,15 +214,13 @@ async function run() {
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
         const gameBoard = gamePage.locator(".relic-stage").first();
         await gameBoard.scrollIntoViewIfNeeded();
-        await gamePage.getByRole("button", { name: "Begin the rite" }).click();
-
-        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
-        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
-        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
-        await gamePage.getByRole("button", { name: "Middle Ring: Rotate right" }).click();
-        await gamePage.getByRole("button", { name: "Inner Ring: Rotate left" }).click();
-        await gamePage.getByRole("button", { name: "Release the archive" }).click();
-        await gamePage.getByRole("heading", { name: "Archive shelf unlocked." }).waitFor();
+        await gamePage.getByRole("button", { name: "Sigil tray: Moon Crest" }).click();
+        await gamePage.getByRole("button", { name: "Socket: Moon Socket" }).click();
+        await gamePage.getByRole("button", { name: "Sigil tray: Tower Mark" }).click();
+        await gamePage.getByRole("button", { name: "Socket: Tower Socket" }).click();
+        await gamePage.getByRole("button", { name: "Sigil tray: Ember Seal" }).click();
+        await gamePage.getByRole("button", { name: "Socket: Ember Socket" }).click();
+        await gamePage.getByRole("heading", { name: "The seal breaks." }).waitFor();
       } finally {
         await gameContext.close();
       }

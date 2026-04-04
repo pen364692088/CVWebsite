@@ -1,22 +1,18 @@
-export interface ResumeAsset {
-  pdf: string;
-  previews: string[];
+export interface StudioDossierAsset {
+  available: boolean;
+  href: string;
 }
 
 export interface ContactLink {
-  key: "email" | "github" | "linkedin" | "resume";
+  key: "email" | "github" | "linkedin" | "dossier";
   href: string;
   label: string;
   available: boolean;
 }
 
-export const resumeAsset: ResumeAsset = {
-  pdf: "/resume/zhouyu-liao-software-developer-resume.pdf",
-  previews: [
-    "/resume/preview-cover.jpg",
-    "/resume/preview-page-2.jpg",
-    "/resume/preview-page-3.jpg",
-  ],
+export const studioDossierAsset: StudioDossierAsset = {
+  available: false,
+  href: "",
 };
 
 export const contactLinks: ContactLink[] = [
@@ -39,9 +35,9 @@ export const contactLinks: ContactLink[] = [
     available: false,
   },
   {
-    key: "resume",
-    href: resumeAsset.pdf,
-    label: "Download PDF resume",
-    available: true,
+    key: "dossier",
+    href: "",
+    label: "",
+    available: false,
   },
 ];

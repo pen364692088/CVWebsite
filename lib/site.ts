@@ -1,6 +1,7 @@
 export const SITE = {
   name: "Ashen Archive",
-  person: "Zhouyu Liao",
+  studioName: "流月工作室",
+  founderName: "Zhouyu Liao",
   siteUrl: "https://pen364692088.github.io",
   basePath: "/CVWebsite",
   localeStorageKey: "ashen-archive-locale",
