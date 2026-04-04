@@ -10,6 +10,8 @@ export interface ArtifactMedia {
 
 export interface ArtifactCopy {
   title: string;
+  category: string;
+  role: string;
   summary: string;
   tags: string[];
   what: string;
@@ -61,6 +63,8 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "Ember Reel",
+        category: "Featured Reel",
+        role: "Technical Artist / VFX / Presentation",
         summary:
           "A featured collection of technical art fragments spanning real-time VFX, lighting passes, shaders, and playable presentation work.",
         tags: ["Technical Art", "VFX", "Realtime Visuals"],
@@ -77,6 +81,8 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "余烬作品集",
+        category: "精选卷宗",
+        role: "技术美术 / 特效 / 展示整合",
         summary: "以技术美术为核心的精选合集，涵盖实时特效、灯光处理、Shader 与可玩画面表现。",
         tags: ["技术美术", "特效", "实时视觉"],
         what: "这是一个用于展示周宇辽技术美术能力范围的精选作品集合，面向招聘方、合作方与美术负责人。",
@@ -90,6 +96,8 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "Ember Reel",
+        category: "注目リール",
+        role: "テクニカルアート / VFX / プレゼンテーション",
         summary:
           "リアルタイム VFX、ライティング、シェーダー、プレイアブル演出をまとめたテクニカルアート作品集です。",
         tags: ["テクニカルアート", "VFX", "リアルタイム表現"],
@@ -105,6 +113,8 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "Ember Reel",
+        category: "대표 릴",
+        role: "테크니컬 아트 / VFX / 프레젠테이션",
         summary:
           "실시간 VFX, 라이팅, 셰이더, 플레이어블 연출을 묶어 보여주는 대표 테크니컬 아트 컬렉션입니다.",
         tags: ["테크니컬 아트", "VFX", "실시간 비주얼"],
@@ -135,6 +145,8 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "Ritual Pipeline",
+        category: "Workflow Relic",
+        role: "Technical Art Support / Tooling",
         summary:
           "A semi-real case study shaped from production-facing technical art support, artist tooling, and cross-discipline pipeline maintenance.",
         tags: ["Artist Tools", "Pipelines", "Optimization"],
@@ -151,6 +163,8 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "仪式管线",
+        category: "流程遗物",
+        role: "技术美术支持 / 工具开发",
         summary: "基于真实工作经历整理出的半真实案例，聚焦技术美术支持、艺术工具与跨团队制作流程。",
         tags: ["艺术工具", "制作流程", "优化"],
         what: "这个案例围绕技术美术在日常制作中的支持职责展开，重点是为美术、灯光、特效与场景团队降低流程摩擦。",
@@ -164,6 +178,8 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "Ritual Pipeline",
+        category: "ワークフロー記録",
+        role: "テクニカルアート支援 / ツーリング",
         summary:
           "実務経験をもとに再構成した、技術美術支援・アーティストツール・制作パイプライン改善のケースです。",
         tags: ["アーティストツール", "パイプライン", "最適化"],
@@ -179,6 +195,8 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "Ritual Pipeline",
+        category: "워크플로 기록",
+        role: "테크니컬 아트 지원 / 툴링",
         summary:
           "실무 경험을 기반으로 재구성한 반실제 케이스로, 테크니컬 아트 지원과 아티스트 툴, 파이프라인 개선에 초점을 둡니다.",
         tags: ["아티스트 툴", "파이프라인", "최적화"],
@@ -209,6 +227,8 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "Mobile Systems, Quietly Tuned",
+        category: "Playable System Record",
+        role: "Unity Developer / Feature Owner",
         summary:
           "A semi-real snapshot of gameplay system implementation for mobile projects where stability, iteration speed, and feature ownership mattered.",
         tags: ["Unity", "Gameplay Systems", "Live Support"],
@@ -225,6 +245,8 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "静默调校的移动系统",
+        category: "玩法系统档案",
+        role: "Unity 开发 / 功能负责人",
         summary: "一个基于移动项目经历整理的半真实案例，重点是 Unity 系统开发、稳定迭代与模块责任制。",
         tags: ["Unity", "玩法系统", "长期维护"],
         what: "这个项目卡以移动游戏开发经验为原型，强调系统模块的独立交付能力和持续迭代能力。",
@@ -238,6 +260,8 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "静かに磨いたモバイルシステム",
+        category: "ゲームプレイ記録",
+        role: "Unity 開発 / 機能オーナー",
         summary:
           "モバイル開発経験をもとにした半実例で、Unity システム実装・安定運用・継続改善に焦点を当てています。",
         tags: ["Unity", "ゲームプレイシステム", "継続運用"],
@@ -253,6 +277,8 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "조용하게 다듬은 모바일 시스템",
+        category: "플레이어블 시스템 기록",
+        role: "Unity 개발 / 기능 오너",
         summary:
           "모바일 게임 개발 경험을 바탕으로 한 반실제 사례로, Unity 시스템 구현과 안정적 반복 개선에 초점을 둡니다.",
         tags: ["Unity", "게임플레이 시스템", "라이브 운영"],

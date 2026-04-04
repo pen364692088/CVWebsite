@@ -7,7 +7,7 @@ export function AboutSection({ copy }: { copy: Dictionary["about"] }) {
     <section id="about" className="section-shell">
       <div className="section-grid">
         <Reveal>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <p className="section-kicker">{copy.eyebrow}</p>
             <h2 className="section-title">{copy.title}</h2>
             <p className="section-body">{copy.body}</p>
@@ -16,7 +16,17 @@ export function AboutSection({ copy }: { copy: Dictionary["about"] }) {
         </Reveal>
 
         <Reveal delay={0.12}>
-          <div className="archive-sheet pt-5">
+          <div className="record-sheet">
+            <div className="record-header">
+              <div className="space-y-2">
+                <p className="section-kicker">{copy.eyebrow}</p>
+                <p className="record-id">Record A-01 · Active Catalog</p>
+              </div>
+              <div className="record-seal" aria-hidden="true">
+                ZL
+              </div>
+            </div>
+
             <div className="dossier-list">
               {copy.dossier.map((item) => (
                 <div key={item.label} className="dossier-row">

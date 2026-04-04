@@ -41,6 +41,13 @@ select {
   outline-offset: 3px;
 }
 
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 1px solid rgba(201, 106, 43, 0.72);
+}
+
 ::selection {
   background: rgba(201, 106, 43, 0.24);
 }
@@ -87,29 +94,21 @@ select {
   border-radius: var(--radius-panel);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01)),
-    rgba(23, 26, 31, 0.72);
+    rgba(23, 26, 31, 0.8);
   box-shadow: var(--shadow-deep);
 }
 
-.ritual-card {
-  height: 100%;
-  border-top: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line-soft);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0.008)),
-    rgba(17, 19, 23, 0.58);
-  padding: clamp(1.5rem, 2vw, 2rem) 0;
-}
-
 .artifact-card {
-  display: block;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
   overflow: hidden;
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-soft);
   border-radius: var(--radius-card);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.008)),
-    rgba(18, 20, 24, 0.56);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.016), rgba(255, 255, 255, 0.008)),
+    rgba(18, 20, 24, 0.6);
   box-shadow: var(--shadow-card);
   transition:
     transform var(--motion-base) ease,
@@ -121,14 +120,32 @@ select {
   border-top-color: rgba(201, 106, 43, 0.38);
   border-bottom-color: rgba(216, 211, 200, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.01)),
-    rgba(19, 22, 27, 0.72);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.012)),
+    rgba(19, 22, 27, 0.76);
+}
+
+.artifact-ledger,
+.artifact-modal-ledger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 1rem 1.25rem 0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.7);
+}
+
+.artifact-modal-ledger {
+  padding: 0 0 1rem;
 }
 
 .artifact-image-frame {
   position: relative;
   overflow: hidden;
   border-radius: calc(var(--radius-media) + 0.1rem);
+  margin: 1.1rem 1.1rem 0;
   background: linear-gradient(180deg, rgba(140, 119, 81, 0.12), rgba(11, 13, 16, 0.18));
 }
 
@@ -139,12 +156,70 @@ select {
   background: linear-gradient(180deg, rgba(11, 13, 16, 0) 0%, rgba(11, 13, 16, 0.22) 100%);
 }
 
+.artifact-plaque {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.35rem 1.25rem 1.4rem;
+  text-align: left;
+}
+
+.artifact-role {
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(140, 119, 81, 0.84);
+}
+
+.artifact-meta-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.artifact-meta-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(140, 119, 81, 0.8);
+}
+
+.artifact-meta-value {
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: rgba(216, 211, 200, 0.9);
+}
+
+.artifact-open-link {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.7);
+}
+
+.artifact-annex {
+  margin-top: 2rem;
+  display: flex;
+  min-height: 14rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-soft);
+  padding: 1.5rem 0 0.25rem;
+}
+
 .primary-button,
 .secondary-button,
 .icon-button,
 .contact-link,
 .language-select,
-.signal-link {
+.signal-link,
+.signal-route,
+.relic-select {
   transition:
     background-color var(--motion-fast) ease,
     border-color var(--motion-fast) ease,
@@ -179,7 +254,8 @@ select {
   box-shadow: 0 0 0 1px rgba(201, 106, 43, 0.14), 0 18px 42px rgba(201, 106, 43, 0.22);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -190,7 +266,7 @@ select {
   color: var(--ivory);
 }
 
-.secondary-button:hover {
+.secondary-button:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(140, 119, 81, 0.62);
   background: rgba(255, 255, 255, 0.05);
@@ -260,6 +336,11 @@ select {
   color: var(--mist);
 }
 
+.detail-block ul {
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
 .media-frame {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -267,27 +348,6 @@ select {
   border-radius: var(--radius-media);
   border: 1px solid rgba(216, 211, 200, 0.08);
   background: rgba(255, 255, 255, 0.02);
-}
-
-.contact-link,
-.signal-link {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  padding-block: 1rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.contact-link:last-child,
-.signal-link:last-child {
-  border-bottom: none;
-}
-
-.contact-link:hover,
-.signal-link:hover {
-  border-color: rgba(140, 119, 81, 0.42);
-  color: var(--ivory);
 }
 
 .hero-stage {
@@ -308,9 +368,9 @@ select {
 }
 
 .hero-copy {
-  width: min(100%, 32rem);
   position: relative;
   z-index: 2;
+  width: min(100%, 32rem);
 }
 
 .hero-brandline {
@@ -460,7 +520,7 @@ select {
 .hero-firelight::before {
   inset: 0;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(201, 106, 43, 0.32) 0%, rgba(201, 106, 43, 0.08) 34%, transparent 72%);
+  background: radial-gradient(circle, rgba(201, 106, 43, 0.3) 0%, rgba(201, 106, 43, 0.08) 34%, transparent 72%);
   filter: blur(4px);
 }
 
@@ -487,9 +547,42 @@ select {
   box-shadow: 0 0 20px rgba(201, 106, 43, 0.32);
 }
 
-.archive-sheet {
+.record-sheet {
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    rgba(15, 17, 20, 0.34);
+  padding: 1.25rem 0 0.2rem;
+}
+
+.record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.record-id {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(216, 211, 200, 0.65);
+}
+
+.record-seal {
+  display: inline-flex;
+  height: 4rem;
+  width: 4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(140, 119, 81, 0.48);
+  border-radius: 999px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.2rem;
+  color: rgba(216, 211, 200, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(216, 211, 200, 0.05);
 }
 
 .dossier-list {
@@ -543,10 +636,55 @@ select {
   color: rgba(140, 119, 81, 0.78);
 }
 
-.signal-sheet {
+.signal-frame {
   display: grid;
   gap: 2rem;
   border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-soft);
+  padding-top: 1.3rem;
+}
+
+.signal-route-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.signal-route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  padding-block: 1rem;
+}
+
+.signal-route:hover {
+  border-color: rgba(140, 119, 81, 0.42);
+  color: var(--ivory);
+}
+
+.signal-route-disabled {
+  opacity: 0.74;
+}
+
+.signal-route-key {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(140, 119, 81, 0.84);
+}
+
+.signal-route-value {
+  text-align: right;
+  font-size: 0.95rem;
+  color: rgba(216, 211, 200, 0.88);
+}
+
+.resume-folio {
+  display: grid;
+  gap: 1.25rem;
 }
 
 .resume-preview-grid {
@@ -572,8 +710,154 @@ select {
   pointer-events: none;
 }
 
-.game-board {
-  min-height: 30rem;
+.relic-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.relic-stage {
+  position: relative;
+  min-height: 28rem;
+  overflow: hidden;
+  border-radius: calc(var(--radius-panel) + 0.2rem);
+  border-top: 1px solid rgba(140, 119, 81, 0.42);
+  border-bottom: 1px solid rgba(216, 211, 200, 0.08);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(140, 119, 81, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(18, 20, 24, 0.92), rgba(9, 10, 12, 0.98));
+}
+
+.relic-stage::after {
+  content: "";
+  position: absolute;
+  inset: 1rem;
+  border: 1px solid rgba(216, 211, 200, 0.05);
+  border-radius: calc(var(--radius-panel) - 0.2rem);
+  pointer-events: none;
+}
+
+.relic-axis {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  z-index: 1;
+  height: 76%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(216, 211, 200, 0.04), rgba(216, 211, 200, 0.34), rgba(216, 211, 200, 0.04));
+}
+
+.relic-ring-shell {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.relic-ring {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  z-index: 2;
+  border: 1px solid rgba(216, 211, 200, 0.1);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(140, 119, 81, 0.08);
+}
+
+.relic-ring-selected {
+  border-color: rgba(201, 106, 43, 0.36);
+}
+
+.relic-ring-unlocked {
+  border-color: rgba(201, 106, 43, 0.5);
+}
+
+.relic-glyph {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(216, 211, 200, 0.18);
+}
+
+.relic-glyph-target {
+  background: rgba(201, 106, 43, 0.9);
+  box-shadow: 0 0 12px rgba(201, 106, 43, 0.28);
+}
+
+.relic-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  height: 7rem;
+  width: 7rem;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 1px solid rgba(140, 119, 81, 0.48);
+  background:
+    radial-gradient(circle, rgba(216, 211, 200, 0.12) 0%, rgba(140, 119, 81, 0.12) 44%, rgba(13, 14, 16, 0.9) 100%);
+}
+
+.relic-core-unlocked {
+  border-color: rgba(201, 106, 43, 0.6);
+  box-shadow: 0 0 24px rgba(201, 106, 43, 0.18);
+}
+
+.relic-core-mark {
+  display: block;
+  height: 1rem;
+  width: 1rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(248, 189, 124, 0.96), rgba(201, 106, 43, 0.92));
+}
+
+.relic-console {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-soft);
+  padding: 1.3rem 0 0.25rem;
+}
+
+.relic-status-bar {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.8fr);
+}
+
+.relic-control-row {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 0.9rem;
+}
+
+.relic-select {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: var(--radius-action);
+  border: 1px solid rgba(140, 119, 81, 0.28);
+  background: rgba(255, 255, 255, 0.02);
+  padding-inline: 0.95rem;
+  color: rgba(216, 211, 200, 0.88);
+}
+
+.relic-select-active {
+  border-color: rgba(201, 106, 43, 0.44);
+  background: rgba(201, 106, 43, 0.08);
+}
+
+.relic-rotate {
+  min-width: 8.6rem;
 }
 
 @media (min-width: 900px) {
@@ -585,8 +869,13 @@ select {
     grid-template-columns: 0.92fr 1.08fr;
   }
 
-  .signal-sheet {
+  .signal-frame {
     grid-template-columns: 0.78fr 1.22fr;
+    align-items: start;
+  }
+
+  .relic-layout {
+    grid-template-columns: 1.05fr 0.95fr;
     align-items: start;
   }
 }
@@ -611,6 +900,12 @@ select {
 
   .hero-firelight {
     left: 58%;
+  }
+
+  .artifact-meta-grid,
+  .relic-status-bar,
+  .relic-control-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -656,8 +951,19 @@ select {
     height: 4.9rem;
   }
 
-  .dossier-row {
+  .dossier-row,
+  .artifact-meta-grid,
+  .relic-status-bar,
+  .relic-control-row {
     grid-template-columns: 1fr;
+  }
+
+  .record-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dossier-row {
     gap: 0.35rem;
   }
 
@@ -666,8 +972,26 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .game-board {
-    min-height: 26rem;
+  .signal-route,
+  .artifact-annex {
+    align-items: flex-start;
+  }
+
+  .signal-route {
+    flex-direction: column;
+  }
+
+  .signal-route-value {
+    text-align: left;
+  }
+
+  .relic-stage {
+    min-height: 24rem;
+  }
+
+  .relic-core {
+    height: 5.5rem;
+    width: 5.5rem;
   }
 }
 

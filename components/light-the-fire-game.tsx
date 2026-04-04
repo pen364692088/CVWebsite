@@ -2,257 +2,283 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useState } from "react";
 
-type Point = { x: number; y: number };
-type Ember = Point & { id: string };
-export type GameState = "idle" | "exploring" | "readyToIgnite" | "ignited" | "replay";
+import type { Dictionary } from "@/data/dictionaries";
+import { ARCHIVE_UNLOCK_EVENT, ARCHIVE_UNLOCK_KEY } from "@/lib/archive";
 
-const embers: Ember[] = [
-  { id: "ember-north", x: 18, y: 30 },
-  { id: "ember-east", x: 78, y: 42 },
-  { id: "ember-west", x: 36, y: 72 },
-];
+export type GameState = "idle" | "solving" | "readyToIgnite" | "ignited" | "failed";
 
-const firePoint = { x: 62, y: 76 };
-
-function distance(a: Point, b: Point) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
+const RING_SEGMENTS = [12, 8, 6];
+const INITIAL_RINGS = [3, 7, 1];
+const MAX_MOVES = 12;
+const RING_SIZES = [100, 74, 48];
 
 interface LightTheFireGameProps {
-  copy: {
-    intro: string;
-    instructions: string;
-    progressLabel: string;
-    startLabel: string;
-    readyLabel: string;
-    igniteLabel: string;
-    replayLabel: string;
-    unlockedTitle: string;
-    unlockedBody: string;
-    unlockedCta: string;
-  };
+  copy: Dictionary["game"];
   locale: string;
+}
+
+function normalize(value: number, segments: number) {
+  return (value + segments) % segments;
+}
+
+function isSolved(rings: number[]) {
+  return rings.every((value) => value === 0);
 }
 
 export function LightTheFireGame({ copy, locale }: LightTheFireGameProps) {
   const reducedMotion = useReducedMotion();
-  const boardRef = useRef<HTMLDivElement>(null);
-  const [orb, setOrb] = useState<Point>({ x: 14, y: 60 });
-  const [state, setState] = useState<GameState>("idle");
-  const [collected, setCollected] = useState<string[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const canIgnite = collected.length === embers.length && distance(orb, firePoint) < 14;
-
-  useEffect(() => {
-    if (state === "idle" && collected.length > 0) {
-      setState("exploring");
-    }
-  }, [collected.length, state]);
+  const instructionsId = useId();
+  const statusId = useId();
+  const [ringPositions, setRingPositions] = useState(INITIAL_RINGS);
+  const [movesRemaining, setMovesRemaining] = useState(MAX_MOVES);
+  const [selectedRing, setSelectedRing] = useState(0);
+  const [gameState, setGameState] = useState<GameState>("idle");
+  const [archiveUnlocked, setArchiveUnlocked] = useState(false);
 
   useEffect(() => {
-    if (collected.length === embers.length && state !== "ignited") {
-      setState("readyToIgnite");
+    if (window.localStorage.getItem(ARCHIVE_UNLOCK_KEY) === "true") {
+      setArchiveUnlocked(true);
+      setGameState("ignited");
     }
-  }, [collected.length, state]);
+  }, []);
 
-  const statusText = useMemo(() => {
-    if (state === "ignited") return copy.unlockedBody;
-    if (state === "readyToIgnite") return copy.readyLabel;
-    return copy.instructions;
-  }, [copy.instructions, copy.readyLabel, copy.unlockedBody, state]);
+  function beginRite() {
+    if (gameState === "readyToIgnite" || gameState === "ignited") return;
+    setGameState(isSolved(ringPositions) ? "readyToIgnite" : "solving");
+  }
 
-  function updateOrb(next: Point) {
-    const clamped = {
-      x: Math.min(92, Math.max(8, next.x)),
-      y: Math.min(88, Math.max(12, next.y)),
-    };
+  function rotateRing(index: number, direction: -1 | 1) {
+    if (gameState === "failed" || gameState === "ignited") return;
 
-    setOrb(clamped);
-    setCollected((current) => {
-      const nextCollected = [...current];
+    const nextPositions = ringPositions.map((value, ringIndex) =>
+      ringIndex === index ? normalize(value + direction, RING_SEGMENTS[ringIndex]) : value,
+    );
+    const nextMoves = Math.max(movesRemaining - 1, 0);
+    const solved = isSolved(nextPositions);
 
-      for (const ember of embers) {
-        if (!nextCollected.includes(ember.id) && distance(clamped, ember) < 10) {
-          nextCollected.push(ember.id);
-        }
+    setSelectedRing(index);
+    setRingPositions(nextPositions);
+    setMovesRemaining(nextMoves);
+
+    if (solved) {
+      setGameState("readyToIgnite");
+      return;
+    }
+
+    if (nextMoves === 0) {
+      setGameState("failed");
+      return;
+    }
+
+    setGameState("solving");
+  }
+
+  function releaseArchive() {
+    if (!isSolved(ringPositions)) return;
+
+    setArchiveUnlocked(true);
+    setGameState("ignited");
+    window.localStorage.setItem(ARCHIVE_UNLOCK_KEY, "true");
+    window.dispatchEvent(new Event(ARCHIVE_UNLOCK_EVENT));
+  }
+
+  function resetPuzzle() {
+    setRingPositions(INITIAL_RINGS);
+    setMovesRemaining(MAX_MOVES);
+    setSelectedRing(0);
+    setGameState("idle");
+  }
+
+  function handleKeyDown(event: import("react").KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelectedRing((current) => normalize(current - 1, copy.ringLabels.length));
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelectedRing((current) => normalize(current + 1, copy.ringLabels.length));
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      if (gameState === "idle") beginRite();
+      rotateRing(selectedRing, -1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      if (gameState === "idle") beginRite();
+      rotateRing(selectedRing, 1);
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      if (gameState === "idle" || gameState === "failed") {
+        beginRite();
+        return;
       }
 
-      return nextCollected;
-    });
+      if (gameState === "readyToIgnite") {
+        releaseArchive();
+      }
+    }
   }
 
-  function pointFromClient(clientX: number, clientY: number): Point | null {
-    const board = boardRef.current;
-    if (!board) return null;
-
-    const rect = board.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-
-    return { x, y };
-  }
-
-  function handlePointerMove(clientX: number, clientY: number) {
-    const point = pointFromClient(clientX, clientY);
-    if (!point) return;
-
-    if (state === "idle") setState("exploring");
-    updateOrb(point);
-  }
-
-  function handleIgnite() {
-    if (!canIgnite) return;
-    setState("ignited");
-  }
-
-  function handleReplay() {
-    setOrb({ x: 14, y: 60 });
-    setCollected([]);
-    setIsDragging(false);
-    setState("replay");
-    window.setTimeout(() => setState("idle"), 20);
-  }
+  let statusText = copy.instructions;
+  if (gameState === "failed") statusText = copy.failedLabel;
+  if (gameState === "readyToIgnite") statusText = copy.readyLabel;
+  if (archiveUnlocked || gameState === "ignited") statusText = copy.unlockedBody;
 
   return (
-    <div className="space-y-5">
-      <p className="max-w-2xl text-sm leading-6 text-mist">{copy.intro}</p>
-
+    <div className="relic-layout">
       <div
-        ref={boardRef}
-        className="game-board group relative overflow-hidden rounded-[32px] border border-white/10 bg-[#0d0e10]"
+        className="relic-stage"
         tabIndex={0}
-        role="application"
+        aria-describedby={`${instructionsId} ${statusId}`}
         aria-label={copy.instructions}
-        onPointerDown={(event) => {
-          setIsDragging(true);
-          handlePointerMove(event.clientX, event.clientY);
-        }}
-        onPointerMove={(event) => {
-          if (!isDragging) return;
-          handlePointerMove(event.clientX, event.clientY);
-        }}
-        onPointerUp={() => setIsDragging(false)}
-        onPointerLeave={() => setIsDragging(false)}
-        onTouchStart={(event) => {
-          const touch = event.touches[0];
-          if (!touch) return;
-          setIsDragging(true);
-          handlePointerMove(touch.clientX, touch.clientY);
-        }}
-        onTouchMove={(event) => {
-          const touch = event.touches[0];
-          if (!touch) return;
-          handlePointerMove(touch.clientX, touch.clientY);
-        }}
-        onTouchEnd={() => setIsDragging(false)}
-        onKeyDown={(event) => {
-          const step = 4;
-
-          if (state === "idle") setState("exploring");
-
-          if (event.key === "ArrowUp") updateOrb({ x: orb.x, y: orb.y - step });
-          if (event.key === "ArrowDown") updateOrb({ x: orb.x, y: orb.y + step });
-          if (event.key === "ArrowLeft") updateOrb({ x: orb.x - step, y: orb.y });
-          if (event.key === "ArrowRight") updateOrb({ x: orb.x + step, y: orb.y });
-          if (event.key === "Enter") handleIgnite();
-        }}
+        onKeyDown={handleKeyDown}
       >
-        <motion.div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#4a3120_0%,transparent_38%),radial-gradient(circle_at_75%_15%,rgba(90,42,36,0.45),transparent_30%),linear-gradient(180deg,#131519_0%,#08090b_100%)]"
-          animate={reducedMotion ? undefined : { opacity: [0.94, 1, 0.95] }}
-          transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY }}
-        />
+        <div className="relic-axis" aria-hidden="true" />
 
-        {embers.map((ember) => {
-          const found = collected.includes(ember.id);
+        {copy.ringLabels.map((label, index) => {
+          const segments = RING_SEGMENTS[index];
+          const size = RING_SIZES[index];
+
           return (
-            <motion.div
-              key={ember.id}
-              className={`absolute h-3 w-3 rounded-full ${found ? "bg-gold" : "bg-ember/60"}`}
-              style={{ left: `${ember.x}%`, top: `${ember.y}%` }}
-              animate={
-                reducedMotion
-                  ? undefined
-                  : {
-                      scale: found ? 1 : [0.8, 1.15, 0.9],
-                      opacity: found ? 0.95 : [0.3, 0.8, 0.35],
-                    }
-              }
-              transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-            />
+            <div key={label} className="relic-ring-shell" style={{ width: `${size}%`, height: `${size}%` }}>
+              <motion.div
+                className={`relic-ring ${selectedRing === index ? "relic-ring-selected" : ""} ${
+                  archiveUnlocked ? "relic-ring-unlocked" : ""
+                }`}
+                animate={reducedMotion ? undefined : { rotate: (360 / segments) * ringPositions[index] }}
+                transition={{ type: "spring", stiffness: 90, damping: 18 }}
+              >
+                {Array.from({ length: segments }).map((_, glyphIndex) => (
+                  <span
+                    key={`${label}-${glyphIndex}`}
+                    className={`relic-glyph ${glyphIndex === 0 ? "relic-glyph-target" : ""}`}
+                    style={{
+                      transform: `translate(-50%, -50%) rotate(${(360 / segments) * glyphIndex}deg) translateY(calc(${size / -2}% + 0.55rem))`,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </div>
           );
         })}
 
-        <button
-          type="button"
-          className={`absolute h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border transition ${
-            canIgnite
-              ? "border-ember/80 bg-ember/15 shadow-[0_0_40px_rgba(201,106,43,0.35)]"
-              : "border-gold/20 bg-gold/5"
-          }`}
-          style={{ left: `${firePoint.x}%`, top: `${firePoint.y}%` }}
-          onClick={handleIgnite}
-          aria-label={copy.igniteLabel}
-        >
-          <span className={`mx-auto block h-8 w-8 rounded-full ${state === "ignited" ? "bg-ember" : "bg-gold/35"}`} />
-        </button>
-
         <motion.div
-          className="pointer-events-none absolute h-16 w-16 rounded-full border border-ivory/30 bg-ivory/8 shadow-[0_0_80px_rgba(216,211,200,0.3)]"
-          style={{ left: `${orb.x}%`, top: `${orb.y}%`, translateX: "-50%", translateY: "-50%" }}
-          animate={reducedMotion ? undefined : { scale: [1, 1.06, 0.98] }}
-          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-        />
+          className={`relic-core ${archiveUnlocked ? "relic-core-unlocked" : ""}`}
+          animate={reducedMotion ? undefined : { scale: archiveUnlocked ? [1, 1.04, 1] : [0.98, 1.02, 1] }}
+          transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+        >
+          <span className="relic-core-mark" aria-hidden="true" />
+        </motion.div>
+      </div>
 
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_var(--orb-x,_50%)_var(--orb-y,_50%),rgba(255,255,255,0.06),transparent_24%),radial-gradient(circle_at_var(--orb-x,_50%)_var(--orb-y,_50%),transparent_0%,rgba(0,0,0,0.72)_25%,rgba(0,0,0,0.9)_65%)]"
-          style={
-            {
-              "--orb-x": `${orb.x}%`,
-              "--orb-y": `${orb.y}%`,
-            } as CSSProperties
-          }
-        />
+      <div className="relic-console">
+        <p id={instructionsId} className="text-sm leading-7 text-mist">
+          {copy.instructions}
+        </p>
 
-        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-sm">
+        <div className="relic-status-bar">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-gold">{copy.progressLabel}</p>
-            <p className="text-sm text-ivory">
-              {collected.length} / {embers.length}
+            <p className="artifact-meta-label">{copy.statusLabel}</p>
+            <p id={statusId} aria-live="polite" className="artifact-meta-value">
+              {statusText}
+            </p>
+          </div>
+          <div>
+            <p className="artifact-meta-label">{copy.movesLabel}</p>
+            <p className="artifact-meta-value">{movesRemaining}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {copy.ringLabels.map((label, index) => (
+            <div key={label} className="relic-control-row">
+              <button
+                type="button"
+                className={`relic-select ${selectedRing === index ? "relic-select-active" : ""}`}
+                onClick={() => setSelectedRing(index)}
+                aria-pressed={selectedRing === index}
+              >
+                {label}
+              </button>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="secondary-button relic-rotate"
+                  onClick={() => {
+                    if (gameState === "idle") beginRite();
+                    rotateRing(index, -1);
+                  }}
+                  disabled={gameState === "failed" || gameState === "ignited"}
+                  aria-label={`${label}: ${copy.rotateLeftLabel}`}
+                >
+                  {copy.rotateLeftLabel}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button relic-rotate"
+                  onClick={() => {
+                    if (gameState === "idle") beginRite();
+                    rotateRing(index, 1);
+                  }}
+                  disabled={gameState === "failed" || gameState === "ignited"}
+                  aria-label={`${label}: ${copy.rotateRightLabel}`}
+                >
+                  {copy.rotateRightLabel}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={beginRite}
+            disabled={gameState === "solving" || gameState === "readyToIgnite"}
+          >
+            {copy.startLabel}
+          </button>
+          <button type="button" className="primary-button" onClick={releaseArchive} disabled={!isSolved(ringPositions)}>
+            {copy.igniteLabel}
+          </button>
+          <button type="button" className="secondary-button" onClick={resetPuzzle}>
+            {copy.replayLabel}
+          </button>
+        </div>
+
+        <div className="artifact-annex min-h-0">
+          <div className="space-y-3">
+            <p className="section-kicker">{copy.unlockedTitle}</p>
+            <h3 className="font-display text-2xl text-ivory">{copy.unlockedTitle}</h3>
+            <p className="text-sm leading-7 text-mist">
+              {archiveUnlocked || gameState === "ignited" ? copy.unlockedBody : copy.instructions}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="secondary-button" onClick={() => setState("exploring")}>
-              {copy.startLabel}
-            </button>
-            <button type="button" className="primary-button" onClick={handleIgnite} disabled={!canIgnite}>
-              {copy.igniteLabel}
-            </button>
-            <button type="button" className="secondary-button" onClick={handleReplay}>
-              {copy.replayLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 rounded-[28px] border border-white/10 bg-white/[0.03] px-5 py-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <p aria-live="polite" className="text-sm leading-6 text-mist">
-            {statusText}
-          </p>
-        </div>
-        <div className="flex flex-col justify-between gap-3 lg:items-end">
-          <div className="text-right">
-            <p className="font-display text-xl text-ivory">{copy.unlockedTitle}</p>
-            <p className="text-sm text-mist">{state === "ignited" ? copy.unlockedBody : copy.instructions}</p>
-          </div>
-          <Link href={`/${locale}/#contact`} className="primary-button inline-flex w-fit items-center">
-            {copy.unlockedCta}
-          </Link>
+          {archiveUnlocked || gameState === "ignited" ? (
+            <Link href={`/${locale}/#artifacts`} className="primary-button w-fit">
+              {copy.unlockedCta}
+            </Link>
+          ) : (
+            <span className="secondary-button w-fit" aria-disabled="true">
+              {copy.unlockedCta}
+            </span>
+          )}
         </div>
       </div>
     </div>

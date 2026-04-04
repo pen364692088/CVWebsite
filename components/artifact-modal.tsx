@@ -10,7 +10,11 @@ import { assetPath } from "@/lib/site";
 interface ArtifactModalProps {
   artifact: {
     slug: string;
+    featured: boolean;
+    caseNumber: string;
     title: string;
+    category: string;
+    role: string;
     summary: string;
     tags: string[];
     what: string;
@@ -31,6 +35,7 @@ interface ArtifactModalProps {
 
 export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalProps) {
   const reducedMotion = useReducedMotion();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -42,7 +47,36 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
     closeRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      }
+
+      if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -58,16 +92,18 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
     <AnimatePresence>
       {artifact ? (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/82 px-4 py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`${artifact.slug}-title`}
+            aria-describedby={`${artifact.slug}-summary`}
             className="ritual-panel relative w-full max-w-5xl p-6 sm:p-8"
             initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -79,14 +115,35 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
               {dictionary.closeLabel}
             </button>
 
-            <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-5">
+                <div className="artifact-modal-ledger">
+                  <span>
+                    {dictionary.caseLabel} {artifact.caseNumber}
+                  </span>
+                  <span>{artifact.category}</span>
+                  <span>{artifact.role}</span>
+                </div>
+
                 <div>
-                  <p className="section-kicker">{dictionary.featuredLabel}</p>
+                  <p className="section-kicker">{artifact.featured ? dictionary.featuredLabel : artifact.category}</p>
                   <h2 id={`${artifact.slug}-title`} className="font-display text-3xl text-ivory sm:text-4xl">
                     {artifact.title}
                   </h2>
-                  <p className="mt-3 max-w-3xl text-base leading-7 text-mist">{artifact.summary}</p>
+                  <p id={`${artifact.slug}-summary`} className="mt-3 max-w-3xl text-base leading-7 text-mist">
+                    {artifact.summary}
+                  </p>
+                </div>
+
+                <div className="artifact-meta-grid">
+                  <div>
+                    <p className="artifact-meta-label">{dictionary.categoryLabel}</p>
+                    <p className="artifact-meta-value">{artifact.category}</p>
+                  </div>
+                  <div>
+                    <p className="artifact-meta-label">{dictionary.roleLabel}</p>
+                    <p className="artifact-meta-value">{artifact.role}</p>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -106,7 +163,7 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
                     <h3>{dictionary.contributionLabel}</h3>
                     <ul className="space-y-2 text-sm leading-6 text-mist">
                       {artifact.contribution.map((item) => (
-                        <li key={item}>• {item}</li>
+                        <li key={item}>{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -114,7 +171,7 @@ export function ArtifactModal({ artifact, dictionary, onClose }: ArtifactModalPr
                     <h3>{dictionary.techLabel}</h3>
                     <ul className="space-y-2 text-sm leading-6 text-mist">
                       {artifact.technologies.map((item) => (
-                        <li key={item}>• {item}</li>
+                        <li key={item}>{item}</li>
                       ))}
                     </ul>
                   </div>

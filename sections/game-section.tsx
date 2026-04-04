@@ -16,6 +16,7 @@ export function GameSection({ copy, locale }: GameSectionProps) {
         <div className="mb-10 max-w-3xl space-y-4">
           <p className="section-kicker">{copy.eyebrow}</p>
           <h2 className="section-title">{copy.title}</h2>
+          <p className="section-body">{copy.intro}</p>
         </div>
       </Reveal>
 

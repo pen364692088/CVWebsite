@@ -187,7 +187,10 @@ async function run() {
         await page.keyboard.press("Escape");
         await page.locator('[role="dialog"]').waitFor({ state: "hidden" });
 
-        await page.locator("#contact").scrollIntoViewIfNeeded();
+        for (const section of ["#about", "#disciplines", "#artifacts", "#fire", "#contact"]) {
+          await page.locator(section).scrollIntoViewIfNeeded();
+          await delay(150);
+        }
         await page.screenshot({
           path: path.join(outputDir, `${scenario.name}.png`),
           fullPage: true,
@@ -204,12 +207,17 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        const gameBoard = gamePage.locator('[role="application"]').first();
+        const gameBoard = gamePage.locator(".relic-stage").first();
         await gameBoard.scrollIntoViewIfNeeded();
-        await gameBoard.focus();
-        await gamePage.keyboard.press("ArrowRight");
-        await gamePage.keyboard.press("ArrowUp");
-        await gamePage.locator("text=Embers found").waitFor();
+        await gamePage.getByRole("button", { name: "Begin the rite" }).click();
+
+        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
+        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
+        await gamePage.getByRole("button", { name: "Outer Ring: Rotate left" }).click();
+        await gamePage.getByRole("button", { name: "Middle Ring: Rotate right" }).click();
+        await gamePage.getByRole("button", { name: "Inner Ring: Rotate left" }).click();
+        await gamePage.getByRole("button", { name: "Release the archive" }).click();
+        await gamePage.getByRole("heading", { name: "Archive shelf unlocked." }).waitFor();
       } finally {
         await gameContext.close();
       }
