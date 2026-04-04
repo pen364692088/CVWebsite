@@ -53,8 +53,8 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
   },
   {
     id: "front-smoke",
-    src: "/atmosphere/smoke-band.svg",
-    alt: "Generated foreground smoke used to frame the ritual cards and lower terrain.",
+    src: "/atmosphere/smoke-band.jpg",
+    alt: "Generated raster foreground smoke used to frame the ritual cards and lower terrain.",
     depth: 0.28,
     opacity: 0.56,
     mobileOpacity: 0.38,
@@ -66,7 +66,7 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
 export const HERO_PARTICLE_PRESETS: ParticlePreset[] = [
   {
     id: "embers",
-    src: "/atmosphere/ember-sprite.svg",
+    src: "/atmosphere/ember-sprite.png",
     count: 8,
     mobileCount: 5,
     reducedMotionCount: 3,
@@ -76,7 +76,7 @@ export const HERO_PARTICLE_PRESETS: ParticlePreset[] = [
   },
   {
     id: "ash",
-    src: "/atmosphere/ash-sprite.svg",
+    src: "/atmosphere/ash-sprite.png",
     count: 6,
     mobileCount: 3,
     reducedMotionCount: 2,

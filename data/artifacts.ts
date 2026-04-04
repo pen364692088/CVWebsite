@@ -59,7 +59,7 @@ const artifacts: Artifact[] = [
       },
       {
         kind: "image",
-        src: "/artifacts/egocore-diagram.svg",
+        src: "/artifacts/egocore-diagram.jpg",
         alt: "Public-safe diagram showing EgoCore as a runtime host, orchestration layer, and governance shell.",
         label: "EgoCore runtime diagram",
       },
@@ -191,7 +191,7 @@ const artifacts: Artifact[] = [
       },
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-diagram.svg",
+        src: "/artifacts/ashen-archive-diagram.jpg",
         alt: "Public-safe diagram showing the site as a scene-led archive interface with ritual cards and reading sigils.",
         label: "Ashen Archive interface diagram",
       },
@@ -221,7 +221,7 @@ const artifacts: Artifact[] = [
             text: "Shaped the atmosphere layer, hero composition, ritual cards, and sigil language so the site feels curated rather than templated.",
           },
         ],
-        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
+        technologies: ["Next.js", "TypeScript", "Motion", "Generated raster art", "Static export"],
         solved:
           "Turned a personal site into a memorable archive interface without sacrificing scanability, localization, or static-export safety.",
       },
@@ -249,7 +249,7 @@ const artifacts: Artifact[] = [
             text: "确定氛围层、首屏构图、祭坛卡片和符印语言，让站点更像被策展过的档案，而不是现成模板。",
           },
         ],
-        technologies: ["Next.js", "TypeScript", "Motion", "SVG 资产流程", "静态导出"],
+        technologies: ["Next.js", "TypeScript", "Motion", "栅格资产流程", "静态导出"],
         solved: "把个人站做成有记忆点的档案界面，同时不牺牲可扫读性、多语言结构和 GitHub Pages 静态部署安全性。",
       },
       ja: {
@@ -276,7 +276,7 @@ const artifacts: Artifact[] = [
             text: "雰囲気レイヤー、hero 構図、儀式カード、sigil 言語を設計し、テンプレート感ではなくキュレーション感を作りました。",
           },
         ],
-        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
+        technologies: ["Next.js", "TypeScript", "Motion", "Generated raster art", "Static export"],
         solved:
           "覚えやすい公開アーカイブ体験を作りつつ、可読性、多言語構造、静的配備の安全性を守りました。",
       },
@@ -304,7 +304,7 @@ const artifacts: Artifact[] = [
             text: "분위기 레이어, hero 구도, 의식 카드, sigil 언어를 설계해 템플릿이 아니라 큐레이션된 아카이브처럼 느껴지게 했습니다.",
           },
         ],
-        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
+        technologies: ["Next.js", "TypeScript", "Motion", "Generated raster art", "Static export"],
         solved: "기억에 남는 공개 아카이브 경험을 만들면서도 가독성, 다국어 구조, 정적 배포 안정성을 지켰습니다.",
       },
     },
@@ -323,7 +323,7 @@ const artifacts: Artifact[] = [
       },
       {
         kind: "image",
-        src: "/artifacts/openemotion-diagram.svg",
+        src: "/artifacts/openemotion-diagram.jpg",
         alt: "Public-safe diagram showing OpenEmotion as a reflective self-model, memory, and appraisal core.",
         label: "OpenEmotion reflective core diagram",
       },

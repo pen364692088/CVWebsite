@@ -135,7 +135,7 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
               style={reducedMotion ? undefined : { x: dragonOffsetX, y: dragonOffsetY }}
             >
               <Image
-                src={assetPath("/hero/abyss-dragon-silhouette.svg")}
+                src={assetPath("/hero/abyss-dragon-silhouette.png")}
                 alt=""
                 width={620}
                 height={260}

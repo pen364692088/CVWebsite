@@ -86,13 +86,13 @@ The current UI keeps this entry lightweight. If you publish a studio-safe dossie
 
 Current artifact visuals live in:
 
-- `public/artifacts/egocore-cover.svg`
-- `public/artifacts/egocore-diagram.svg`
-- `public/artifacts/ashen-archive-cover.svg`
-- `public/artifacts/ashen-archive-diagram.svg`
-- `public/artifacts/openemotion-cover.svg`
-- `public/artifacts/openemotion-diagram.svg`
-- `public/hero/abyss-hero-matte.svg`
+- `public/artifacts/egocore-cover.jpg`
+- `public/artifacts/egocore-diagram.jpg`
+- `public/artifacts/ashen-archive-cover.jpg`
+- `public/artifacts/ashen-archive-diagram.jpg`
+- `public/artifacts/openemotion-cover.jpg`
+- `public/artifacts/openemotion-diagram.jpg`
+- `public/hero/abyss-hero-matte.jpg`
 - `public/atmosphere/*`
 
 Asset provenance and generation notes are tracked in `docs/assets-manifest.md`.

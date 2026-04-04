@@ -19,9 +19,17 @@ const expectedFiles = [
   "out/ja/index.html",
   "out/ko/index.html",
   "out/hero/abyss-hero-matte.jpg",
+  "out/hero/abyss-dragon-silhouette.png",
+  "out/hero/abyss-ornament.png",
+  "out/atmosphere/smoke-band.jpg",
+  "out/atmosphere/ember-sprite.png",
+  "out/atmosphere/ash-sprite.png",
   "out/artifacts/egocore-cover.jpg",
+  "out/artifacts/egocore-diagram.jpg",
   "out/artifacts/ashen-archive-cover.jpg",
+  "out/artifacts/ashen-archive-diagram.jpg",
   "out/artifacts/openemotion-cover.jpg",
+  "out/artifacts/openemotion-diagram.jpg",
 ];
 
 for (const file of expectedFiles) {

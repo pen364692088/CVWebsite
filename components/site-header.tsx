@@ -32,7 +32,7 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
               </a>
             ))}
             <span className="header-ornament-shell" aria-hidden="true">
-              <Image src={assetPath("/hero/abyss-ornament.svg")} alt="" width={280} height={44} className="header-ornament" />
+              <Image src={assetPath("/hero/abyss-ornament.png")} alt="" width={280} height={44} className="header-ornament" />
             </span>
             {rightItems.map((item) => (
               <a key={item.id} href={`#${item.id}`} className="interactive-link">
