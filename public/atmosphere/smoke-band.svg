@@ -1,0 +1,19 @@
+<svg width="1600" height="620" viewBox="0 0 1600 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="blur" x="-160" y="-160" width="1920" height="940" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+    <linearGradient id="fade" x1="800" y1="0" x2="800" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0"/>
+      <stop offset=".22" stop-color="white" stop-opacity=".32"/>
+      <stop offset=".75" stop-color="white" stop-opacity=".18"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="620" fill="transparent"/>
+  <g filter="url(#blur)" opacity=".9">
+    <path d="M32 422C126 354 224 336 320 364C402 388 474 436 574 454C680 474 806 452 938 410C1062 370 1144 352 1246 366C1346 380 1442 428 1568 510L1568 620L32 620L32 422Z" fill="url(#fade)"/>
+    <path d="M96 336C162 286 250 268 342 286C440 304 542 350 640 348C734 346 806 306 900 280C988 256 1092 252 1184 286C1260 314 1336 364 1496 456L1496 620L96 620L96 336Z" fill="url(#fade)"/>
+    <path d="M0 474C120 424 214 414 334 434C446 454 540 504 660 520C786 536 884 514 1000 474C1120 432 1232 412 1366 438C1470 458 1548 494 1600 526V620H0V474Z" fill="url(#fade)"/>
+  </g>
+</svg>

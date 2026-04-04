@@ -46,428 +46,398 @@ export interface ArtifactView extends ArtifactCopy {
 
 const artifacts: Artifact[] = [
   {
-    slug: "ember-reel",
-    featured: true,
-    cover: "/artifacts/ember-reel-cover.jpg",
-    lenses: ["moon", "tower", "ember"],
-    media: [
-      {
-        kind: "video",
-        src: "/media/work-collection-of-ta.mp4",
-        poster: "/artifacts/ember-reel-cover.jpg",
-        alt: "Technical art reel showing VFX, environment lighting, and gameplay-facing visual work.",
-        label: "Featured work collection video",
-      },
-      {
-        kind: "image",
-        src: "/artifacts/ember-reel-frame-1.jpg",
-        alt: "Preview frame from the technical art portfolio collection.",
-        label: "Portfolio preview 01",
-      },
-      {
-        kind: "image",
-        src: "/artifacts/ember-reel-frame-2.jpg",
-        alt: "Preview frame from the technical art portfolio collection.",
-        label: "Portfolio preview 02",
-      },
-      {
-        kind: "image",
-        src: "/artifacts/ember-reel-frame-3.jpg",
-        alt: "Preview frame from the technical art portfolio collection.",
-        label: "Portfolio preview 03",
-      },
-    ],
-    content: {
-      en: {
-        title: "Ember Reel",
-        category: "Featured Reel",
-        role: "Unity Systems / Technical Art / VFX",
-        summary:
-          "A real featured reel built from shipped fragments and portfolio captures, used here as the strongest proof of range across systems, technical art, and real-time visuals.",
-        tags: ["Technical Art", "VFX", "Realtime Visuals"],
-        evidence: [
-          "Real captured video rather than placeholder art",
-          "Shows engine-side integration, lighting, and material response",
-          "Works as the quickest overview of how visual and technical work meet",
-        ],
-        what:
-          "This reel is the fastest way to understand the overlap between implementation, presentation polish, and atmosphere-driven visual work.",
-        contribution: [
-          {
-            lens: "moon",
-            text: "Integrated gameplay-facing visual logic so effects and moments read clearly in motion instead of as isolated shots.",
-          },
-          {
-            lens: "tower",
-            text: "Balanced materials, lighting, and scene setup against runtime constraints to keep the work presentable and production-safe.",
-          },
-          {
-            lens: "ember",
-            text: "Built and tuned real-time effects that support mood while preserving readability and frame budget.",
-          },
-        ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
-        solved:
-          "Condensed a broad range of implementation work into one artifact that proves both visual taste and practical engine-side discipline.",
-      },
-      "zh-CN": {
-        title: "余烬作品集",
-        category: "精选合集",
-        role: "Unity 系统 / 技术美术 / 特效",
-        summary: "这是站内最强的真实证据条目，由真实视频与作品帧组成，用来快速说明我在系统、技术美术与实时视觉上的交叉能力。",
-        tags: ["技术美术", "特效", "实时视觉"],
-        evidence: ["使用真实视频而非占位图", "能看出引擎内接入、灯光和材质反应", "最适合作为整体能力范围的首个入口"],
-        what: "如果只看一个条目，这个合集最能说明实现能力、画面控制和氛围表达是如何在引擎里汇合的。",
-        contribution: [
-          {
-            lens: "moon",
-            text: "把面向玩法的视觉逻辑接进运行流程，让效果在实际运动中可读，而不是只停留在单帧画面。",
-          },
-          {
-            lens: "tower",
-            text: "在运行约束内协调材质、灯光和场景搭建，让展示质量和制作稳定性同时成立。",
-          },
-          {
-            lens: "ember",
-            text: "制作并调校实时特效，让氛围表达成立，同时不牺牲反馈清晰度和帧预算。",
-          },
-        ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX 流程"],
-        solved: "把分散在不同项目里的实现成果压缩成一个能同时说明审美判断和工程执行力的核心证据条目。",
-      },
-      ja: {
-        title: "Ember Reel",
-        category: "Featured Reel",
-        role: "Unity Systems / Technical Art / VFX",
-        summary:
-          "実際のキャプチャと動画で構成した代表リールで、システム、テクニカルアート、リアルタイム表現の重なりを最も速く伝えます。",
-        tags: ["Technical Art", "VFX", "Realtime Visuals"],
-        evidence: [
-          "抽象プレースホルダーではなく実動画を使用",
-          "エンジン内実装、ライティング、マテリアル反応が読み取れる",
-          "全体像を短時間で把握するための最適な入口",
-        ],
-        what: "実装、演出、空気感づくりがエンジンの中でどう交わるかを最も速く示す代表アーカイブです。",
-        contribution: [
-          {
-            lens: "moon",
-            text: "ゲームプレイ側の視認性を保つよう、動きの中で読めるビジュアルロジックとして統合しました。",
-          },
-          {
-            lens: "tower",
-            text: "マテリアル、ライティング、シーン構成を実行制約の中で整理し、見栄えと安全性を両立させました。",
-          },
-          {
-            lens: "ember",
-            text: "雰囲気を支えつつ読みやすさも保つリアルタイム VFX を制作・調整しました。",
-          },
-        ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
-        solved: "幅のある実装実績を一つの代表物へ圧縮し、視覚的判断力と技術的規律を同時に示しました。",
-      },
-      ko: {
-        title: "Ember Reel",
-        category: "Featured Reel",
-        role: "Unity Systems / Technical Art / VFX",
-        summary:
-          "실제 캡처와 영상으로 구성한 대표 릴로, 시스템과 테크니컬 아트, 실시간 비주얼이 만나는 지점을 가장 빠르게 보여줍니다.",
-        tags: ["Technical Art", "VFX", "Realtime Visuals"],
-        evidence: [
-          "추상 플레이스홀더가 아니라 실제 영상 사용",
-          "엔진 내 통합, 라이팅, 머티리얼 반응을 읽을 수 있음",
-          "전체 역량 범위를 가장 빠르게 파악하는 진입점",
-        ],
-        what: "구현, 연출, 분위기 조성이 엔진 안에서 어떻게 겹치는지 가장 짧게 보여주는 대표 아카이브입니다.",
-        contribution: [
-          {
-            lens: "moon",
-            text: "효과가 정적인 샷이 아니라 실제 플레이 흐름 안에서 읽히도록 비주얼 로직을 통합했습니다.",
-          },
-          {
-            lens: "tower",
-            text: "머티리얼, 라이팅, 씬 구성을 런타임 제약 안에서 정리해 보기 좋고 안전한 상태로 맞췄습니다.",
-          },
-          {
-            lens: "ember",
-            text: "분위기를 살리면서도 가독성과 프레임 예산을 유지하는 실시간 VFX를 제작하고 조정했습니다.",
-          },
-        ],
-        technologies: ["Unreal Engine", "Unity", "Shader Graph", "HLSL", "VFX pipelines"],
-        solved: "넓은 범위의 구현 작업을 하나의 대표 아티팩트로 압축해 시각적 판단력과 엔진 측 규율을 함께 증명했습니다.",
-      },
-    },
-  },
-  {
-    slug: "ritual-pipeline",
+    slug: "egocore",
     featured: false,
-    cover: "/artifacts/ritual-pipeline.svg",
-    lenses: ["tower", "ember"],
-    media: [
-      {
-        kind: "image",
-        src: "/artifacts/ritual-pipeline.svg",
-        alt: "Archive-style diagram standing in for pipeline tooling, workflow cleanup, and technical art support.",
-        label: "Pipeline diagram placeholder",
-      },
-    ],
-    content: {
-      en: {
-        title: "Ritual Pipeline",
-        category: "Workflow Record",
-        role: "Technical Art Support / Tooling",
-        summary:
-          "A semi-real case built from recurring technical art and tooling work: the kind that rarely becomes a trailer shot, but decides whether visual teams move smoothly or stall.",
-        tags: ["Artist Tools", "Pipelines", "Optimization"],
-        evidence: [
-          "Maps day-to-day production friction instead of only final visuals",
-          "Explains how tooling and rules reduce setup cost",
-          "Shows support work that lets artists keep moving",
-        ],
-        what:
-          "This case stands in for the pipeline-facing work that makes visuals more repeatable: validation, editor helpers, documentation, and cleanup between art goals and engine reality.",
-        contribution: [
-          {
-            lens: "tower",
-            text: "Turned repeated production pain points into smaller artist-facing helpers and clearer workflow rules.",
-          },
-          {
-            lens: "tower",
-            text: "Reduced manual setup cost by documenting safer defaults and standardizing recurring steps.",
-          },
-          {
-            lens: "ember",
-            text: "Protected visual targets by making effect setup and scene handoff less fragile for art and lighting passes.",
-          },
-        ],
-        technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
-        solved:
-          "Replaced scattered tribal knowledge with a more stable production path, so visual iteration stopped depending on memory and repeated cleanup.",
-      },
-      "zh-CN": {
-        title: "仪式管线",
-        category: "流程档案",
-        role: "技术美术支持 / 工具开发",
-        summary: "这是一个半真实案例，代表那些不会变成宣传片镜头、却决定美术团队到底顺不顺的技术美术与工具工作。",
-        tags: ["艺术工具", "制作流程", "优化"],
-        evidence: ["关注的是日常制作摩擦，不只是最终画面", "说明工具和规则如何降低重复配置成本", "体现支持型工作如何让美术继续往前推进"],
-        what: "它代表的是让视觉实现更可重复的那类工作：校验、编辑器辅助、文档整理，以及在美术目标和引擎现实之间做清理和接线。",
-        contribution: [
-          {
-            lens: "tower",
-            text: "把反复出现的制作痛点转成更小、更直接面向美术的辅助工具和工作规范。",
-          },
-          {
-            lens: "tower",
-            text: "通过记录更安全的默认流程与标准步骤，降低重复配置和返工成本。",
-          },
-          {
-            lens: "ember",
-            text: "通过更稳的接入方式保护视觉目标，让特效和灯光迭代不那么容易被流程问题拖慢。",
-          },
-        ],
-        technologies: ["Python 工具", "编辑器扩展", "资产校验", "流程文档"],
-        solved: "把依赖个人记忆的零散经验替换成更稳定的制作路径，让视觉迭代不再频繁卡在基础配置和返工上。",
-      },
-      ja: {
-        title: "Ritual Pipeline",
-        category: "Workflow Record",
-        role: "Technical Art Support / Tooling",
-        summary:
-          "派手な映像にはなりにくいが、ビジュアル制作の流れを左右する技術美術支援とツール整備を代表する半実例です。",
-        tags: ["Artist Tools", "Pipelines", "Optimization"],
-        evidence: [
-          "完成画だけでなく日々の制作摩擦を扱う",
-          "ツールとルールでセットアップ負荷を下げる",
-          "アーティストが止まらないための支援を示す",
-        ],
-        what:
-          "バリデーション、エディタ補助、文書化、ワークフロー整理など、ビジュアル制作を再現しやすくする裏側の仕事を代表しています。",
-        contribution: [
-          {
-            lens: "tower",
-            text: "繰り返し発生する制作上の痛点を、小さな支援ツールと明確な手順へ置き換えました。",
-          },
-          {
-            lens: "tower",
-            text: "安全なデフォルトと標準手順を整え、手作業セットアップを減らしました。",
-          },
-          {
-            lens: "ember",
-            text: "エフェクトやライティングの引き継ぎが壊れにくいようにし、ビジュアル目標を守りました。",
-          },
-        ],
-        technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
-        solved:
-          "属人的な知識に頼らずに回る制作経路を整え、ビジュアル改善が基礎設定のやり直しで止まらないようにしました。",
-      },
-      ko: {
-        title: "Ritual Pipeline",
-        category: "Workflow Record",
-        role: "Technical Art Support / Tooling",
-        summary:
-          "트레일러 장면으로는 잘 드러나지 않지만, 비주얼 팀이 매끄럽게 움직일지 멈출지를 결정하는 테크니컬 아트 지원과 툴링 작업을 대표하는 반실제 사례입니다.",
-        tags: ["Artist Tools", "Pipelines", "Optimization"],
-        evidence: [
-          "완성 화면보다 일상적인 제작 마찰을 다룸",
-          "툴과 규칙으로 셋업 비용을 줄이는 방식을 보여줌",
-          "아티스트가 멈추지 않게 하는 지원 작업을 증명",
-        ],
-        what:
-          "검증, 에디터 보조, 문서화, 워크플로 정리처럼 비주얼 제작을 더 반복 가능하게 만드는 뒤쪽 작업을 대표하는 케이스입니다.",
-        contribution: [
-          {
-            lens: "tower",
-            text: "반복적으로 발생하던 제작 병목을 작은 지원 도구와 명확한 작업 규칙으로 바꿨습니다.",
-          },
-          {
-            lens: "tower",
-            text: "안전한 기본값과 표준 절차를 정리해 수동 셋업 비용을 줄였습니다.",
-          },
-          {
-            lens: "ember",
-            text: "이펙트와 라이팅 핸드오프를 덜 취약하게 만들어 비주얼 목표가 흐트러지지 않게 했습니다.",
-          },
-        ],
-        technologies: ["Python tooling", "Editor utilities", "Asset validation", "Documentation systems"],
-        solved:
-          "개인 기억에 의존하던 제작 지식을 더 안정적인 경로로 바꿔, 비주얼 반복 작업이 기본 설정과 재정리 때문에 멈추지 않도록 했습니다.",
-      },
-    },
-  },
-  {
-    slug: "mobile-systems",
-    featured: false,
-    cover: "/artifacts/mobile-systems.svg",
+    cover: "/artifacts/egocore-cover.svg",
     lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/mobile-systems.svg",
-        alt: "Archive-style diagram representing gameplay systems, modular implementation, and feature maintenance.",
-        label: "Gameplay systems diagram placeholder",
+        src: "/artifacts/egocore-cover.svg",
+        alt: "Obsidian runtime relic used as the cover art for EgoCore.",
+        label: "EgoCore cover relic",
+      },
+      {
+        kind: "image",
+        src: "/artifacts/egocore-diagram.svg",
+        alt: "Public-safe diagram showing EgoCore as a runtime host, orchestration layer, and governance shell.",
+        label: "EgoCore runtime diagram",
       },
     ],
     content: {
       en: {
-        title: "Mobile Systems, Quietly Tuned",
-        category: "Playable System Record",
-        role: "Unity Systems / Feature Ownership",
+        title: "EgoCore",
+        category: "Runtime Host",
+        role: "Architecture / Runtime / Governance",
         summary:
-          "A semi-real record based on mobile production work where the hard part was not spectacle, but keeping features stable, maintainable, and fast to iterate on.",
-        tags: ["Unity", "Gameplay Systems", "Live Support"],
+          "A public-safe case about building the outward host for a dual-core AI system: event intake, task orchestration, guardrails, replayability, and practical execution discipline.",
+        tags: ["Runtime Systems", "Governance", "Task Orchestration"],
         evidence: [
-          "Centers on feature ownership and module boundaries",
-          "Shows implementation decisions under live update pressure",
-          "Useful proof for teams that care about maintainability, not only visuals",
+          "Clear boundary between external execution and internal core semantics",
+          "Replay / audit thinking carried into the implementation story",
+          "Framed as a host that can operate, recover, and stay governable under pressure",
         ],
         what:
-          "This case focuses on gameplay-facing implementation: the day-to-day work of turning requirements into modules that can survive content changes and production schedules.",
+          "EgoCore is the outer runtime layer: the part that receives user events, structures work, calls tools, tracks execution, and keeps the system inside real-world operating boundaries.",
         contribution: [
           {
             lens: "moon",
-            text: "Implemented independent systems and feature modules based on production scope, schedule, and player-facing requirements.",
-          },
-          {
-            lens: "moon",
-            text: "Protected runtime stability during repeated updates by keeping module ownership and boundaries clear.",
+            text: "Defined the host-side runtime path so user events, tasks, and outward actions move through a legible execution chain instead of a loose collection of scripts.",
           },
           {
             lens: "tower",
-            text: "Worked with design and art to keep implementation practical, readable, and easier to hand off or extend.",
+            text: "Turned safety, replay, audit, and operational boundaries into first-class implementation constraints rather than afterthought documentation.",
           },
         ],
-        technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
+        technologies: ["Python", "Schema contracts", "Task runtime", "Replay / audit artifacts", "Guardrail design"],
         solved:
-          "Made player-facing systems easier to own, test, and revise under continuous iteration, instead of letting feature growth turn the project brittle.",
+          "Made the runtime layer easier to reason about, easier to govern, and less likely to drift into a fragile set of undocumented behaviors.",
       },
       "zh-CN": {
-        title: "静默调校的移动系统",
-        category: "玩法系统档案",
-        role: "Unity 系统 / 功能负责",
-        summary: "这是一个基于移动项目经验整理的半真实案例，重点不在炫技，而在于如何让功能稳定、易维护、且方便持续迭代。",
-        tags: ["Unity", "玩法系统", "长期维护"],
-        evidence: ["强调功能负责和模块边界", "体现持续更新压力下的实现判断", "更适合证明可维护性，而不是只展示画面氛围"],
-        what: "这个案例关注的是面向玩法的实现工作，也就是把需求拆成能活过排期变化和内容反复的模块与系统。",
+        title: "EgoCore",
+        category: "运行时宿主",
+        role: "架构 / Runtime / 治理",
+        summary:
+          "这是一个公开安全版案例，聚焦双核 AI 系统的外层宿主：事件入口、任务编排、边界治理、可回放证据链，以及可执行性的工程纪律。",
+        tags: ["运行时系统", "治理", "任务编排"],
+        evidence: [
+          "清晰区分外部执行层与内部主体层",
+          "把 replay / audit 思路真正写进实现叙事",
+          "强调系统在压力下仍可运行、可恢复、可治理",
+        ],
+        what:
+          "EgoCore 是外层 runtime：接收用户事件、结构化任务、调用工具、跟踪执行，并把系统保持在现实可操作边界之内。",
         contribution: [
           {
             lens: "moon",
-            text: "根据项目范围、排期和玩家侧需求，独立实现对应系统与功能模块。",
-          },
-          {
-            lens: "moon",
-            text: "通过更清晰的模块归属和边界，保证持续更新中的运行稳定性。",
+            text: "把用户事件、任务和外部动作整理成一条可读的宿主执行链，而不是零散脚本的堆积。",
           },
           {
             lens: "tower",
-            text: "与策划和美术协作，让实现方式更实际、可读，也更容易后续接手和扩展。",
+            text: "把安全、回放、审计和运行边界变成一等实现约束，而不是事后补充的说明文档。",
           },
         ],
-        technologies: ["Unity", "C#", "功能模块", "性能分析"],
-        solved: "让玩家可见的系统在高频迭代中依然容易维护、测试和修改，不至于随着功能堆积而变得脆弱。",
+        technologies: ["Python", "契约 Schema", "任务运行时", "Replay / Audit 证据", "Guardrail 设计"],
+        solved: "让运行时层更容易理解、更容易治理，也更不容易漂移成一组脆弱且缺乏边界的行为集合。",
       },
       ja: {
-        title: "Mobile Systems, Quietly Tuned",
-        category: "Playable System Record",
-        role: "Unity Systems / Feature Ownership",
+        title: "EgoCore",
+        category: "Runtime Host",
+        role: "Architecture / Runtime / Governance",
         summary:
-          "派手さよりも、機能の安定性、保守性、反復速度が問われるモバイル案件の実装経験をもとにした半実例です。",
-        tags: ["Unity", "Gameplay Systems", "Live Support"],
+          "外側ホストとしての実装を公開安全な範囲で整理したケースです。イベント入力、タスク編成、ガードレール、再生可能性、実運用の規律に焦点を当てています。",
+        tags: ["Runtime Systems", "Governance", "Task Orchestration"],
         evidence: [
-          "機能担当とモジュール境界に焦点",
-          "継続更新下での実装判断を示す",
-          "ビジュアルより保守性を重視するチームへの証拠になる",
+          "外部実行層と内部コアの境界が明確",
+          "replay / audit の考え方を実装物語に反映",
+          "運用・復旧・統制を前提にしたホスト設計",
         ],
         what:
-          "要件を、変更やスケジュールに耐えられるモジュールへ落とし込む、ゲームプレイ実装の日常業務を代表するケースです。",
+          "EgoCore は外側の runtime 層です。ユーザーイベントを受け、作業を構造化し、ツールを呼び、実行を追跡し、現実の運用境界を守ります。",
         contribution: [
           {
             lens: "moon",
-            text: "スコープ、日程、プレイヤー要件に合わせて機能モジュールとシステムを実装しました。",
-          },
-          {
-            lens: "moon",
-            text: "モジュール境界を明確に保ち、継続更新中のランタイム安定性を守りました。",
+            text: "ユーザーイベント、タスク、外向きの動作を、散発的なスクリプトではなく読める実行チェーンとして整理しました。",
           },
           {
             lens: "tower",
-            text: "企画とアートの要件を踏まえ、実装を実用的で読みやすく、拡張しやすい形に整理しました。",
+            text: "安全、再生、監査、運用境界を、実装の中心制約として扱いました。",
           },
         ],
-        technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
+        technologies: ["Python", "Schema contracts", "Task runtime", "Replay / audit artifacts", "Guardrail design"],
         solved:
-          "プレイヤー向けシステムを、継続反復の中でも保守しやすく修正しやすい構造に保ちました。",
+          "Runtime 層を理解しやすく、統治しやすくし、 undocumented な挙動の寄せ集めへ崩れるリスクを下げました。",
       },
       ko: {
-        title: "Mobile Systems, Quietly Tuned",
-        category: "Playable System Record",
-        role: "Unity Systems / Feature Ownership",
+        title: "EgoCore",
+        category: "런타임 호스트",
+        role: "아키텍처 / Runtime / 거버넌스",
         summary:
-          "화려한 연출보다 기능 안정성, 유지보수성, 반복 속도가 중요한 모바일 제작 경험을 바탕으로 한 반실제 기록입니다.",
-        tags: ["Unity", "Gameplay Systems", "Live Support"],
+          "이 케이스는 이중 코어 AI 시스템의 외부 호스트를 공개 가능한 범위에서 정리합니다. 이벤트 입력, 작업 오케스트레이션, 가드레일, 리플레이 가능성, 운영 규율이 핵심입니다.",
+        tags: ["Runtime Systems", "Governance", "Task Orchestration"],
         evidence: [
-          "기능 책임과 모듈 경계에 초점",
-          "지속 업데이트 압박 아래의 구현 판단을 보여줌",
-          "비주얼보다 유지보수를 중시하는 팀에 유효한 증거",
+          "외부 실행층과 내부 코어 의미층의 경계가 분명함",
+          "replay / audit 사고를 구현 서사 안에 반영",
+          "압박 상황에서도 운영 가능하고 복구 가능한 호스트 설계",
         ],
         what:
-          "요구사항을 변경과 일정 압박에도 버틸 수 있는 모듈로 바꾸는, 게임플레이 구현의 일상적 업무를 대표하는 케이스입니다.",
+          "EgoCore는 바깥 runtime 계층입니다. 사용자 이벤트를 받아 구조화하고, 작업을 실행하며, 도구를 호출하고, 실행 흔적을 추적하면서 시스템을 현실적인 운영 경계 안에 유지합니다.",
         contribution: [
           {
             lens: "moon",
-            text: "프로덕션 범위, 일정, 플레이어 요구에 맞춰 시스템과 기능 모듈을 독립적으로 구현했습니다.",
-          },
-          {
-            lens: "moon",
-            text: "모듈 경계를 명확히 유지해 반복 업데이트 중에도 런타임 안정성을 지켰습니다.",
+            text: "사용자 이벤트, 작업, 외부 동작이 흩어진 스크립트가 아니라 읽을 수 있는 실행 체인으로 이어지도록 정리했습니다.",
           },
           {
             lens: "tower",
-            text: "기획과 아트 요구를 함께 고려해 구현을 실용적이고 읽기 쉬우며 확장 가능한 형태로 정리했습니다.",
+            text: "안전성, 리플레이, 감사, 운영 경계를 사후 문서가 아니라 핵심 구현 제약으로 다뤘습니다.",
           },
         ],
-        technologies: ["Unity", "C#", "Feature modules", "Performance profiling"],
+        technologies: ["Python", "스키마 계약", "Task runtime", "Replay / audit artifacts", "Guardrail design"],
+        solved: "런타임 계층을 더 이해하기 쉽고 통제하기 쉬운 구조로 정리해, 문서 없는 취약한 동작 모음으로 흐를 위험을 낮췄습니다.",
+      },
+    },
+  },
+  {
+    slug: "ashen-archive",
+    featured: true,
+    cover: "/artifacts/ashen-archive-cover.svg",
+    lenses: ["moon", "ember"],
+    media: [
+      {
+        kind: "image",
+        src: "/artifacts/ashen-archive-cover.svg",
+        alt: "Burning archive relic used as the cover art for Ashen Archive.",
+        label: "Ashen Archive cover relic",
+      },
+      {
+        kind: "image",
+        src: "/artifacts/ashen-archive-diagram.svg",
+        alt: "Public-safe diagram showing the site as a scene-led archive interface with ritual cards and reading sigils.",
+        label: "Ashen Archive interface diagram",
+      },
+    ],
+    content: {
+      en: {
+        title: "Ashen Archive",
+        category: "Interactive Archive",
+        role: "Art Direction / UI Systems / Motion",
+        summary:
+          "The portfolio itself, treated as a case study: a scene-led archive that merges atmospheric presentation, layered motion, and a data-driven structure instead of a generic portfolio template.",
+        tags: ["Next.js", "Interactive UI", "Art Direction"],
+        evidence: [
+          "Scene-first hero built from safe-source atmosphere assets and original generated art",
+          "Content, navigation, and case metadata all driven from local structured data",
+          "Motion and hover states designed as part of the archive language, not bolted on afterward",
+        ],
+        what:
+          "Ashen Archive is the public-facing shell for this body of work. The point is not only to look dramatic, but to turn mood, hierarchy, and interaction into a coherent reading system.",
+        contribution: [
+          {
+            lens: "moon",
+            text: "Built the structure that makes the page readable as a system: routing, data-driven sections, stable asset paths, and a portfolio flow that can scale.",
+          },
+          {
+            lens: "ember",
+            text: "Shaped the atmosphere layer, hero composition, ritual cards, and sigil language so the site feels curated rather than templated.",
+          },
+        ],
+        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
         solved:
-          "플레이어가 체감하는 시스템을 지속적인 반복 속에서도 유지보수와 수정이 쉬운 구조로 다듬었습니다.",
+          "Turned a personal site into a memorable archive interface without sacrificing scanability, localization, or static-export safety.",
+      },
+      "zh-CN": {
+        title: "Ashen Archive",
+        category: "交互档案馆",
+        role: "美术方向 / UI 系统 / Motion",
+        summary:
+          "把作品站本身当成一个正式案例：它不是普通 portfolio 模板，而是把氛围呈现、分层动效和数据驱动结构合成一套可读的档案馆界面。",
+        tags: ["Next.js", "交互界面", "美术方向"],
+        evidence: [
+          "首屏场景由安全来源素材与原创生成资产共同构成",
+          "内容、导航和案例元数据都来自本地结构化数据",
+          "动效和 hover 不是后补，而是档案馆语言的一部分",
+        ],
+        what:
+          "Ashen Archive 是这组作品的对外壳层。重点不只是“看起来有气氛”，而是把氛围、层级和交互变成一套真正可读的阅读系统。",
+        contribution: [
+          {
+            lens: "moon",
+            text: "搭建了让页面可以被当作系统来阅读的结构：路由、数据驱动区块、稳定资源路径，以及可持续扩展的作品流。",
+          },
+          {
+            lens: "ember",
+            text: "确定氛围层、首屏构图、祭坛卡片和符印语言，让站点更像被策展过的档案，而不是现成模板。",
+          },
+        ],
+        technologies: ["Next.js", "TypeScript", "Motion", "SVG 资产流程", "静态导出"],
+        solved: "把个人站做成有记忆点的档案界面，同时不牺牲可扫读性、多语言结构和 GitHub Pages 静态部署安全性。",
+      },
+      ja: {
+        title: "Ashen Archive",
+        category: "Interactive Archive",
+        role: "Art Direction / UI Systems / Motion",
+        summary:
+          "このポートフォリオ自体をケースとして扱います。雰囲気、階層、動き、データ構造を一体化し、汎用テンプレートではない公開アーカイブにしました。",
+        tags: ["Next.js", "Interactive UI", "Art Direction"],
+        evidence: [
+          "安全に使える素材と自作アートで構成した scene-first hero",
+          "コンテンツ、導線、ケース情報はローカルの構造化データで管理",
+          "モーションと hover は後付けでなくアーカイブ言語の一部",
+        ],
+        what:
+          "Ashen Archive は作品群の公開シェルです。雰囲気だけでなく、気分・情報・相互作用を一つの読解システムとしてまとめています。",
+        contribution: [
+          {
+            lens: "moon",
+            text: "ルーティング、データ駆動セクション、安定したアセット経路を整え、ページ全体を一つのシステムとして読めるようにしました。",
+          },
+          {
+            lens: "ember",
+            text: "雰囲気レイヤー、hero 構図、儀式カード、sigil 言語を設計し、テンプレート感ではなくキュレーション感を作りました。",
+          },
+        ],
+        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
+        solved:
+          "覚えやすい公開アーカイブ体験を作りつつ、可読性、多言語構造、静的配備の安全性を守りました。",
+      },
+      ko: {
+        title: "Ashen Archive",
+        category: "인터랙티브 아카이브",
+        role: "아트 디렉션 / UI 시스템 / Motion",
+        summary:
+          "포트폴리오 자체를 하나의 케이스로 다룹니다. 분위기 연출, 계층, 모션, 데이터 구조를 결합해 평범한 템플릿이 아닌 공개 아카이브로 만들었습니다.",
+        tags: ["Next.js", "Interactive UI", "Art Direction"],
+        evidence: [
+          "안전한 출처의 분위기 자산과 자체 제작 아트로 만든 scene-first hero",
+          "콘텐츠, 내비게이션, 케이스 메타데이터를 모두 로컬 구조화 데이터로 관리",
+          "모션과 hover가 사후 장식이 아니라 아카이브 언어의 일부",
+        ],
+        what:
+          "Ashen Archive는 이 작업 묶음의 공개 셸입니다. 단지 분위기를 내는 것이 아니라, 분위기와 위계, 상호작용을 읽을 수 있는 시스템으로 묶는 데 목적이 있습니다.",
+        contribution: [
+          {
+            lens: "moon",
+            text: "라우팅, 데이터 기반 섹션, 안정적인 자산 경로를 정리해 페이지 전체를 하나의 시스템으로 읽히게 만들었습니다.",
+          },
+          {
+            lens: "ember",
+            text: "분위기 레이어, hero 구도, 의식 카드, sigil 언어를 설계해 템플릿이 아니라 큐레이션된 아카이브처럼 느껴지게 했습니다.",
+          },
+        ],
+        technologies: ["Next.js", "TypeScript", "Motion", "SVG art pipeline", "Static export"],
+        solved: "기억에 남는 공개 아카이브 경험을 만들면서도 가독성, 다국어 구조, 정적 배포 안정성을 지켰습니다.",
+      },
+    },
+  },
+  {
+    slug: "openemotion",
+    featured: false,
+    cover: "/artifacts/openemotion-cover.svg",
+    lenses: ["tower", "ember"],
+    media: [
+      {
+        kind: "image",
+        src: "/artifacts/openemotion-cover.svg",
+        alt: "Moonlit vessel used as the cover art for OpenEmotion.",
+        label: "OpenEmotion cover relic",
+      },
+      {
+        kind: "image",
+        src: "/artifacts/openemotion-diagram.svg",
+        alt: "Public-safe diagram showing OpenEmotion as a reflective self-model, memory, and appraisal core.",
+        label: "OpenEmotion reflective core diagram",
+      },
+    ],
+    content: {
+      en: {
+        title: "OpenEmotion",
+        category: "Reflective Core",
+        role: "Identity / Memory / Reflection Design",
+        summary:
+          "A public-safe case about the inward side of the system: persistent self-modeling, governed memory evolution, appraisal state, and reflective revision under explicit constraints.",
+        tags: ["Self-model", "Memory", "Reflective Systems"],
+        evidence: [
+          "Shows identity and memory as structured, governed state rather than loose prompts",
+          "Framed around continuity, invariants, and evidence quality instead of vague personality language",
+          "Observation-window thinking makes the system legible as an evolving core, not a magic box",
+        ],
+        what:
+          "OpenEmotion is the internal core that tracks identity continuity, self-model changes, memory evolution, and reflective adjustment while staying inside governance boundaries.",
+        contribution: [
+          {
+            lens: "tower",
+            text: "Defined public-safe boundaries for what the inner core owns, how it changes, and what must remain governed or auditable over time.",
+          },
+          {
+            lens: "ember",
+            text: "Shaped the language and structure for identity, memory, appraisal, and reflection so the system can evolve without becoming unreadable or mythologized.",
+          },
+        ],
+        technologies: ["Python", "Identity invariants", "Memory schemas", "Observation workflows", "Reflective governance"],
+        solved:
+          "Made the reflective side of the system easier to present as a disciplined architecture instead of a vague claim about intelligence or emotion.",
+      },
+      "zh-CN": {
+        title: "OpenEmotion",
+        category: "反思核心",
+        role: "身份 / 记忆 / Reflection 设计",
+        summary:
+          "这是一个公开安全版案例，聚焦系统的内部一侧：持续 self-model、受控记忆演化、appraisal 状态，以及在明确约束下进行的反思修正。",
+        tags: ["Self-model", "记忆", "反思系统"],
+        evidence: [
+          "把 identity 和 memory 写成结构化、受治理的状态，而不是松散 prompt",
+          "重点是连续性、invariants 和证据质量，而不是空泛的人格叙事",
+          "通过 observation window 让它更像演化中的内核，而不是神秘黑盒",
+        ],
+        what:
+          "OpenEmotion 是内部核心，负责身份连续性、自我模型变化、记忆演化和反思修正，同时始终保持在治理边界之内。",
+        contribution: [
+          {
+            lens: "tower",
+            text: "界定内部核心真正拥有的语义边界，明确哪些变化必须受治理、可审计、可回溯。",
+          },
+          {
+            lens: "ember",
+            text: "组织 identity、memory、appraisal 和 reflection 的表达结构，让系统能演化，但不会变得不可读或被神化。",
+          },
+        ],
+        technologies: ["Python", "身份不变量", "记忆 Schema", "观测工作流", "反思治理"],
+        solved: "让系统内部的反思层能以一种工程化、可解释的方式呈现，而不是停留在关于“智能”或“情绪”的模糊说法上。",
+      },
+      ja: {
+        title: "OpenEmotion",
+        category: "Reflective Core",
+        role: "Identity / Memory / Reflection Design",
+        summary:
+          "システムの内側を公開安全な範囲で整理したケースです。持続 self-model、統治された memory 変化、appraisal 状態、反省的修正を扱います。",
+        tags: ["Self-model", "Memory", "Reflective Systems"],
+        evidence: [
+          "identity と memory を loose prompt ではなく構造化された状態として扱う",
+          "曖昧な人格言語ではなく continuity と invariants を中心に据える",
+          "観測窓の考え方で evolving core として読めるようにしている",
+        ],
+        what:
+          "OpenEmotion は、identity continuity、self-model の更新、memory evolution、reflective adjustment を担う内側のコアです。",
+        contribution: [
+          {
+            lens: "tower",
+            text: "内側コアが何を所有し、どこまで変化し、何が常に audit 可能であるべきかを公開安全な形で整理しました。",
+          },
+          {
+            lens: "ember",
+            text: "identity、memory、appraisal、reflection を読みやすい構造へまとめ、進化しても神話化しないようにしました。",
+          },
+        ],
+        technologies: ["Python", "Identity invariants", "Memory schemas", "Observation workflows", "Reflective governance"],
+        solved:
+          "内側の反省層を、曖昧な主張ではなく規律あるアーキテクチャとして説明しやすくしました。",
+      },
+      ko: {
+        title: "OpenEmotion",
+        category: "반성 코어",
+        role: "정체성 / 메모리 / Reflection 설계",
+        summary:
+          "이 케이스는 시스템의 안쪽 층을 공개 가능한 범위로 정리합니다. 지속 self-model, 통제된 memory 진화, appraisal 상태, 명시적 제약 아래의 반성적 수정이 핵심입니다.",
+        tags: ["Self-model", "Memory", "Reflective Systems"],
+        evidence: [
+          "identity와 memory를 느슨한 프롬프트가 아니라 구조화된 상태로 다룸",
+          "모호한 성격 서사보다 continuity, invariants, evidence quality에 초점",
+          "observation window 사고로 진화 중인 코어처럼 읽히게 함",
+        ],
+        what:
+          "OpenEmotion은 identity continuity, self-model 변화, memory evolution, reflective adjustment를 담당하는 내부 코어입니다.",
+        contribution: [
+          {
+            lens: "tower",
+            text: "내부 코어가 무엇을 소유하고 어떻게 변하며 무엇이 항상 감사 가능해야 하는지에 대한 공개 안전한 경계를 정의했습니다.",
+          },
+          {
+            lens: "ember",
+            text: "identity, memory, appraisal, reflection의 언어와 구조를 정리해 시스템이 진화해도 읽기 어렵거나 신화화되지 않게 만들었습니다.",
+          },
+        ],
+        technologies: ["Python", "Identity invariants", "Memory schemas", "Observation workflows", "Reflective governance"],
+        solved: "시스템의 반성 계층을 ‘지능’이나 ‘감정’에 대한 모호한 주장 대신 규율 있는 아키텍처로 설명할 수 있게 했습니다.",
       },
     },
   },

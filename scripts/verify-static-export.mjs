@@ -18,7 +18,10 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/media/work-collection-of-ta.mp4",
+  "out/hero/abyss-hero-matte.svg",
+  "out/artifacts/egocore-cover.svg",
+  "out/artifacts/ashen-archive-cover.svg",
+  "out/artifacts/openemotion-cover.svg",
 ];
 
 for (const file of expectedFiles) {
@@ -40,11 +43,13 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes("Ashen Archive"), `Missing site title in ${locale}`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
+  assert(html.includes('class="abyss-hero"'), `Missing abyss hero shell in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
-  assert(html.includes("archive-relic-stage"), `Missing relic stage shell in ${locale}`);
-  assert(html.includes("archive-diagnostic-rail"), `Missing diagnostic rail in ${locale}`);
-  assert(html.includes("work-collection-of-ta.mp4"), `Missing featured media in ${locale}`);
+  assert(html.includes("relic-altar-card"), `Missing ritual relic cards in ${locale}`);
+  assert(html.includes("sigil-filter-grid"), `Missing ritual strip in ${locale}`);
+  assert(html.includes("EgoCore"), `Missing EgoCore artifact in ${locale}`);
+  assert(html.includes("OpenEmotion"), `Missing OpenEmotion artifact in ${locale}`);
 }
 
 console.log("Static export verification passed.");

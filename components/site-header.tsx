@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { Dictionary } from "@/data/dictionaries";
 import type { Locale } from "@/lib/i18n";
+import { assetPath } from "@/lib/site";
 
 import { LocaleSwitcher } from "@/components/locale-switcher";
 
@@ -11,17 +13,28 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
+  const leftItems = dictionary.nav.items.slice(0, 2);
+  const rightItems = dictionary.nav.items.slice(2);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-white/8 bg-night/72 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[90rem] items-center justify-between gap-6 px-5 py-3.5 sm:px-8">
+    <header className="site-header">
+      <div className="site-header-inner">
         <Link href={`/${locale}/`} className="header-mark">
           <span className="header-title">{dictionary.nav.title}</span>
           <span className="header-identity">{dictionary.nav.identity}</span>
         </Link>
 
         <div className="flex items-center gap-4">
-          <nav className="hidden items-center gap-5 text-sm text-mist lg:flex" aria-label="Primary">
-            {dictionary.nav.items.map((item) => (
+          <nav className="header-nav-shell" aria-label="Primary">
+            {leftItems.map((item) => (
+              <a key={item.id} href={`#${item.id}`} className="interactive-link">
+                {item.label}
+              </a>
+            ))}
+            <span className="header-ornament-shell" aria-hidden="true">
+              <Image src={assetPath("/hero/abyss-ornament.svg")} alt="" width={280} height={44} className="header-ornament" />
+            </span>
+            {rightItems.map((item) => (
               <a key={item.id} href={`#${item.id}`} className="interactive-link">
                 {item.label}
               </a>

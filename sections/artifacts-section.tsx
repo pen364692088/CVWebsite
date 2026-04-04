@@ -2,28 +2,42 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import type { ArtifactView } from "@/data/artifacts";
 import type { Dictionary } from "@/data/dictionaries";
 import type { ArchiveLens } from "@/lib/archive";
 import { assetPath } from "@/lib/site";
 
-import { ArtifactModal } from "@/components/artifact-modal";
 import { Reveal } from "@/components/reveal";
 
 interface ArtifactsSectionProps {
   copy: Dictionary["artifacts"];
-  artifacts: ArtifactView[];
+  artifacts: Array<{
+    slug: string;
+    caseNumber: string;
+    featured: boolean;
+    cover: string;
+    lenses: ArchiveLens[];
+    title: string;
+    category: string;
+    role: string;
+    summary: string;
+    tags: string[];
+    evidence: string[];
+    solved: string;
+  }>;
   activeLens: ArchiveLens;
   activeLensTitle: string;
+  onArtifactOpen: (slug: string) => void;
 }
 
-function getCaseNumber(index: number) {
-  return `A-${String(index + 1).padStart(2, "0")}`;
-}
-
-function getArtifactPriority(artifact: ArtifactView, activeLens: ArchiveLens) {
+function getArtifactPriority(
+  artifact: {
+    featured: boolean;
+    lenses: ArchiveLens[];
+  },
+  activeLens: ArchiveLens,
+) {
   if (activeLens === "all") {
     return artifact.featured ? 20 : 10;
   }
@@ -32,12 +46,10 @@ function getArtifactPriority(artifact: ArtifactView, activeLens: ArchiveLens) {
     return artifact.featured ? 5 : 0;
   }
 
-  return 100 - artifact.lenses.length * 10 + (artifact.featured ? 5 : 0);
+  return 100 - artifact.lenses.length * 10 + (artifact.featured ? 0 : 5);
 }
 
-export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle }: ArtifactsSectionProps) {
-  const [activeArtifact, setActiveArtifact] = useState<(ArtifactView & { caseNumber: string }) | null>(null);
-
+export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle, onArtifactOpen }: ArtifactsSectionProps) {
   const sortedArtifacts = useMemo(
     () =>
       [...artifacts].sort((left, right) => {
@@ -61,7 +73,6 @@ export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle 
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr_0.85fr]">
         {sortedArtifacts.map((artifact, index) => {
-          const caseNumber = getCaseNumber(artifacts.findIndex((item) => item.slug === artifact.slug));
           const isFocused = activeLens === "all" || artifact.lenses.includes(activeLens);
 
           return (
@@ -70,13 +81,13 @@ export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle 
                 type="button"
                 className={`group artifact-card h-full ${isFocused ? "artifact-card-active" : "artifact-card-muted"}`}
                 whileHover={{ y: -4 }}
-                onClick={() => setActiveArtifact({ ...artifact, caseNumber })}
+                onClick={() => onArtifactOpen(artifact.slug)}
                 aria-haspopup="dialog"
                 aria-label={`${copy.openLabel}: ${artifact.title}`}
               >
                 <div className="artifact-ledger">
                   <span>
-                    {copy.caseLabel} {caseNumber}
+                    {copy.caseLabel} {artifact.caseNumber}
                   </span>
                   <span>{artifact.featured ? copy.featuredLabel : artifact.category}</span>
                 </div>
@@ -162,12 +173,7 @@ export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle 
               <button
                 type="button"
                 className="primary-button"
-                onClick={() =>
-                  setActiveArtifact({
-                    ...leadArtifact,
-                    caseNumber: getCaseNumber(artifacts.findIndex((artifact) => artifact.slug === leadArtifact.slug)),
-                  })
-                }
+                onClick={() => onArtifactOpen(leadArtifact.slug)}
               >
                 {copy.shelfCta}
               </button>
@@ -175,8 +181,6 @@ export function ArtifactsSection({ copy, artifacts, activeLens, activeLensTitle 
           </aside>
         </Reveal>
       ) : null}
-
-      <ArtifactModal artifact={activeArtifact} dictionary={copy} activeLens={activeLens} onClose={() => setActiveArtifact(null)} />
     </section>
   );
 }

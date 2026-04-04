@@ -7,6 +7,7 @@
 - 目标人设：`Zhouyu Liao`
 - 部署目标：GitHub Pages，子路径 `/CVWebsite/`
 - 当前视觉方向：`Dark Fantasy + Modern Minimal`
+- 当前首页方向：`Abyss Museum / Scene-led Hero`
 - 支持语言：`en`、`zh-CN`、`ja`、`ko`
 
 ## 技术栈
@@ -16,8 +17,6 @@
 - TypeScript 严格模式
 - Tailwind CSS
 - Motion
-- Three.js
-- React Three Fiber
 
 建议与 CI 对齐：
 
@@ -29,7 +28,7 @@
   App Router 路由入口。`app/page.tsx` 是语言网关，`app/[locale]/page.tsx` 是主站单页。
 
 - `components/`
-  可复用组件与交互组件，包括语言切换、作品详情弹层、小游戏等。
+  可复用组件与交互组件，包括语言切换、作品详情弹层、sigil 阅读控制器等。
 
 - `sections/`
   单页各区块实现：Hero、About、Disciplines、Artifacts、Game、Contact。
@@ -44,10 +43,10 @@
   全局 theme token。
 
 - `public/`
-  简历 PDF、预览图、作品视频与项目封面等可替换资源。
+  dossier 资源、Abyss hero 图层、氛围粒子、项目封面与示意图等可替换资源。
 
 - `scripts/`
-  构建后静态导出校验与本地链接检查。
+  构建后静态导出校验、Playwright 验证与本地链接检查。
 
 - `.github/workflows/deploy.yml`
   GitHub Pages 静态导出部署流程。
@@ -80,7 +79,6 @@ http://localhost:3000/CVWebsite
 - `basePath: "/CVWebsite"`
 - `trailingSlash: true`
 - `images.unoptimized: true`
-- `transpilePackages: ["three"]`
 
 这意味着：
 
@@ -146,11 +144,14 @@ http://localhost:3000/CVWebsite
 - 大面积实时 blur
 - 依赖大量 JS 计算的滚动特效
 
-允许存在一个受控的 hero-band Three.js / R3F relic 场景，但它必须：
+首页当前采用 2D / 2.5D 场景层方案：
 
-- 只服务 `Hero / Disciplines / Reading Sigils`
-- 不扩散到全站
-- 保留移动端降级和 `prefers-reduced-motion`
+- 远景城堡 / 月轮
+- 中景冷雾
+- 前景灰烬 / 火星 / 烟层
+- 三张 ritual relic 卡
+
+继续沿着这个方向迭代，不要默认把首页重新改回 realtime relic hero。
 
 ### 6. 无障碍要求
 
@@ -166,11 +167,14 @@ http://localhost:3000/CVWebsite
 
 最常替换的位置：
 
-- 简历 PDF 与预览图：
+- dossier PDF：
   [`public/resume`](/mnt/d/Project/AIProject/MyProject/CVWebsite/public/resume)
 
-- 作品视频与精选图片：
-  [`public/media`](/mnt/d/Project/AIProject/MyProject/CVWebsite/public/media)
+- Hero / 氛围素材：
+  [`public/hero`](/mnt/d/Project/AIProject/MyProject/CVWebsite/public/hero)
+  [`public/atmosphere`](/mnt/d/Project/AIProject/MyProject/CVWebsite/public/atmosphere)
+
+- 项目封面与示意图：
   [`public/artifacts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/public/artifacts)
 
 - 联系方式与简历下载路径：
@@ -178,6 +182,9 @@ http://localhost:3000/CVWebsite
 
 - 项目内容：
   [`data/artifacts.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/artifacts.ts)
+
+- 场景图层与粒子参数：
+  [`data/atmosphere.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/atmosphere.ts)
 
 如果用户要求“补全真实内容”，优先从这些位置下手，而不是直接改组件。
 
@@ -202,6 +209,7 @@ npm run verify:links
 
 - 根路径 `/CVWebsite/` 会先读本地语言记忆，再读浏览器语言
 - LinkedIn 当前仍是预留位，未接入已验证公开链接
-- 站点首版采用 `1 真 2 半真` 的作品结构
-- 阅读控制器是轻量 DOM 交互，驱动作品排序与 3D relic 状态
-- 首屏前半段包含一个受控的实时 relic 场景，默认不是全站 3D
+- 首页现在采用 `Abyss` 场景首屏，而不是 realtime relic 主视觉
+- 首页三张 ritual 卡固定是 `EgoCore`、`Ashen Archive`、`OpenEmotion`
+- 阅读控制器是轻量 DOM 交互，驱动作品排序与高亮
+- 素材来源与生成说明统一记录在 [`docs/assets-manifest.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/assets-manifest.md)

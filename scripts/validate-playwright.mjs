@@ -180,20 +180,18 @@ async function run() {
 
         const hero = page.locator("h1");
         await hero.waitFor({ state: "visible" });
-        assert((await hero.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
-        const archiveLabel = page.locator(".hero-archive-label");
-        await archiveLabel.waitFor({ state: "visible" });
-        assert((await archiveLabel.textContent())?.includes("Ashen Archive"), `Missing archive title for ${scenario.name}`);
+        assert((await hero.textContent())?.includes("Ashen Archive"), `Missing archive title for ${scenario.name}`);
+        const identity = page.locator(".hero-nameplate");
+        await identity.waitFor({ state: "visible" });
+        assert((await identity.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
         const brandline = page.locator(".hero-brandline");
         await brandline.waitFor({ state: "visible" });
         assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
-        const relicStage = page.locator(".archive-relic-stage");
-        await relicStage.waitFor({ state: "visible" });
-        assert((await page.locator(".archive-diagnostic-rail").count()) === 1, `Missing diagnostic rail for ${scenario.name}`);
-        assert((await page.locator(".archive-relic-poster-image").count()) === 1, `Missing relic poster layer for ${scenario.name}`);
+        assert((await page.locator(".abyss-hero-stage").count()) === 1, `Missing abyss hero stage for ${scenario.name}`);
+        assert((await page.locator(".relic-altar-card").count()) === 3, `Expected 3 ritual relic cards for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
-        const artifactButton = page.locator('button[aria-haspopup="dialog"]').first();
+        const artifactButton = page.locator('.abyss-ritual-grid button[aria-haspopup="dialog"]').first();
         await artifactButton.scrollIntoViewIfNeeded();
         await artifactButton.click();
         await page.locator('[role="dialog"]').waitFor({ state: "visible" });
@@ -222,36 +220,37 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        const phaseValue = gamePage.locator(".archive-diagnostic-row").filter({ hasText: "Phase" }).locator(".archive-diagnostic-value");
-        const modeValue = gamePage.locator(".archive-diagnostic-row").filter({ hasText: "Material mode" }).locator(".archive-diagnostic-value");
-
-        await gamePage.locator(".archive-relic-stage canvas").waitFor({ state: "visible" });
-        assert((await phaseValue.textContent())?.includes("Threshold"), "Initial relic phase should start at Threshold");
-
-        await gamePage.locator("#disciplines").scrollIntoViewIfNeeded();
-        await gamePage.waitForTimeout(250);
-        assert((await phaseValue.textContent())?.includes("Discipline"), "Phase did not switch at Disciplines");
+        const heroFocus = gamePage.locator(".hero-focus-title");
+        await heroFocus.waitFor({ state: "visible" });
+        assert((await heroFocus.textContent())?.includes("Read the full system"), "Initial hero focus should start in whole archive mode");
 
         await gamePage.locator("#fire").scrollIntoViewIfNeeded();
         await gamePage.waitForTimeout(250);
-        assert((await phaseValue.textContent())?.includes("Sigil"), "Phase did not switch at Reading Sigils");
 
         await gamePage.getByRole("button", { name: /Moon Crest/i }).click();
 
         const currentFocus = gamePage.locator("#fire .relic-status-bar .artifact-meta-value").first();
         await currentFocus.waitFor({ state: "visible" });
-        assert((await currentFocus.textContent())?.includes("Unity Systems"), "Sigil filter did not update current focus");
-        assert((await modeValue.textContent())?.includes("Ordered"), "Material mode did not respond to sigil filter");
-
-        const heroFocus = gamePage.locator(".hero-focus-title");
+        assert((await currentFocus.textContent())?.includes("Systems & Runtime"), "Sigil filter did not update current focus");
         await heroFocus.waitFor({ state: "visible" });
-        assert((await heroFocus.textContent())?.includes("Unity Systems"), "Hero focus card did not respond to sigil filter");
+        assert((await heroFocus.textContent())?.includes("Systems & Runtime"), "Hero focus card did not respond to sigil filter");
 
         const firstArtifactTitle = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
         await firstArtifactTitle.scrollIntoViewIfNeeded();
         assert(
-          (await firstArtifactTitle.textContent())?.includes("Mobile Systems, Quietly Tuned"),
-          "Artifact ordering did not shift toward the selected lens",
+          (await firstArtifactTitle.textContent())?.includes("EgoCore"),
+          "Artifact ordering did not shift toward the moon lens",
+        );
+
+        await gamePage.getByRole("button", { name: /Ember Seal/i }).click();
+        await heroFocus.waitFor({ state: "visible" });
+        assert((await heroFocus.textContent())?.includes("Identity & Narrative"), "Ember lens did not update hero focus");
+
+        const emberLeadArtifact = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
+        await emberLeadArtifact.scrollIntoViewIfNeeded();
+        assert(
+          (await emberLeadArtifact.textContent())?.includes("OpenEmotion"),
+          "Artifact ordering did not shift toward the ember lens",
         );
 
         const reducedMotionContext = await browser.newContext({
@@ -265,21 +264,13 @@ async function run() {
           await reducedMotionPage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
           await reducedMotionPage.locator("#fire").scrollIntoViewIfNeeded();
           await reducedMotionPage.getByRole("button", { name: /Ember Seal/i }).click();
-          const reducedModeValue = reducedMotionPage
-            .locator(".archive-diagnostic-row")
-            .filter({ hasText: "Material mode" })
-            .locator(".archive-diagnostic-value");
+          const reducedModeValue = reducedMotionPage.locator("#fire .relic-status-bar .artifact-meta-value").first();
           await reducedModeValue.waitFor({ state: "visible" });
-          assert((await reducedModeValue.textContent())?.includes("Ember"), "Reduced motion lens switching failed");
+          assert((await reducedModeValue.textContent())?.includes("Identity & Narrative"), "Reduced motion lens switching failed");
+          await expectNoHorizontalOverflow(reducedMotionPage, "reduced-motion");
         } finally {
           await reducedMotionContext.close();
         }
-
-        const fallbackPage = await gameContext.newPage();
-        await fallbackPage.goto(`${baseUrl}/en/?relic=fallback`, { waitUntil: "networkidle" });
-        await fallbackPage.locator(".archive-relic-status").waitFor({ state: "visible" });
-        assert((await fallbackPage.locator(".archive-relic-status").textContent())?.includes("Realtime relic unavailable"), "Fallback poster did not appear when relic was forced off");
-        await fallbackPage.close();
       } finally {
         await gameContext.close();
       }

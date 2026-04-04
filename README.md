@@ -1,6 +1,6 @@
 # Ashen Archive
 
-Dark fantasy inspired portfolio site for **Zhouyu Liao**, rebuilt with **Next.js App Router**, **TypeScript**, **Tailwind CSS**, and **Motion**.  
+Scene-led dark fantasy portfolio site for **Zhouyu Liao**, rebuilt with **Next.js App Router**, **TypeScript**, **Tailwind CSS**, and **Motion**.  
 The production target remains **GitHub Pages** under the `/CVWebsite/` base path with static export.
 
 ## Tech stack
@@ -10,8 +10,6 @@ The production target remains **GitHub Pages** under the `/CVWebsite/` base path
 - TypeScript
 - Tailwind CSS
 - Motion
-- Three.js
-- React Three Fiber
 
 ## Local development
 
@@ -76,31 +74,28 @@ This file controls:
 - LinkedIn availability
 - resume download path
 
-### Replace resume files
+### Replace dossier files
 
-Current resume assets live in:
+Current dossier assets live in:
 
 - `public/resume/zhouyu-liao-software-developer-resume.pdf`
-- `public/resume/preview-cover.jpg`
-- `public/resume/preview-page-2.jpg`
-- `public/resume/preview-page-3.jpg`
 
-Replace these files while keeping the same paths if you want the current UI to keep working without code changes.
+The current UI keeps this entry lightweight. If you publish a studio-safe dossier later, keep the path stable or update `data/profile.ts`.
 
 ### Replace artifact media
 
-Featured artifact media lives in:
+Current artifact visuals live in:
 
-- `public/media/work-collection-of-ta.mp4`
-- `public/artifacts/ember-reel-cover.jpg`
-- `public/artifacts/ember-reel-frame-1.jpg`
-- `public/artifacts/ember-reel-frame-2.jpg`
-- `public/artifacts/ember-reel-frame-3.jpg`
+- `public/artifacts/egocore-cover.svg`
+- `public/artifacts/egocore-diagram.svg`
+- `public/artifacts/ashen-archive-cover.svg`
+- `public/artifacts/ashen-archive-diagram.svg`
+- `public/artifacts/openemotion-cover.svg`
+- `public/artifacts/openemotion-diagram.svg`
+- `public/hero/abyss-hero-matte.svg`
+- `public/atmosphere/*`
 
-Supporting artifact visuals currently use:
-
-- `public/artifacts/ritual-pipeline.svg`
-- `public/artifacts/mobile-systems.svg`
+Asset provenance and generation notes are tracked in `docs/assets-manifest.md`.
 
 ### Add or edit projects
 
@@ -154,7 +149,6 @@ The current setup uses:
 ## Notes
 
 - `next.config.mjs` is configured for `output: "export"` and `basePath: "/CVWebsite"`
-- `next.config.mjs` also transpiles `three` for the controlled relic scene
 - public asset references that are not handled by `next/link` use the helper in [`lib/site.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/site.ts)
-- the site uses exactly one controlled R3F / Three.js scene for the relic band
-- do not expand this into multiple canvases, free-camera navigation, or full-page particle backgrounds by default
+- the homepage is built around a scene-first abyss hero with layered parallax, ritual project cards, and a DOM-based sigil filter
+- keep atmosphere restrained: one main scene, a few overlay layers, and hover states that reinforce the archive language instead of turning the page into a demo
