@@ -3,6 +3,7 @@ const nextConfig = {
   output: "export",
   basePath: "/CVWebsite",
   trailingSlash: true,
+  transpilePackages: ["three"],
   images: {
     unoptimized: true,
   },

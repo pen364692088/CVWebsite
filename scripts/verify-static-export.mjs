@@ -42,6 +42,8 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
+  assert(html.includes("archive-relic-stage"), `Missing relic stage shell in ${locale}`);
+  assert(html.includes("archive-diagnostic-rail"), `Missing diagnostic rail in ${locale}`);
   assert(html.includes("work-collection-of-ta.mp4"), `Missing featured media in ${locale}`);
 }
 

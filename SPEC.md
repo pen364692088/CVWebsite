@@ -20,7 +20,8 @@ In scope:
 - localized routes for `en`, `zh-CN`, `ja`, and `ko`
 - one featured artifact with real media
 - two supporting artifacts with semi-real content
-- one lightweight mini game: **Light the Fire**
+- one sigil-based reading controller
+- one controlled realtime relic band across Hero / Disciplines / Reading Sigils
 - resume preview + PDF download
 - direct contact routes
 
@@ -30,7 +31,8 @@ Out of scope:
 - authentication
 - database or backend APIs
 - server-side form submission
-- Three.js driven homepage
+- multi-canvas 3D scenes
+- free-camera WebGL exploration
 - any direct imitation of an existing game IP
 
 ## Architecture
@@ -40,6 +42,7 @@ Out of scope:
 - Base path: `/CVWebsite`
 - Styling: Tailwind CSS + custom theme tokens
 - Animation: Motion
+- Realtime stage: Three.js + React Three Fiber
 - Content source: local TypeScript data files
 - Media source: local assets under `public/`
 
@@ -84,9 +87,10 @@ The root route `/CVWebsite/` acts as a locale gateway:
 
 - sticky header with anchor navigation
 - language switcher with saved preference
+- one sticky / inline realtime relic stage tied to section phase and active sigil
 - artifact cards open accessible modal details
 - featured video is user-initiated, not autoplayed
-- mini game supports:
+- sigil controller supports:
   - mouse
   - touch
   - keyboard
@@ -103,10 +107,11 @@ The root route `/CVWebsite/` acts as a locale gateway:
 ## Acceptance criteria
 
 - the first impression reads as dark fantasy + modern minimal, not cyberpunk
+- the first impression is led by a realtime relic, not a static threshold image
 - the site builds to `out/` successfully
 - all four locale routes export successfully
 - root locale gateway redirects correctly
-- the mini game is completable and replayable
+- the relic stage responds to section phase and active sigil
 - responsive layouts work at desktop, tablet, and mobile widths
 - contact and resume actions are visible and usable
 - documentation clearly explains running, editing content, adding artifacts, and adjusting theme tokens

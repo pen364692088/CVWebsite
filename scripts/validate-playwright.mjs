@@ -187,6 +187,10 @@ async function run() {
         const brandline = page.locator(".hero-brandline");
         await brandline.waitFor({ state: "visible" });
         assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
+        const relicStage = page.locator(".archive-relic-stage");
+        await relicStage.waitFor({ state: "visible" });
+        assert((await page.locator(".archive-diagnostic-rail").count()) === 1, `Missing diagnostic rail for ${scenario.name}`);
+        assert((await page.locator(".archive-relic-poster-image").count()) === 1, `Missing relic poster layer for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
         const artifactButton = page.locator('button[aria-haspopup="dialog"]').first();
@@ -218,12 +222,26 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
+        const phaseValue = gamePage.locator(".archive-diagnostic-row").filter({ hasText: "Phase" }).locator(".archive-diagnostic-value");
+        const modeValue = gamePage.locator(".archive-diagnostic-row").filter({ hasText: "Material mode" }).locator(".archive-diagnostic-value");
+
+        await gamePage.locator(".archive-relic-stage canvas").waitFor({ state: "visible" });
+        assert((await phaseValue.textContent())?.includes("Threshold"), "Initial relic phase should start at Threshold");
+
+        await gamePage.locator("#disciplines").scrollIntoViewIfNeeded();
+        await gamePage.waitForTimeout(250);
+        assert((await phaseValue.textContent())?.includes("Discipline"), "Phase did not switch at Disciplines");
+
         await gamePage.locator("#fire").scrollIntoViewIfNeeded();
+        await gamePage.waitForTimeout(250);
+        assert((await phaseValue.textContent())?.includes("Sigil"), "Phase did not switch at Reading Sigils");
+
         await gamePage.getByRole("button", { name: /Moon Crest/i }).click();
 
         const currentFocus = gamePage.locator("#fire .relic-status-bar .artifact-meta-value").first();
         await currentFocus.waitFor({ state: "visible" });
         assert((await currentFocus.textContent())?.includes("Unity Systems"), "Sigil filter did not update current focus");
+        assert((await modeValue.textContent())?.includes("Ordered"), "Material mode did not respond to sigil filter");
 
         const heroFocus = gamePage.locator(".hero-focus-title");
         await heroFocus.waitFor({ state: "visible" });
@@ -235,6 +253,33 @@ async function run() {
           (await firstArtifactTitle.textContent())?.includes("Mobile Systems, Quietly Tuned"),
           "Artifact ordering did not shift toward the selected lens",
         );
+
+        const reducedMotionContext = await browser.newContext({
+          viewport: { width: 1280, height: 900 },
+          locale: "en-US",
+          reducedMotion: "reduce",
+        });
+
+        try {
+          const reducedMotionPage = await reducedMotionContext.newPage();
+          await reducedMotionPage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
+          await reducedMotionPage.locator("#fire").scrollIntoViewIfNeeded();
+          await reducedMotionPage.getByRole("button", { name: /Ember Seal/i }).click();
+          const reducedModeValue = reducedMotionPage
+            .locator(".archive-diagnostic-row")
+            .filter({ hasText: "Material mode" })
+            .locator(".archive-diagnostic-value");
+          await reducedModeValue.waitFor({ state: "visible" });
+          assert((await reducedModeValue.textContent())?.includes("Ember"), "Reduced motion lens switching failed");
+        } finally {
+          await reducedMotionContext.close();
+        }
+
+        const fallbackPage = await gameContext.newPage();
+        await fallbackPage.goto(`${baseUrl}/en/?relic=fallback`, { waitUntil: "networkidle" });
+        await fallbackPage.locator(".archive-relic-status").waitFor({ state: "visible" });
+        assert((await fallbackPage.locator(".archive-relic-status").textContent())?.includes("Realtime relic unavailable"), "Fallback poster did not appear when relic was forced off");
+        await fallbackPage.close();
       } finally {
         await gameContext.close();
       }

@@ -1,4 +1,4 @@
-import type { ArchiveLens, SigilLens } from "@/lib/archive";
+import type { ArchiveLens, ArchivePhase, SigilLens } from "@/lib/archive";
 import type { Locale } from "@/lib/i18n";
 
 export interface Dictionary {
@@ -73,6 +73,17 @@ export interface Dictionary {
     sigilLabel: string;
     focusCta: string;
     options: Array<{ id: ArchiveLens; label: string; title: string; body: string }>;
+  };
+  relic: {
+    fallbackAlt: string;
+    unsupportedLabel: string;
+    sigilLabel: string;
+    phaseLabel: string;
+    modeLabel: string;
+    callsLabel: string;
+    pointsLabel: string;
+    phaseNames: Record<ArchivePhase, string>;
+    modeNames: Record<ArchiveLens, string>;
   };
   contact: {
     eyebrow: string;
@@ -248,6 +259,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
           body: "Realtime effects, material work, atmosphere, and readable feedback.",
         },
       ],
+    },
+    relic: {
+      fallbackAlt: "Archive relic fallback poster showing the threshold study behind a dormant obsidian chamber.",
+      unsupportedLabel: "Realtime relic unavailable. Showing the archive poster instead.",
+      sigilLabel: "Active sigil",
+      phaseLabel: "Phase",
+      modeLabel: "Material mode",
+      callsLabel: "Calls",
+      pointsLabel: "Points",
+      phaseNames: {
+        hero: "Threshold",
+        disciplines: "Discipline split",
+        sigils: "Sigil read",
+      },
+      modeNames: {
+        all: "Balanced shell",
+        moon: "Ordered grid",
+        tower: "Faceted assembly",
+        ember: "Ember trace",
+      },
     },
     contact: {
       eyebrow: "Send a Signal",
@@ -426,6 +457,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
         },
       ],
     },
+    relic: {
+      fallbackAlt: "档案遗物的后备海报：阈值拱门之后，一枚沉睡的黑曜核心仍被封存。",
+      unsupportedLabel: "实时遗物当前不可用，已退回静态档案海报。",
+      sigilLabel: "当前符印",
+      phaseLabel: "阶段",
+      modeLabel: "材质模式",
+      callsLabel: "调用",
+      pointsLabel: "点数",
+      phaseNames: {
+        hero: "阈值",
+        disciplines: "能力分层",
+        sigils: "符印读取",
+      },
+      modeNames: {
+        all: "平衡壳层",
+        moon: "秩序格栅",
+        tower: "切面装配",
+        ember: "余烬痕迹",
+      },
+    },
     contact: {
       eyebrow: "发送信号",
       title: "如果你需要的是能把想法做进引擎里的人，就从这里开始。",
@@ -598,6 +649,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
           body: "リアルタイム表現、マテリアル処理、雰囲気とフィードバックを優先。",
         },
       ],
+    },
+    relic: {
+      fallbackAlt: "しきい値の回廊の奥で、黒曜の核が眠るアーカイブ用フォールバックポスター。",
+      unsupportedLabel: "リアルタイム relic は利用できません。静的ポスターを表示しています。",
+      sigilLabel: "Active sigil",
+      phaseLabel: "Phase",
+      modeLabel: "Material mode",
+      callsLabel: "Calls",
+      pointsLabel: "Points",
+      phaseNames: {
+        hero: "Threshold",
+        disciplines: "Discipline split",
+        sigils: "Sigil read",
+      },
+      modeNames: {
+        all: "Balanced shell",
+        moon: "Ordered grid",
+        tower: "Faceted assembly",
+        ember: "Ember trace",
+      },
     },
     contact: {
       eyebrow: "Send a Signal",
@@ -777,6 +848,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
           body: "실시간 이펙트, 머티리얼 작업, 분위기와 피드백을 우선합니다.",
         },
       ],
+    },
+    relic: {
+      fallbackAlt: "임계 회랑 뒤편에서 흑요석 핵이 잠든 아카이브 폴백 포스터.",
+      unsupportedLabel: "실시간 relic 을 사용할 수 없어 정적 포스터로 대체했습니다.",
+      sigilLabel: "Active sigil",
+      phaseLabel: "Phase",
+      modeLabel: "Material mode",
+      callsLabel: "Calls",
+      pointsLabel: "Points",
+      phaseNames: {
+        hero: "Threshold",
+        disciplines: "Discipline split",
+        sigils: "Sigil read",
+      },
+      modeNames: {
+        all: "Balanced shell",
+        moon: "Ordered grid",
+        tower: "Faceted assembly",
+        ember: "Ember trace",
+      },
     },
     contact: {
       eyebrow: "Send a Signal",

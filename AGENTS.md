@@ -16,6 +16,8 @@
 - TypeScript 严格模式
 - Tailwind CSS
 - Motion
+- Three.js
+- React Three Fiber
 
 建议与 CI 对齐：
 
@@ -78,6 +80,7 @@ http://localhost:3000/CVWebsite
 - `basePath: "/CVWebsite"`
 - `trailingSlash: true`
 - `images.unoptimized: true`
+- `transpilePackages: ["three"]`
 
 这意味着：
 
@@ -136,11 +139,18 @@ http://localhost:3000/CVWebsite
 
 不允许默认引入：
 
-- Three.js 首页
+- 多个 Canvas 场景
+- 自由相机 / 3D 漫游
 - 高频闪烁
-- 全屏粒子爆炸
+- 全屏粒子背景
 - 大面积实时 blur
 - 依赖大量 JS 计算的滚动特效
+
+允许存在一个受控的 hero-band Three.js / R3F relic 场景，但它必须：
+
+- 只服务 `Hero / Disciplines / Reading Sigils`
+- 不扩散到全站
+- 保留移动端降级和 `prefers-reduced-motion`
 
 ### 6. 无障碍要求
 
@@ -193,4 +203,5 @@ npm run verify:links
 - 根路径 `/CVWebsite/` 会先读本地语言记忆，再读浏览器语言
 - LinkedIn 当前仍是预留位，未接入已验证公开链接
 - 站点首版采用 `1 真 2 半真` 的作品结构
-- 小游戏是轻量 DOM 交互，不依赖 canvas-heavy 或 3D 方案
+- 阅读控制器是轻量 DOM 交互，驱动作品排序与 3D relic 状态
+- 首屏前半段包含一个受控的实时 relic 场景，默认不是全站 3D

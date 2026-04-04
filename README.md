@@ -10,6 +10,8 @@ The production target remains **GitHub Pages** under the `/CVWebsite/` base path
 - TypeScript
 - Tailwind CSS
 - Motion
+- Three.js
+- React Three Fiber
 
 ## Local development
 
@@ -152,5 +154,7 @@ The current setup uses:
 ## Notes
 
 - `next.config.mjs` is configured for `output: "export"` and `basePath: "/CVWebsite"`
+- `next.config.mjs` also transpiles `three` for the controlled relic scene
 - public asset references that are not handled by `next/link` use the helper in [`lib/site.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/site.ts)
-- the site intentionally avoids Three.js and heavy 3D dependencies
+- the site uses exactly one controlled R3F / Three.js scene for the relic band
+- do not expand this into multiple canvases, free-camera navigation, or full-page particle backgrounds by default
