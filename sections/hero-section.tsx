@@ -24,54 +24,7 @@ export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
         setOffset({ x, y });
       }}
     >
-      <div className="hero-visual">
-        <motion.div
-          className="absolute inset-0"
-          animate={reducedMotion ? undefined : { x: offset.x * -0.2, y: offset.y * -0.16, scale: [1, 1.02, 1] }}
-          transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-        >
-          <Image
-            src={assetPath("/hero/ashen-threshold.svg")}
-            alt="An ashen stone threshold lit by a small fire in a dark archive-like ruin."
-            fill
-            priority
-            sizes="100vw"
-            className="hero-visual-image object-cover object-center"
-          />
-        </motion.div>
-
-        <motion.div
-          className="hero-mist"
-          animate={reducedMotion ? undefined : { x: [0, 24, 0], opacity: [0.6, 0.84, 0.64] }}
-          transition={{ duration: 11, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute inset-x-0 bottom-[12%] h-44 bg-[radial-gradient(circle_at_center,rgba(201,106,43,0.24)_0%,transparent_58%)]"
-          animate={reducedMotion ? undefined : { opacity: [0.56, 0.78, 0.6] }}
-          transition={{ duration: 6.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-        />
-
-        {[
-          { left: "62%", top: "58%", size: "0.32rem", delay: 0 },
-          { left: "58%", top: "63%", size: "0.4rem", delay: 1.2 },
-          { left: "66%", top: "61%", size: "0.28rem", delay: 2.1 },
-        ].map((ember) => (
-          <motion.span
-            key={`${ember.left}-${ember.top}`}
-            className="ember-speck"
-            style={{ left: ember.left, top: ember.top, width: ember.size, height: ember.size }}
-            animate={reducedMotion ? undefined : { y: [0, -12, -22], opacity: [0, 0.92, 0] }}
-            transition={{
-              duration: 5.5,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeOut",
-              delay: ember.delay,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="hero-content">
+      <div className="hero-grid">
         <div className="hero-copy space-y-7">
           <Reveal>
             <p className="section-kicker">{copy.eyebrow}</p>
@@ -103,9 +56,57 @@ export function HeroSection({ copy }: { copy: Dictionary["hero"] }) {
             </div>
           </Reveal>
           <Reveal delay={0.28}>
-            <p className="text-xs uppercase tracking-[0.24em] text-gold/84">{copy.availability}</p>
+            <p className="hero-availability">{copy.availability}</p>
           </Reveal>
         </div>
+
+        <Reveal delay={0.14} className="hero-tableau-reveal">
+          <div className="hero-tableau">
+            <motion.div
+              className="hero-scene"
+              animate={reducedMotion ? undefined : { x: offset.x * 0.28, y: offset.y * 0.2 }}
+              transition={{ type: "spring", stiffness: 48, damping: 20, mass: 1.05 }}
+            >
+              <Image
+                src={assetPath("/hero/norwich-threshold-pexels.jpg")}
+                alt="A dark stone arch opening toward a distant cathedral tower, treated as an archive threshold."
+                fill
+                priority
+                sizes="(min-width: 1024px) 52vw, 100vw"
+                className="hero-scene-image"
+              />
+              <div className="hero-scene-vignette" />
+              <div className="hero-scene-shadow" />
+              <p className="hero-scene-plaque">Plate I · Threshold Study</p>
+
+              <Image
+                src={assetPath("/hero/dragon-trace.svg")}
+                alt=""
+                aria-hidden="true"
+                width={500}
+                height={280}
+                className="hero-dragon-trace"
+              />
+
+              <Image
+                src={assetPath("/hero/guardian-remnant.svg")}
+                alt=""
+                aria-hidden="true"
+                width={280}
+                height={620}
+                className="hero-guardian-remnant"
+              />
+
+              <motion.div
+                className="hero-firelight"
+                animate={reducedMotion ? undefined : { opacity: [0.72, 0.92, 0.76], scale: [0.98, 1.03, 0.99] }}
+                transition={{ duration: 5.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              >
+                <span className="hero-fire-core" />
+              </motion.div>
+            </motion.div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

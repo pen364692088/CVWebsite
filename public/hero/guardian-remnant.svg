@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 620" role="img" aria-labelledby="title">
+  <title>Broken guardian effigy silhouette</title>
+  <defs>
+    <linearGradient id="stone" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#b6a78d" />
+      <stop offset="55%" stop-color="#8f816d" />
+      <stop offset="100%" stop-color="#665c50" />
+    </linearGradient>
+  </defs>
+  <path
+    fill="url(#stone)"
+    d="M146 24c24 0 41 20 41 46 0 16-5 30-15 39l23 54-10 28 8 26-18 22 7 40-14 24 18 205-18 26-41 29-66-18-24-47 20-210-11-26 13-31-13-31 24-55c-9-10-14-23-14-41 0-27 18-46 44-46 11 0 21 4 29 11 7-7 17-11 27-11Z"
+  />
+  <path
+    fill="#dacbb7"
+    opacity=".62"
+    d="M141 71c17 0 30 14 30 33 0 18-13 31-30 31-18 0-31-13-31-31 0-19 13-33 31-33Zm-43 106 39-31 37 35-15 55-7 89 15 192-30 19-44-13-13-29 24-259-6-58Z"
+  />
+  <path
+    fill="none"
+    stroke="#53483d"
+    stroke-linecap="round"
+    stroke-width="8"
+    d="M86 198c23-6 42-23 56-50m10 2c9 22 18 38 31 51M116 247l45 0M111 287l39 0M105 327l48 0M102 371l52 0M97 414l57 0M91 456l64 0M84 496l72 0"
+  />
+  <path
+    fill="none"
+    stroke="#41362f"
+    stroke-linecap="round"
+    stroke-width="5"
+    d="M72 525l31-20m72-200 18-36m-126 8-16 32m96 159 18 35"
+    opacity=".7"
+  />
+</svg>

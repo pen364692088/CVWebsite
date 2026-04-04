@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 280" role="img" aria-labelledby="title">
+  <title>Dragon crest linework</title>
+  <g fill="none" stroke="#c7b292" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-opacity=".2" stroke-width="3" d="M64 140c0-62 50-112 186-112 130 0 186 54 186 112s-56 112-186 112C114 252 64 202 64 140Z" />
+    <path
+      stroke-width="8"
+      stroke-opacity=".72"
+      d="M117 175c28-5 54-24 78-55 18-24 46-48 82-61 31-12 63-13 90 3-19 2-31 13-37 28 23-6 44-1 59 16-23 4-42 17-58 38-11 14-29 33-58 48-31 16-64 23-96 17 18-8 30-20 34-35-19 7-40 7-63 1 17-8 28-20 34-36-24-1-45-10-65-29Z"
+    />
+    <path stroke-width="5" stroke-opacity=".62" d="M355 95c18-23 33-31 49-36-7 19-6 34 3 48m-215 53c11 20 22 34 38 42m-68-81c-17-13-37-18-61-15 10 16 24 28 42 36" />
+    <path stroke-width="4" stroke-opacity=".48" d="M241 86c7 21 24 31 48 31m-78 44c12 10 27 15 45 15m-5-96 16-20m29 12 26-18m-127 148-13 27m45-4 7 29" />
+  </g>
+</svg>

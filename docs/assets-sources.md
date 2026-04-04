@@ -46,6 +46,15 @@ These placeholders are intentionally replaceable and are only used for the semi-
 
 ## Design assets
 
+Phase 1 research and direction:
+
+- `docs/phase-1-material-research.md`
+- `docs/phase-1-art-direction-board.md`
+
+Selected imported hero image:
+
+- `public/hero/norwich-threshold-pexels.jpg`
+
 ### Theme tokens
 
 Theme source of truth:
