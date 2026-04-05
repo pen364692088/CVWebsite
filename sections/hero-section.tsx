@@ -151,7 +151,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
               fill
               priority
               sizes="100vw"
-              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-mid"
+              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-mid object-cover"
             />
             <Image
               src={assetPath(HERO_STAGE_ASSETS.emberBottomOverlay.src)}
@@ -160,7 +160,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
               fill
               priority
               sizes="100vw"
-              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-bottom"
+              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-bottom object-cover"
             />
 
             <Image
@@ -329,7 +329,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       width={320}
                       height={320}
-                      className="abyss-stage-card-frame-top"
+                      className="abyss-stage-card-frame-top object-cover"
                     />
                     <Image
                       src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
@@ -337,7 +337,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       width={320}
                       height={320}
-                      className="abyss-stage-card-frame-left"
+                      className="abyss-stage-card-frame-left object-cover"
                     />
                     <Image
                       src={assetPath(HERO_STAGE_ASSETS.dividerBottom.src)}
@@ -345,7 +345,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       width={320}
                       height={320}
-                      className="abyss-stage-card-frame-bottom"
+                      className="abyss-stage-card-frame-bottom object-cover"
                     />
                     <Image
                       src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
@@ -353,7 +353,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       width={320}
                       height={320}
-                      className="abyss-stage-card-frame-right"
+                      className="abyss-stage-card-frame-right object-cover"
                     />
                   </span>
                   <div className="artifact-ledger abyss-stage-card-ledger">
@@ -416,7 +416,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       fill
                       sizes="(min-width: 1024px) 13vw, 20vw"
-                      className="abyss-stage-ritual-plate"
+                      className="abyss-stage-ritual-plate object-cover"
                     />
                     <span className="abyss-stage-ritual-label">{option.label}</span>
                   </motion.button>
