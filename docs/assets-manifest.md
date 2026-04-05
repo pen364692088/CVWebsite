@@ -11,6 +11,8 @@
 | `public/atmosphere/smoke-veils-unsplash.jpg` | stock | https://unsplash.com/photos/smoke-on-a-black-background-bVlz5gv18Qk | Unsplash License | Hero middle fog layer | No |
 | `public/atmosphere/smoke-band.jpg` | generated in repo | n/a | Original repo asset | Hero foreground smoke veil | No |
 | `public/atmosphere/smoke-band-v2.jpg` | generated in repo | n/a | Original repo asset | Hero foreground smoke veil, design-led v2 | No |
+| `public/atmosphere/embers-mid-overlay.png` | user-provided archive pack | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Mid atmosphere ember veil / hero accent | No |
+| `public/atmosphere/embers-bottom-arc.png` | user-provided archive pack | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Lower ember arc accent / hero accent | No |
 | `public/atmosphere/ember-sprite.png` | generated in repo | n/a | Original repo asset | Ember particles, button hover, card hover | No |
 | `public/atmosphere/ash-sprite.png` | generated in repo | n/a | Original repo asset | Ash particles, ambient drift | No |
 
@@ -21,6 +23,12 @@
 | `public/hero/abyss-ornament.png` | generated in repo | n/a | Original repo asset | Header crest / section dividers | No |
 | `public/hero/abyss-dragon-silhouette.png` | generated in repo | n/a | Original repo asset | Hero trace layer | No |
 | `public/hero/abyss-ornament-v2.png` | user-provided reference crop | `c:/Users/LEO/Downloads/Échos des abysses _ page d'accueil.png` | Experimental local-study use by explicit user request | Floating locale ornament / section accent | No |
+| `public/reference-crops/dark-fantasy-pack/divider_01.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Border top frame accents for abyss stage | No |
+| `public/reference-crops/dark-fantasy-pack/divider_02.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Border side frame accents for abyss stage | No |
+| `public/reference-crops/dark-fantasy-pack/divider_03.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Bottom frame accents for abyss stage | No |
+| `public/reference-crops/dark-fantasy-pack/divider_04.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Corner frame accents for abyss stage | No |
+| `public/reference-crops/dark-fantasy-pack/unseal-the-relic-button.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Ritual button plate texture | No |
+| `public/reference-crops/dark-fantasy-pack/abyss-seal.png` | user-provided pack import | `c:/Users/LEO/Downloads/dark_fantasy_split_assets_clean_v2.zip` | User provided reference pack for study use | Ritual seal glyph accent | No |
 
 ## Artifact Covers
 

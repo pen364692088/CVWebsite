@@ -1354,24 +1354,14 @@ footer {
   position: relative;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  border: 1px solid rgba(161, 135, 91, 0.32);
-  border-radius: 0.2rem;
+  border: 1px solid rgba(151, 116, 49, 0.22);
+  border-radius: 0.35rem;
   background:
     radial-gradient(circle at 50% 16%, rgba(255, 233, 201, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(9, 8, 8, 0.98), rgba(4, 4, 5, 1));
   box-shadow:
     inset 0 0 0 1px rgba(216, 211, 200, 0.05),
     0 34px 90px rgba(0, 0, 0, 0.52);
-}
-
-.abyss-reference-stage::before {
-  content: "";
-  position: absolute;
-  inset: 0.7rem;
-  border: 1px solid rgba(216, 211, 200, 0.08);
-  border-radius: 0.08rem;
-  pointer-events: none;
-  z-index: 3;
 }
 
 .abyss-reference-stage::after {
@@ -1394,6 +1384,105 @@ footer {
 .abyss-reference-image img {
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.abyss-stage-frame {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.84;
+  mix-blend-mode: screen;
+  filter: contrast(1.02);
+  object-fit: fill;
+  z-index: 3;
+}
+
+.abyss-stage-frame-top,
+.abyss-stage-frame-bottom {
+  inset: 0.18rem 4.1rem;
+  height: 16%;
+}
+
+.abyss-stage-frame-bottom {
+  top: auto;
+  inset: auto 4.1rem 0.18rem;
+}
+
+.abyss-stage-frame-side {
+  inset: 4.5rem 4.5rem 4.2rem;
+  width: 2.35rem;
+}
+
+.abyss-stage-frame-left {
+  left: 0.18rem;
+  right: auto;
+  transform: scaleX(-1);
+}
+
+.abyss-stage-frame-right {
+  right: 0.18rem;
+  left: auto;
+}
+
+.abyss-stage-corner {
+  position: absolute;
+  width: 12.4%;
+  height: auto;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.88;
+  mix-blend-mode: soft-light;
+  object-fit: contain;
+}
+
+.abyss-stage-corner-tl {
+  top: 0;
+  left: 0;
+}
+
+.abyss-stage-corner-tr {
+  top: 0;
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.abyss-stage-corner-bl {
+  bottom: 0;
+  left: 0;
+  transform: scaleY(-1);
+}
+
+.abyss-stage-corner-br {
+  bottom: 0;
+  right: 0;
+  transform: scale(-1, -1);
+}
+
+.abyss-stage-ember-overlay {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  top: auto;
+  bottom: -8%;
+  width: 108%;
+  height: 42%;
+  pointer-events: none;
+  opacity: 0.44;
+  mix-blend-mode: screen;
+  z-index: 4;
+}
+
+.abyss-stage-ember-overlay-mid {
+  bottom: 12%;
+  height: 28%;
+  opacity: 0.22;
+  transform: scale(1.04);
+}
+
+.abyss-stage-ember-overlay-bottom {
+  bottom: -12%;
+  height: 36%;
+  opacity: 0.3;
+  transform: scale(1.06);
 }
 
 .abyss-particle-field-stage {
@@ -1488,7 +1577,7 @@ footer {
   position: absolute;
   left: 50%;
   top: 14.2%;
-  z-index: 6;
+  z-index: 8;
   display: grid;
   width: min(100%, 36rem);
   justify-items: center;
@@ -1535,10 +1624,14 @@ footer {
   content: "";
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(255, 225, 174, 0);
-  border-radius: 0.2rem;
+  border: 1px solid transparent;
+  border-radius: 0;
   opacity: 0;
-  transition: opacity var(--motion-fast) ease, border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background-color var(--motion-fast) ease;
+  transition:
+    opacity var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 .abyss-stage-hotspot:hover::before,
@@ -1609,24 +1702,35 @@ footer {
   place-items: center;
   overflow: hidden;
   text-decoration: none;
+  z-index: 9;
 }
 
 .abyss-stage-enter-hotspot::before {
-  border-radius: 0.28rem;
+  border-radius: 0;
 }
 
 .abyss-stage-enter-hotspot:hover::before,
 .abyss-stage-enter-hotspot:focus-visible::before {
-  border-color: rgba(255, 208, 140, 0.56);
-  background:
-    radial-gradient(circle at 50% 60%, rgba(243, 180, 121, 0.18), transparent 70%),
-    linear-gradient(180deg, rgba(255, 245, 226, 0.08), transparent 46%);
+  border-color: rgba(255, 208, 140, 0.36);
   box-shadow: 0 0 26px rgba(243, 180, 121, 0.24);
 }
 
 .abyss-stage-button-art {
   z-index: 0;
-  opacity: 0.95;
+  opacity: 0.96;
+}
+
+.abyss-stage-button-seal {
+  z-index: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(255, 206, 143, 0.4));
+  transition: transform var(--motion-fast) ease, opacity var(--motion-fast) ease;
+}
+
+.abyss-stage-enter-hotspot:hover .abyss-stage-button-seal,
+.abyss-stage-enter-hotspot:focus-visible .abyss-stage-button-seal {
+  transform: translateY(-0.05rem) scale(1.08);
+  opacity: 1;
 }
 
 .abyss-stage-button-label {
@@ -1646,8 +1750,8 @@ footer {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgba(161, 135, 91, 0.36);
-  border-radius: 0.22rem;
+  border: 1px solid rgba(161, 135, 91, 0.32);
+  border-radius: 0;
   background:
     linear-gradient(180deg, rgba(14, 12, 11, 0.94), rgba(7, 7, 8, 0.96)),
     rgba(6, 6, 7, 0.9);
@@ -1655,22 +1759,67 @@ footer {
     inset 0 0 0 1px rgba(216, 211, 200, 0.05),
     0 24px 68px rgba(0, 0, 0, 0.4);
   text-align: center;
+  isolation: isolate;
 }
 
 .abyss-stage-card::before {
-  inset: 0.55rem;
-  border-radius: 0.08rem;
+  inset: 0;
+  border-radius: 0;
 }
 
 .abyss-stage-card:hover::before,
 .abyss-stage-card:focus-visible::before,
 .abyss-stage-card-focused::before {
   border-color: rgba(201, 106, 43, 0.48);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%, rgba(201, 106, 43, 0.04) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%, rgba(201, 106, 43, 0.08) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(255, 230, 182, 0.04),
     0 0 30px rgba(201, 106, 43, 0.18);
+}
+
+.abyss-stage-card-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.abyss-stage-card-frame-top,
+.abyss-stage-card-frame-bottom {
+  position: absolute;
+  inset: 0.16rem 0.18rem;
+  width: calc(100% - 0.36rem);
+  object-fit: fill;
+  opacity: 0.64;
+}
+
+.abyss-stage-card-frame-top {
+  top: 0;
+  height: 0.34rem;
+}
+
+.abyss-stage-card-frame-left,
+.abyss-stage-card-frame-right {
+  position: absolute;
+  top: 0.16rem;
+  bottom: 0.16rem;
+  width: 0.28rem;
+  opacity: 0.52;
+}
+
+.abyss-stage-card-frame-left {
+  left: 0;
+}
+
+.abyss-stage-card-frame-right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.abyss-stage-card-frame-bottom {
+  bottom: 0;
+  top: auto;
+  transform: scaleY(-1);
 }
 
 .abyss-stage-card-ledger {
@@ -1754,25 +1903,38 @@ footer {
   align-items: flex-end;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid rgba(161, 135, 91, 0.28);
-  border-radius: 0.22rem;
+  border: 1px solid rgba(201, 170, 111, 0.26);
+  border-radius: 0;
   background:
     linear-gradient(180deg, rgba(16, 13, 10, 0.82), rgba(7, 7, 8, 0.94)),
     rgba(7, 7, 8, 0.9);
 }
 
+.abyss-stage-ritual-plate {
+  position: absolute;
+  inset: 0;
+  object-fit: fill;
+  opacity: 0.85;
+  transition: opacity var(--motion-fast) ease;
+  z-index: 0;
+}
+
+.abyss-stage-ritual:hover .abyss-stage-ritual-plate,
+.abyss-stage-ritual:focus-visible .abyss-stage-ritual-plate,
+.abyss-stage-ritual-active .abyss-stage-ritual-plate {
+  opacity: 1;
+}
+
 .abyss-stage-ritual::before {
   inset: 0.45rem;
-  border-radius: 0.08rem;
+  border-radius: 0;
 }
 
 .abyss-stage-ritual:hover::before,
 .abyss-stage-ritual:focus-visible::before,
 .abyss-stage-ritual-active::before {
   border-color: rgba(201, 106, 43, 0.4);
-  background:
-    radial-gradient(circle at 50% 30%, rgba(243, 180, 121, 0.16), transparent 65%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 48%);
+  background: linear-gradient(180deg, rgba(243, 180, 121, 0.2), transparent 52%);
   box-shadow: 0 0 28px rgba(201, 106, 43, 0.16);
 }
 
@@ -1925,8 +2087,20 @@ footer {
     width: min(100%, 42rem);
   }
 
-  .abyss-reference-stage::before {
-    inset: 0.45rem;
+  .abyss-stage-frame-top,
+  .abyss-stage-frame-bottom {
+    inset: 0.12rem 1.4rem;
+    opacity: 0.75;
+  }
+
+  .abyss-stage-frame-left,
+  .abyss-stage-frame-right {
+    inset: 2.9rem 0.4rem 3rem;
+    width: 1.4rem;
+  }
+
+  .abyss-stage-corner {
+    width: 18%;
   }
 
   .abyss-stage-copy {

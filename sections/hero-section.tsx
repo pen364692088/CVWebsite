@@ -143,6 +143,90 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
               sizes="(min-width: 1280px) 64rem, (min-width: 768px) 78vw, 100vw"
               className="abyss-stage-smoke object-cover"
             />
+
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.emberMidOverlay.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              priority
+              sizes="100vw"
+              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-mid"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.emberBottomOverlay.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              priority
+              sizes="100vw"
+              className="abyss-stage-ember-overlay abyss-stage-ember-overlay-bottom"
+            />
+
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerTop.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="100vw"
+              className="abyss-stage-frame abyss-stage-frame-top"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="100vw"
+              className="abyss-stage-frame abyss-stage-frame-side abyss-stage-frame-left"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="100vw"
+              className="abyss-stage-frame abyss-stage-frame-side abyss-stage-frame-right"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerBottom.src)}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="100vw"
+              className="abyss-stage-frame abyss-stage-frame-bottom"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerCorner.src)}
+              alt=""
+              aria-hidden="true"
+              width={240}
+              height={240}
+              className="abyss-stage-corner abyss-stage-corner-tl"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerCorner.src)}
+              alt=""
+              aria-hidden="true"
+              width={240}
+              height={240}
+              className="abyss-stage-corner abyss-stage-corner-tr"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerCorner.src)}
+              alt=""
+              aria-hidden="true"
+              width={240}
+              height={240}
+              className="abyss-stage-corner abyss-stage-corner-bl"
+            />
+            <Image
+              src={assetPath(HERO_STAGE_ASSETS.dividerCorner.src)}
+              alt=""
+              aria-hidden="true"
+              width={240}
+              height={240}
+              className="abyss-stage-corner abyss-stage-corner-br"
+            />
           </motion.div>
 
           <div className="abyss-particle-field abyss-particle-field-stage" aria-hidden="true">
@@ -209,6 +293,14 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                 sizes="(min-width: 768px) 17rem, 13rem"
                 className="abyss-stage-button-art object-contain"
               />
+              <Image
+                src={assetPath(HERO_STAGE_ASSETS.sealGlyph.src)}
+                alt=""
+                aria-hidden="true"
+                width={40}
+                height={40}
+                className="abyss-stage-button-seal"
+              />
               <span className="abyss-stage-button-label">{copy.enterLabel}</span>
             </a>
 
@@ -230,6 +322,40 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                   onClick={() => onArtifactOpen(artifact.slug)}
                 >
                   <span className="relic-altar-glow" aria-hidden="true" />
+                  <span className="abyss-stage-card-frame" aria-hidden="true">
+                    <Image
+                      src={assetPath(HERO_STAGE_ASSETS.dividerTop.src)}
+                      alt=""
+                      aria-hidden="true"
+                      width={320}
+                      height={320}
+                      className="abyss-stage-card-frame-top"
+                    />
+                    <Image
+                      src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
+                      alt=""
+                      aria-hidden="true"
+                      width={320}
+                      height={320}
+                      className="abyss-stage-card-frame-left"
+                    />
+                    <Image
+                      src={assetPath(HERO_STAGE_ASSETS.dividerBottom.src)}
+                      alt=""
+                      aria-hidden="true"
+                      width={320}
+                      height={320}
+                      className="abyss-stage-card-frame-bottom"
+                    />
+                    <Image
+                      src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
+                      alt=""
+                      aria-hidden="true"
+                      width={320}
+                      height={320}
+                      className="abyss-stage-card-frame-right"
+                    />
+                  </span>
                   <div className="artifact-ledger abyss-stage-card-ledger">
                     <span>{copy.projectLabel}</span>
                     <span>{artifact.title}</span>
@@ -270,12 +396,12 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                 const isActive = activeLens === option.id;
 
                 return (
-                  <motion.button
-                    key={option.id}
-                    type="button"
-                    className={`abyss-stage-hotspot abyss-stage-ritual ${RITUAL_CLASS_BY_LENS[option.id]} ${
-                      isActive ? "abyss-stage-ritual-active" : ""
-                    }`}
+                <motion.button
+                  key={option.id}
+                  type="button"
+                  className={`abyss-stage-hotspot abyss-stage-ritual ${RITUAL_CLASS_BY_LENS[option.id]} ${
+                    isActive ? "abyss-stage-ritual-active" : ""
+                  }`}
                     data-lens={option.id}
                     aria-pressed={isActive}
                     aria-label={option.label}
@@ -284,6 +410,14 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                     whileTap={reducedMotion ? undefined : { scale: 0.994 }}
                     onClick={() => onLensChange(isActive ? "all" : option.id)}
                   >
+                    <Image
+                      src={assetPath(HERO_STAGE_ASSETS.unsealButton.src)}
+                      alt=""
+                      aria-hidden="true"
+                      fill
+                      sizes="(min-width: 1024px) 13vw, 20vw"
+                      className="abyss-stage-ritual-plate"
+                    />
                     <span className="abyss-stage-ritual-label">{option.label}</span>
                   </motion.button>
                 );

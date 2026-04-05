@@ -51,6 +51,26 @@ export const HERO_STAGE_ASSETS = {
     src: "/reference-crops/dark-fantasy-pack/enter-the-abyss-button.png",
     alt: "Abyss entry button plate.",
   },
+  unsealButton: {
+    src: "/reference-crops/dark-fantasy-pack/unseal-the-relic-button.png",
+    alt: "Ritual unlock button plate.",
+  },
+  dividerTop: {
+    src: "/reference-crops/dark-fantasy-pack/divider_01.png",
+    alt: "Ancient border fragment for top frame accents.",
+  },
+  dividerMid: {
+    src: "/reference-crops/dark-fantasy-pack/divider_02.png",
+    alt: "Ancient border fragment for side frame accents.",
+  },
+  dividerBottom: {
+    src: "/reference-crops/dark-fantasy-pack/divider_03.png",
+    alt: "Ancient border fragment for lower frame accents.",
+  },
+  dividerCorner: {
+    src: "/reference-crops/dark-fantasy-pack/divider_04.png",
+    alt: "Ancient border corner ornament for frame corners.",
+  },
   ritualStack: {
     src: "/reference-crops/dark-fantasy-pack/ritual-controls-stack.png",
     alt: "Ritual control stack with buttons and seal.",
@@ -66,6 +86,18 @@ export const HERO_STAGE_ASSETS = {
   smokeBand: {
     src: "/atmosphere/smoke-band-v2.jpg",
     alt: "Low smoke band crossing the abyss foreground.",
+  },
+  emberMidOverlay: {
+    src: "/atmosphere/embers-mid-overlay.png",
+    alt: "Mid-level ember veil for the hero atmosphere.",
+  },
+  emberBottomOverlay: {
+    src: "/atmosphere/embers-bottom-arc.png",
+    alt: "Lower ember arc glow for hero atmosphere.",
+  },
+  sealGlyph: {
+    src: "/reference-crops/dark-fantasy-pack/abyss-seal.png",
+    alt: "Round abyssal seal glyph.",
   },
 } as const;
 
