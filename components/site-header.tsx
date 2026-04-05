@@ -29,7 +29,13 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
 
       <div className="header-locale-shell header-locale-shell-floating">
         <span className="header-floating-ornament" aria-hidden="true">
-          <Image src={assetPath("/hero/abyss-ornament-v2.png")} alt="" width={166} height={50} className="header-ornament" />
+          <Image
+            src={assetPath("/reference-crops/dark-fantasy-pack/ornament-wide.png")}
+            alt=""
+            width={476}
+            height={60}
+            className="header-ornament"
+          />
         </span>
         <LocaleSwitcher currentLocale={locale} label={dictionary.nav.languageLabel} />
       </div>

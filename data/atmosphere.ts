@@ -22,18 +22,65 @@ export interface ParticlePreset {
   maxDuration: number;
 }
 
+export const HERO_STAGE_ASSETS = {
+  castleMoon: {
+    src: "/reference-crops/dark-fantasy-pack/castle-moon.png",
+    alt: "Moonlit gothic keep rising from the abyss.",
+  },
+  dragon: {
+    src: "/reference-crops/dark-fantasy-pack/dragon.png",
+    alt: "Shadow dragon silhouette crossing the upper sky.",
+  },
+  knight: {
+    src: "/reference-crops/dark-fantasy-pack/knight.png",
+    alt: "Dark armored knight relic.",
+  },
+  book: {
+    src: "/reference-crops/dark-fantasy-pack/book.png",
+    alt: "Ancient sealed tome relic.",
+  },
+  raven: {
+    src: "/reference-crops/dark-fantasy-pack/raven.png",
+    alt: "Black raven sigil relic.",
+  },
+  flameSwordAltar: {
+    src: "/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
+    alt: "Sword and candle altar lit by ember fire.",
+  },
+  enterButton: {
+    src: "/reference-crops/dark-fantasy-pack/enter-the-abyss-button.png",
+    alt: "Abyss entry button plate.",
+  },
+  ritualStack: {
+    src: "/reference-crops/dark-fantasy-pack/ritual-controls-stack.png",
+    alt: "Ritual control stack with buttons and seal.",
+  },
+  ornamentWide: {
+    src: "/reference-crops/dark-fantasy-pack/ornament-wide.png",
+    alt: "Wide dark fantasy ornament divider.",
+  },
+  ornamentMid: {
+    src: "/reference-crops/dark-fantasy-pack/ornament-mid.png",
+    alt: "Mid-width dark fantasy ornament divider.",
+  },
+  smokeBand: {
+    src: "/atmosphere/smoke-band-v2.jpg",
+    alt: "Low smoke band crossing the abyss foreground.",
+  },
+} as const;
+
 export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
   {
-    id: "reference-stage",
-    src: "/hero/echoes-abyss-stage-v1.png",
-    alt: "Reference-aligned abyss stage with moonlit gothic keep, dragon silhouette, ritual cards, and ember-strewn valley.",
+    id: "smoke-band",
+    src: "/atmosphere/smoke-band-v2.jpg",
+    alt: "Low-lying smoke band drifting across the foreground of the abyss stage.",
     depth: 0.04,
-    opacity: 1,
-    mobileOpacity: 1,
-    blendMode: "normal",
+    opacity: 0.55,
+    mobileOpacity: 0.46,
+    blendMode: "screen",
     scale: 1,
-    objectPosition: "center top",
-    mobileObjectPosition: "center top",
+    objectPosition: "center bottom",
+    mobileObjectPosition: "center bottom",
   },
 ];
 

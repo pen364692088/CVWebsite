@@ -56,14 +56,14 @@ const artifacts: Artifact[] = [
   {
     slug: "egocore",
     featured: false,
-    cover: "/artifacts/egocore-cover-v3.png",
-    coverPosition: "50% 44%",
+    cover: "/reference-crops/dark-fantasy-pack/knight.png",
+    coverPosition: "center",
     lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/egocore-cover-v3.png",
-        alt: "Reference-aligned EgoCore card art with a dark armored knight lit by ember traces.",
+        src: "/reference-crops/dark-fantasy-pack/knight.png",
+        alt: "Dark armored knight relic used as the EgoCore cover art.",
         label: "EgoCore cover relic",
       },
       {
@@ -73,7 +73,7 @@ const artifacts: Artifact[] = [
         label: "EgoCore dossier board",
       },
     ],
-    mediaPosition: ["50% 44%", "50% 48%"],
+    mediaPosition: ["center", "50% 48%"],
     content: {
       en: {
         title: "EgoCore",
@@ -206,14 +206,14 @@ const artifacts: Artifact[] = [
   {
     slug: "ashen-archive",
     featured: true,
-    cover: "/artifacts/ashen-archive-cover-v3.png",
-    coverPosition: "50% 44%",
+    cover: "/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
+    coverPosition: "center",
     lenses: ["moon", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-cover-v3.png",
-        alt: "Reference-aligned Ashen Archive card art with a blade planted in ash and candle fire.",
+        src: "/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
+        alt: "Sword and candle altar used as the Ashen Archive cover art.",
         label: "Ashen Archive cover relic",
       },
       {
@@ -223,7 +223,7 @@ const artifacts: Artifact[] = [
         label: "Ashen Archive dossier board",
       },
     ],
-    mediaPosition: ["50% 44%", "50% 52%"],
+    mediaPosition: ["center", "50% 52%"],
     content: {
       en: {
         title: "Ashen Archive",
@@ -356,14 +356,14 @@ const artifacts: Artifact[] = [
   {
     slug: "openemotion",
     featured: false,
-    cover: "/artifacts/openemotion-cover-v3.png",
-    coverPosition: "50% 44%",
+    cover: "/reference-crops/dark-fantasy-pack/book.png",
+    coverPosition: "center",
     lenses: ["tower", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/openemotion-cover-v3.png",
-        alt: "Reference-aligned OpenEmotion card art with a chained tome, candlelight, and ember marks.",
+        src: "/reference-crops/dark-fantasy-pack/book.png",
+        alt: "Ancient sealed tome used as the OpenEmotion cover art.",
         label: "OpenEmotion cover relic",
       },
       {
@@ -373,7 +373,7 @@ const artifacts: Artifact[] = [
         label: "OpenEmotion dossier board",
       },
     ],
-    mediaPosition: ["50% 44%", "50% 48%"],
+    mediaPosition: ["center", "50% 48%"],
     content: {
       en: {
         title: "OpenEmotion",

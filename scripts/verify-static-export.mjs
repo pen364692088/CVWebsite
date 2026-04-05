@@ -18,15 +18,22 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/hero/echoes-abyss-stage-v1.png",
-  "out/hero/abyss-ornament-v2.png",
+  "out/reference-crops/dark-fantasy-pack/castle-moon.png",
+  "out/reference-crops/dark-fantasy-pack/dragon.png",
+  "out/reference-crops/dark-fantasy-pack/knight.png",
+  "out/reference-crops/dark-fantasy-pack/book.png",
+  "out/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
+  "out/reference-crops/dark-fantasy-pack/enter-the-abyss-button.png",
+  "out/reference-crops/dark-fantasy-pack/ritual-controls-stack.png",
+  "out/reference-crops/dark-fantasy-pack/ornament-wide.png",
+  "out/atmosphere/smoke-band-v2.jpg",
   "out/atmosphere/ember-sprite.png",
   "out/atmosphere/ash-sprite.png",
-  "out/artifacts/egocore-cover-v3.png",
+  "out/reference-crops/dark-fantasy-pack/knight.png",
   "out/artifacts/egocore-dossier-v3.png",
-  "out/artifacts/ashen-archive-cover-v3.png",
+  "out/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
   "out/artifacts/ashen-archive-dossier-v3.png",
-  "out/artifacts/openemotion-cover-v3.png",
+  "out/reference-crops/dark-fantasy-pack/book.png",
   "out/artifacts/openemotion-dossier-v3.png",
 ];
 
@@ -50,6 +57,7 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
   assert(html.includes('class="abyss-reference-stage"'), `Missing reference-aligned hero stage in ${locale}`);
+  assert(html.includes("abyss-stage-copy"), `Missing visible hero copy layer in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
   assert(html.includes("abyss-stage-card"), `Missing staged ritual card hotspots in ${locale}`);

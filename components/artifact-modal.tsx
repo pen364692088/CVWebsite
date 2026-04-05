@@ -227,7 +227,7 @@ export function ArtifactModal({ artifact, dictionary, activeLens, onClose }: Art
                           alt={item.alt}
                           fill
                           sizes="(min-width: 1024px) 28rem, 100vw"
-                          className="rounded-[inherit] object-cover"
+                          className="rounded-[inherit] object-contain bg-black/72"
                           style={{ objectPosition: artifact.mediaPosition?.[index] }}
                         />
                       </div>
