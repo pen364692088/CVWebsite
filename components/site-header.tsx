@@ -19,28 +19,30 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link href={`/${locale}/`} className="header-mark">
-          <span className="header-title">{dictionary.nav.title}</span>
-          <span className="header-identity">{dictionary.nav.identity}</span>
+        <nav className="header-nav-shell header-nav-shell-left" aria-label="Primary">
+          {leftItems.map((item) => (
+            <a key={item.id} href={`#${item.id}`} className="interactive-link">
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <Link href={`/${locale}/`} className="header-mark" aria-label={dictionary.nav.title}>
+          <span className="sr-only">{dictionary.nav.title}</span>
+          <span className="header-ornament-shell" aria-hidden="true">
+            <Image src={assetPath("/hero/abyss-ornament.png")} alt="" width={280} height={44} className="header-ornament" />
+          </span>
         </Link>
 
-        <div className="flex items-center gap-4">
-          <nav className="header-nav-shell" aria-label="Primary">
-            {leftItems.map((item) => (
-              <a key={item.id} href={`#${item.id}`} className="interactive-link">
-                {item.label}
-              </a>
-            ))}
-            <span className="header-ornament-shell" aria-hidden="true">
-              <Image src={assetPath("/hero/abyss-ornament.png")} alt="" width={280} height={44} className="header-ornament" />
-            </span>
-            {rightItems.map((item) => (
-              <a key={item.id} href={`#${item.id}`} className="interactive-link">
-                {item.label}
-              </a>
-            ))}
-          </nav>
+        <nav className="header-nav-shell header-nav-shell-right" aria-label="Primary">
+          {rightItems.map((item) => (
+            <a key={item.id} href={`#${item.id}`} className="interactive-link">
+              {item.label}
+            </a>
+          ))}
+        </nav>
 
+        <div className="header-locale-shell">
           <LocaleSwitcher currentLocale={locale} label={dictionary.nav.languageLabel} />
         </div>
       </div>

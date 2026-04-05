@@ -17,7 +17,6 @@ import { AboutSection } from "@/sections/about-section";
 import { ArtifactsSection } from "@/sections/artifacts-section";
 import { ContactSection } from "@/sections/contact-section";
 import { DisciplinesSection } from "@/sections/disciplines-section";
-import { GameSection } from "@/sections/game-section";
 import { HeroSection } from "@/sections/hero-section";
 
 interface ArchiveRelicBandProps {
@@ -60,11 +59,12 @@ export function ArchiveRelicBand({ dictionary, artifacts, contacts, dossier }: A
       <main>
         <HeroSection
           copy={dictionary.hero}
+          ritualCopy={dictionary.game}
           activeLens={activeLens}
           artifacts={artifactEntries}
           onArtifactOpen={(slug) => setActiveArtifactSlug(slug)}
+          onLensChange={setActiveLens}
         />
-        <GameSection copy={dictionary.game} activeLens={activeLens} onLensChange={setActiveLens} />
         <AboutSection copy={dictionary.about} />
         <DisciplinesSection copy={dictionary.disciplines} activeLens={activeLens} />
         <ArtifactsSection

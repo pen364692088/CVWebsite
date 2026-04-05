@@ -180,15 +180,14 @@ async function run() {
 
         const hero = page.locator("h1");
         await hero.waitFor({ state: "visible" });
-        assert((await hero.textContent())?.includes("Ashen Archive"), `Missing archive title for ${scenario.name}`);
+        assert((await hero.textContent())?.includes("Echoes of the Abyss"), `Missing archive title for ${scenario.name}`);
         const identity = page.locator(".hero-nameplate");
         await identity.waitFor({ state: "visible" });
         assert((await identity.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
-        const brandline = page.locator(".hero-brandline");
-        await brandline.waitFor({ state: "visible" });
-        assert((await brandline.textContent())?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
+        assert((await page.textContent("body"))?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
         assert((await page.locator(".abyss-hero-stage").count()) === 1, `Missing abyss hero stage for ${scenario.name}`);
         assert((await page.locator(".relic-altar-card").count()) === 3, `Expected 3 ritual relic cards for ${scenario.name}`);
+        assert((await page.locator(".ritual-command-button").count()) === 3, `Expected 3 ritual command buttons for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
         const artifactButton = page.locator('.abyss-ritual-grid button[aria-haspopup="dialog"]').first();
@@ -220,36 +219,34 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        const heroFocus = gamePage.locator(".hero-focus-title");
-        await heroFocus.waitFor({ state: "visible" });
-        assert((await heroFocus.textContent())?.includes("Read the full system"), "Initial hero focus should start in whole archive mode");
+        const initialStatus = gamePage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
+        await initialStatus.waitFor({ state: "visible" });
+        assert((await initialStatus.textContent())?.includes("Whole abyss"), "Initial ritual status should start in whole archive mode");
 
         await gamePage.locator("#fire").scrollIntoViewIfNeeded();
         await gamePage.waitForTimeout(250);
 
-        await gamePage.getByRole("button", { name: /Moon Crest/i }).click();
+        await gamePage.getByRole("button", { name: /Send a Raven/i }).click();
 
-        const currentFocus = gamePage.locator("#fire .relic-status-bar .artifact-meta-value").first();
+        const currentFocus = gamePage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
         await currentFocus.waitFor({ state: "visible" });
-        assert((await currentFocus.textContent())?.includes("Systems & Runtime"), "Sigil filter did not update current focus");
-        await heroFocus.waitFor({ state: "visible" });
-        assert((await heroFocus.textContent())?.includes("Systems & Runtime"), "Hero focus card did not respond to sigil filter");
+        assert((await currentFocus.textContent())?.includes("Systems & Runtime"), "Ritual filter did not update current focus");
 
         const firstArtifactTitle = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
         await firstArtifactTitle.scrollIntoViewIfNeeded();
         assert(
-          (await firstArtifactTitle.textContent())?.includes("EgoCore"),
+          (await firstArtifactTitle.textContent())?.includes("Cursed Knight"),
           "Artifact ordering did not shift toward the moon lens",
         );
 
-        await gamePage.getByRole("button", { name: /Ember Seal/i }).click();
-        await heroFocus.waitFor({ state: "visible" });
-        assert((await heroFocus.textContent())?.includes("Identity & Narrative"), "Ember lens did not update hero focus");
+        await gamePage.getByRole("button", { name: /Kindle the Flame/i }).click();
+        await currentFocus.waitFor({ state: "visible" });
+        assert((await currentFocus.textContent())?.includes("Identity & Narrative"), "Ember lens did not update ritual status");
 
         const emberLeadArtifact = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
         await emberLeadArtifact.scrollIntoViewIfNeeded();
         assert(
-          (await emberLeadArtifact.textContent())?.includes("OpenEmotion"),
+          (await emberLeadArtifact.textContent())?.includes("Tome of Lost Lore"),
           "Artifact ordering did not shift toward the ember lens",
         );
 
@@ -263,8 +260,8 @@ async function run() {
           const reducedMotionPage = await reducedMotionContext.newPage();
           await reducedMotionPage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
           await reducedMotionPage.locator("#fire").scrollIntoViewIfNeeded();
-          await reducedMotionPage.getByRole("button", { name: /Ember Seal/i }).click();
-          const reducedModeValue = reducedMotionPage.locator("#fire .relic-status-bar .artifact-meta-value").first();
+          await reducedMotionPage.getByRole("button", { name: /Kindle the Flame/i }).click();
+          const reducedModeValue = reducedMotionPage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
           await reducedModeValue.waitFor({ state: "visible" });
           assert((await reducedModeValue.textContent())?.includes("Identity & Narrative"), "Reduced motion lens switching failed");
           await expectNoHorizontalOverflow(reducedMotionPage, "reduced-motion");

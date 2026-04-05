@@ -10,13 +10,16 @@ import type { Dictionary } from "@/data/dictionaries";
 import type { ArchiveLens } from "@/lib/archive";
 import { assetPath } from "@/lib/site";
 
+import { LightTheFireGame } from "@/components/light-the-fire-game";
 import { Reveal } from "@/components/reveal";
 
 interface HeroSectionProps {
   copy: Dictionary["hero"];
+  ritualCopy: Dictionary["game"];
   activeLens: ArchiveLens;
   artifacts: Array<ArtifactView & { caseNumber: string }>;
   onArtifactOpen: (slug: string) => void;
+  onLensChange: (lens: ArchiveLens) => void;
 }
 
 interface AtmosphereLayerImageProps {
@@ -70,8 +73,7 @@ function AtmosphereLayerImage({ layer, motionX, motionY, reducedMotion, compactV
   );
 }
 
-export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: HeroSectionProps) {
-  const focus = copy.lensSummary[activeLens];
+export function HeroSection({ copy, ritualCopy, activeLens, artifacts, onArtifactOpen, onLensChange }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion();
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
@@ -180,59 +182,33 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
           </div>
 
           <div className="abyss-hero-content">
-            <div className="abyss-hero-copy">
+            <div className="abyss-hero-copy abyss-hero-copy-centered">
               <Reveal>
-                <p className="section-kicker">{copy.eyebrow}</p>
+                <p className="section-kicker hero-stage-kicker">{copy.eyebrow}</p>
               </Reveal>
 
               <Reveal delay={0.05}>
-                <p className="hero-nameplate">{copy.identity}</p>
-              </Reveal>
-
-              <Reveal delay={0.1}>
-                <div className="space-y-4">
-                  <h1 id="hero-title" className="abyss-hero-title">
-                    {copy.archiveLabel}
-                  </h1>
-                  <p className="hero-brandline text-sm uppercase tracking-[0.24em]">{copy.studioCredit}</p>
-                  <p className="hero-subtitle">{copy.role}</p>
+                <div className="hero-stage-lines">
+                  <p className="hero-nameplate">{copy.identity}</p>
+                  <p className="hero-brandline">{copy.studioCredit}</p>
                 </div>
               </Reveal>
 
-              <Reveal delay={0.15}>
-                <p className="hero-body">{copy.body}</p>
-              </Reveal>
-
-              <Reveal delay={0.2}>
-                <ul className="hero-proof-list" aria-label="Core proof points">
-                  {copy.proofChips.map((item) => (
-                    <li key={item} className="hero-proof-chip">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-
-              <Reveal delay={0.24}>
-                <div className="flex flex-wrap gap-3">
-                  <a href="#artifacts" className="primary-button">
-                    <span>{copy.enterLabel}</span>
-                  </a>
-                  <a href="#fire" className="secondary-button">
-                    <span>{copy.projectLabel}</span>
-                  </a>
+              <Reveal delay={0.1}>
+                <div className="space-y-5">
+                  <h1 id="hero-title" className="abyss-hero-title">
+                    {copy.archiveLabel}
+                  </h1>
+                  <p className="hero-subtitle hero-subtitle-centered">{copy.subtitle}</p>
+                  <p className="hero-stage-note">{copy.role}</p>
                 </div>
               </Reveal>
 
               <Reveal delay={0.28}>
-                <p className="hero-availability">{copy.availability}</p>
-              </Reveal>
-
-              <Reveal delay={0.32}>
-                <div className="hero-focus-card hero-focus-card-inline abyss-focus-card">
-                  <p className="artifact-meta-label">{copy.focusLabel}</p>
-                  <h2 className="hero-focus-title">{focus.title}</h2>
-                  <p className="hero-focus-body">{focus.body}</p>
+                <div className="hero-cta-row hero-cta-row-centered">
+                  <a href="#artifacts" className="primary-button hero-main-button">
+                    <span>{copy.enterLabel}</span>
+                  </a>
                 </div>
               </Reveal>
             </div>
@@ -240,7 +216,12 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
 
           <div className="abyss-ritual-dock">
             <Reveal delay={0.2}>
-              <div className="abyss-ritual-copy">
+              <div className="abyss-ritual-copy abyss-ritual-copy-centered">
+                <div className="abyss-ritual-divider" aria-hidden="true">
+                  <span />
+                  <span className="abyss-ritual-divider-seal" />
+                  <span />
+                </div>
                 <p className="section-kicker">{copy.ritualLabel}</p>
                 <p className="abyss-ritual-text">{copy.ritualIntro}</p>
               </div>
@@ -263,16 +244,10 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
                       aria-label={`${copy.cardCtaLabel}: ${artifact.title}`}
                     >
                       <div className="relic-altar-glow" aria-hidden="true" />
-                      <div className="relic-altar-runes" aria-hidden="true">
-                        <span />
-                        <span />
-                        <span />
-                      </div>
+                      <div className="relic-altar-runes" aria-hidden="true" />
                       <div className="artifact-ledger">
-                        <span>
-                          {artifact.caseNumber}
-                        </span>
-                        <span>{artifact.category}</span>
+                        <span>{artifact.caseNumber}</span>
+                        <span>{artifact.title}</span>
                       </div>
                       <div className={`artifact-image-frame ${artifact.featured ? "aspect-[5/6]" : "aspect-[4/5]"}`}>
                         <Image
@@ -284,26 +259,25 @@ export function HeroSection({ copy, activeLens, artifacts, onArtifactOpen }: Her
                           style={{ objectPosition: artifact.coverPosition }}
                         />
                       </div>
-                      <div className="artifact-plaque">
-                        <div className="space-y-3">
-                          <h3 className="font-display text-3xl text-ivory">{artifact.title}</h3>
-                          <p className="artifact-role">{artifact.role}</p>
-                          <p className="text-sm leading-7 text-mist">{artifact.summary}</p>
+                      <div className="artifact-plaque relic-card-plaque">
+                        <div className="space-y-2">
+                          <h3 className="relic-card-title">{artifact.displayTitle}</h3>
+                          <p className="relic-card-subtitle">{artifact.displayBody}</p>
+                          <p className="relic-card-project">{artifact.displaySubtitle}</p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {artifact.tags.slice(0, 2).map((tag) => (
-                            <span key={tag} className="tag-pill">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                        <p className="artifact-open-link">{copy.cardCtaLabel}</p>
+                        <span className="relic-card-cta">{artifact.displayCta}</span>
                       </div>
                     </motion.button>
                   </Reveal>
                 );
               })}
             </div>
+
+            <Reveal delay={0.42}>
+              <div id="fire" className="abyss-command-dock">
+                <LightTheFireGame copy={ritualCopy} activeLens={activeLens} onLensChange={onLensChange} />
+              </div>
+            </Reveal>
           </div>
         </div>
       </div>

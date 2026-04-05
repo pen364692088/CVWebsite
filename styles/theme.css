@@ -16,10 +16,10 @@
   --shadow-deep: 0 28px 80px rgba(0, 0, 0, 0.35);
   --shadow-card: 0 20px 48px rgba(0, 0, 0, 0.24);
 
-  --radius-card: 1.75rem;
-  --radius-panel: 2rem;
-  --radius-action: 0.95rem;
-  --radius-media: 1.4rem;
+  --radius-card: 0.45rem;
+  --radius-panel: 0.6rem;
+  --radius-action: 0.24rem;
+  --radius-media: 0.32rem;
 
   --space-1: 0.4rem;
   --space-2: 0.75rem;

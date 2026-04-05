@@ -24,22 +24,23 @@ function getRouteValue(item: ContactLink, copy: Dictionary["contact"], dossierAv
 
 export function ContactSection({ copy, contacts, dossier }: ContactSectionProps) {
   return (
-    <section id="contact" className="section-shell">
+    <section id="contact" className="section-shell archive-chamber-section">
       <div className="space-y-6">
         <Reveal>
-          <div className="space-y-5">
+          <div className="section-heading-center space-y-5">
             <p className="section-kicker">{copy.eyebrow}</p>
             <h2 className="section-title">{copy.title}</h2>
-            <p className="section-body">{copy.intro}</p>
+            <div className="section-ornament" aria-hidden="true" />
+            <p className="section-body section-body-centered">{copy.intro}</p>
           </div>
         </Reveal>
 
         <Reveal delay={0.12}>
-          <div className="signal-frame">
-            <div className="space-y-5">
+          <div className="signal-frame archive-register">
+            <div className="space-y-5 signal-column">
               <div className="space-y-3">
                 <p className="section-kicker">{copy.cardTitle}</p>
-                <h3 className="font-display text-2xl text-ivory">{copy.cardTitle}</h3>
+                <h3 className="font-display text-3xl text-ivory">{copy.cardTitle}</h3>
                 <p className="max-w-lg text-sm leading-7 text-mist">{copy.cardBody}</p>
               </div>
 
@@ -75,10 +76,10 @@ export function ContactSection({ copy, contacts, dossier }: ContactSectionProps)
               </ul>
             </div>
 
-            <div className="dossier-folio">
+            <div className="dossier-folio signal-column">
               <div className="space-y-3">
                 <p className="section-kicker">{copy.dossierTitle}</p>
-                <h3 className="font-display text-2xl text-ivory">{copy.dossierTitle}</h3>
+                <h3 className="font-display text-3xl text-ivory">{copy.dossierTitle}</h3>
                 <p className="max-w-xl text-sm leading-7 text-mist">{copy.dossierBody}</p>
               </div>
 

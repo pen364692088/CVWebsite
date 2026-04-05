@@ -5,47 +5,33 @@ import { motion, useReducedMotion } from "motion/react";
 import type { Dictionary } from "@/data/dictionaries";
 import type { ArchiveLens } from "@/lib/archive";
 
-function SigilGlyph({ id }: { id: ArchiveLens }) {
-  const stroke = "rgba(216,211,200,0.9)";
-  const fill = "rgba(201,106,43,0.18)";
+function RitualCommandIcon({ id }: { id: ArchiveLens }) {
+  const stroke = "rgba(216, 211, 200, 0.92)";
+  const ember = "rgba(201, 106, 43, 0.88)";
 
-  if (id === "all") {
+  if (id === "ember") {
     return (
-      <svg aria-hidden="true" viewBox="0 0 48 48" className="sigil-glyph">
-        <circle cx="24" cy="24" r="14" fill="none" stroke={stroke} strokeWidth="2" />
-        <circle cx="24" cy="24" r="8" fill={fill} stroke={stroke} strokeWidth="2" />
-        <path d="M24 6v8M42 24h-8M24 42v-8M6 24h8" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  if (id === "moon") {
-    return (
-      <svg aria-hidden="true" viewBox="0 0 48 48" className="sigil-glyph">
-        <circle cx="22" cy="24" r="12" fill={fill} stroke={stroke} strokeWidth="2" />
-        <circle cx="28" cy="20" r="10" fill="rgba(11,13,16,0.92)" />
+      <svg aria-hidden="true" viewBox="0 0 48 48" className="ritual-command-icon-svg">
+        <path d="M24 8c5 5 8 9 8 14 0 6-3 10-8 18-5-8-8-12-8-18 0-5 3-9 8-14Z" fill="none" stroke={stroke} strokeWidth="2.2" />
+        <path d="M24 17c2 2 3 4 3 6s-1 4-3 7c-2-3-3-5-3-7s1-4 3-6Z" fill={ember} />
       </svg>
     );
   }
 
   if (id === "tower") {
     return (
-      <svg aria-hidden="true" viewBox="0 0 48 48" className="sigil-glyph">
-        <path d="M16 39V18l4-4 4 3 4-3 4 4v21Z" fill={fill} stroke={stroke} strokeWidth="2" />
-        <path d="M20 15V9M28 15V9M24 11h8" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+      <svg aria-hidden="true" viewBox="0 0 48 48" className="ritual-command-icon-svg">
+        <circle cx="24" cy="24" r="13.5" fill="none" stroke={stroke} strokeWidth="2" />
+        <path d="M18 31V19l3-3 3 2 3-2 3 3v12Z" fill="none" stroke={stroke} strokeWidth="2.2" />
+        <path d="M20 14h8" stroke={ember} strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   }
 
   return (
-    <svg aria-hidden="true" viewBox="0 0 48 48" className="sigil-glyph">
-      <path
-        d="M24 9c6 5 8 9 8 14 0 5-3 9-8 16-5-7-8-11-8-16 0-5 2-9 8-14Z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="2"
-      />
-      <path d="M24 18c2 2 3 4 3 6 0 2-1 4-3 6-2-2-3-4-3-6 0-2 1-4 3-6Z" fill={stroke} />
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="ritual-command-icon-svg">
+      <path d="M8 32c7-8 14-11 21-11 5 0 9 1 12 3-3 1-5 3-7 6-2 3-4 6-8 8-6 3-12 2-18-6Z" fill="none" stroke={stroke} strokeWidth="2.2" strokeLinejoin="round" />
+      <circle cx="34.5" cy="21.5" r="1.5" fill={ember} />
     </svg>
   );
 }
@@ -58,63 +44,48 @@ interface LightTheFireGameProps {
 
 export function LightTheFireGame({ copy, activeLens, onLensChange }: LightTheFireGameProps) {
   const reducedMotion = useReducedMotion();
+  const ritualOptions = copy.options.filter((option) => option.id !== "all");
   const activeOption = copy.options.find((item) => item.id === activeLens) ?? copy.options[0];
 
   return (
-    <div className="relic-layout">
-      <div className="relic-stage sigil-filter-stage">
-        <div className="sigil-filter-grid" role="group" aria-label={copy.title}>
-          {copy.options.map((option, index) => (
+    <div className="ritual-command-frame">
+      <div className="ritual-command-grid" role="group" aria-label={copy.title}>
+        {ritualOptions.map((option, index) => {
+          const isActive = activeLens === option.id;
+
+          return (
             <motion.button
               key={option.id}
               type="button"
-              className={`sigil-token sigil-filter-token ${activeLens === option.id ? "sigil-token-selected" : ""}`}
-              aria-pressed={activeLens === option.id}
-              onClick={() => onLensChange(option.id)}
+              className={`ritual-command-button ${isActive ? "ritual-command-button-active" : ""}`}
+              aria-pressed={isActive}
+              onClick={() => onLensChange(isActive ? "all" : option.id)}
               whileHover={reducedMotion ? undefined : { y: -2 }}
-              whileTap={reducedMotion ? undefined : { scale: 0.99 }}
-              transition={{ duration: 0.16, delay: reducedMotion ? 0 : index * 0.02 }}
+              whileTap={reducedMotion ? undefined : { scale: 0.992 }}
+              transition={{ duration: 0.16, delay: reducedMotion ? 0 : index * 0.03 }}
             >
-              <span className="sigil-token-icon" aria-hidden="true">
-                <SigilGlyph id={option.id} />
+              <span className="ritual-command-fire" aria-hidden="true" />
+              <span className="ritual-command-icon" aria-hidden="true">
+                <RitualCommandIcon id={option.id} />
               </span>
-              <span className="sigil-token-copy">
-                <span className="sigil-token-label">{option.label}</span>
-                <span className="sigil-token-title">{option.title}</span>
-                <span className="sigil-token-text">{option.body}</span>
-              </span>
+              <span className="ritual-command-label">{option.label}</span>
+              <span className="ritual-command-body">{option.body}</span>
             </motion.button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      <div className="relic-console">
-        <p className="text-sm leading-7 text-mist">{copy.instructions}</p>
-
-        <div className="relic-status-bar">
-          <div>
-            <p className="artifact-meta-label">{copy.currentLensLabel}</p>
-            <p aria-live="polite" className="artifact-meta-value">
-              {activeOption.title}
-            </p>
-          </div>
-          <div>
-            <p className="artifact-meta-label">{copy.sigilLabel}</p>
-            <p className="artifact-meta-value">{activeOption.label}</p>
-          </div>
+      <div className="ritual-command-status">
+        <div className="ritual-command-status-copy">
+          <p className="artifact-meta-label">{copy.currentLensLabel}</p>
+          <p aria-live="polite" className="artifact-meta-value">
+            {activeOption.title}
+          </p>
         </div>
 
-        <div className="dossier-panel relic-annotation">
-          <div className="space-y-3">
-            <p className="section-kicker">{activeOption.label}</p>
-            <h3 className="font-display text-2xl text-ivory">{activeOption.title}</h3>
-            <p className="text-sm leading-7 text-mist">{activeOption.body}</p>
-          </div>
-
-          <a href="#artifacts" className="primary-button w-fit">
-            {copy.focusCta}
-          </a>
-        </div>
+        <a href="#artifacts" className="secondary-button ritual-command-link">
+          {copy.focusCta}
+        </a>
       </div>
     </div>
   );

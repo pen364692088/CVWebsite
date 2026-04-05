@@ -4,19 +4,27 @@ import { Reveal } from "@/components/reveal";
 
 export function AboutSection({ copy }: { copy: Dictionary["about"] }) {
   return (
-    <section id="about" className="section-shell">
-      <div className="section-grid">
+    <section id="about" className="section-shell archive-chamber-section">
+      <div className="section-heading-center">
         <Reveal>
           <div className="space-y-5">
             <p className="section-kicker">{copy.eyebrow}</p>
             <h2 className="section-title">{copy.title}</h2>
+            <div className="section-ornament" aria-hidden="true" />
+          </div>
+        </Reveal>
+      </div>
+
+      <div className="section-grid section-grid-hall archive-chamber-grid">
+        <Reveal>
+          <div className="archive-hall-panel archive-hall-panel-copy space-y-5">
             <p className="section-body">{copy.body}</p>
             <p className="section-body">{copy.service}</p>
           </div>
         </Reveal>
 
         <Reveal delay={0.12}>
-          <div className="record-sheet">
+          <div className="record-sheet archive-hall-panel archive-hall-panel-ledger">
             <div className="record-header">
               <div className="space-y-2">
                 <p className="section-kicker">{copy.eyebrow}</p>

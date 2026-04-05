@@ -16,6 +16,10 @@ export interface ArtifactContribution {
 
 export interface ArtifactCopy {
   title: string;
+  displayTitle: string;
+  displaySubtitle: string;
+  displayBody: string;
+  displayCta: string;
   category: string;
   role: string;
   summary: string;
@@ -73,6 +77,10 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "EgoCore",
+        displayTitle: "Cursed Knight",
+        displaySubtitle: "EgoCore",
+        displayBody: "Bound in shadows",
+        displayCta: "Explore the abyss",
         category: "Runtime Host",
         role: "Architecture / Runtime / Governance",
         summary:
@@ -101,6 +109,10 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "EgoCore",
+        displayTitle: "受咒骑士",
+        displaySubtitle: "EgoCore",
+        displayBody: "缚于暗影",
+        displayCta: "探索深渊",
         category: "运行时宿主",
         role: "架构 / Runtime / 治理",
         summary:
@@ -128,6 +140,10 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "EgoCore",
+        displayTitle: "Cursed Knight",
+        displaySubtitle: "EgoCore",
+        displayBody: "Bound in shadows",
+        displayCta: "Explore the abyss",
         category: "Runtime Host",
         role: "Architecture / Runtime / Governance",
         summary:
@@ -156,6 +172,10 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "EgoCore",
+        displayTitle: "Cursed Knight",
+        displaySubtitle: "EgoCore",
+        displayBody: "Bound in shadows",
+        displayCta: "Explore the abyss",
         category: "런타임 호스트",
         role: "아키텍처 / Runtime / 거버넌스",
         summary:
@@ -207,6 +227,10 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "Ashen Archive",
+        displayTitle: "Relics of Fire",
+        displaySubtitle: "Ashen Archive",
+        displayBody: "Awaken the flame",
+        displayCta: "Unseal the relic",
         category: "Interactive Archive",
         role: "Art Direction / UI Systems / Motion",
         summary:
@@ -235,6 +259,10 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "Ashen Archive",
+        displayTitle: "火之遗物",
+        displaySubtitle: "Ashen Archive",
+        displayBody: "唤醒火焰",
+        displayCta: "解封遗物",
         category: "交互档案馆",
         role: "美术方向 / UI 系统 / Motion",
         summary:
@@ -262,6 +290,10 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "Ashen Archive",
+        displayTitle: "Relics of Fire",
+        displaySubtitle: "Ashen Archive",
+        displayBody: "Awaken the flame",
+        displayCta: "Unseal the relic",
         category: "Interactive Archive",
         role: "Art Direction / UI Systems / Motion",
         summary:
@@ -290,6 +322,10 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "Ashen Archive",
+        displayTitle: "Relics of Fire",
+        displaySubtitle: "Ashen Archive",
+        displayBody: "Awaken the flame",
+        displayCta: "Unseal the relic",
         category: "인터랙티브 아카이브",
         role: "아트 디렉션 / UI 시스템 / Motion",
         summary:
@@ -341,6 +377,10 @@ const artifacts: Artifact[] = [
     content: {
       en: {
         title: "OpenEmotion",
+        displayTitle: "Tome of Lost Lore",
+        displaySubtitle: "OpenEmotion",
+        displayBody: "Secrets of the abyss",
+        displayCta: "Unearth dark knowledge",
         category: "Reflective Core",
         role: "Identity / Memory / Reflection Design",
         summary:
@@ -369,6 +409,10 @@ const artifacts: Artifact[] = [
       },
       "zh-CN": {
         title: "OpenEmotion",
+        displayTitle: "失落秘典",
+        displaySubtitle: "OpenEmotion",
+        displayBody: "深渊秘辛",
+        displayCta: "发掘黑暗知识",
         category: "反思核心",
         role: "身份 / 记忆 / Reflection 设计",
         summary:
@@ -396,6 +440,10 @@ const artifacts: Artifact[] = [
       },
       ja: {
         title: "OpenEmotion",
+        displayTitle: "Tome of Lost Lore",
+        displaySubtitle: "OpenEmotion",
+        displayBody: "Secrets of the abyss",
+        displayCta: "Unearth dark knowledge",
         category: "Reflective Core",
         role: "Identity / Memory / Reflection Design",
         summary:
@@ -424,6 +472,10 @@ const artifacts: Artifact[] = [
       },
       ko: {
         title: "OpenEmotion",
+        displayTitle: "Tome of Lost Lore",
+        displaySubtitle: "OpenEmotion",
+        displayBody: "Secrets of the abyss",
+        displayCta: "Unearth dark knowledge",
         category: "반성 코어",
         role: "정체성 / 메모리 / Reflection 설계",
         summary:

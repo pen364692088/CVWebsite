@@ -32,8 +32,8 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
     mobileOpacity: 1,
     blendMode: "normal",
     scale: 1.02,
-    objectPosition: "66% 45%",
-    mobileObjectPosition: "61% 42%",
+    objectPosition: "58% 44%",
+    mobileObjectPosition: "56% 42%",
   },
   {
     id: "rear-smoke",
@@ -54,8 +54,8 @@ export const HERO_ATMOSPHERE_LAYERS: AtmosphereLayer[] = [
     mobileOpacity: 0.38,
     blendMode: "screen",
     scale: 1.08,
-    objectPosition: "center 60%",
-    mobileObjectPosition: "center 58%",
+    objectPosition: "center 68%",
+    mobileObjectPosition: "center 66%",
   },
 ];
 

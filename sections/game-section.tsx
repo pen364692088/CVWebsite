@@ -12,12 +12,12 @@ interface GameSectionProps {
 
 export function GameSection({ copy, activeLens, onLensChange }: GameSectionProps) {
   return (
-    <section id="fire" className="section-shell">
+    <section id="fire" className="section-shell abyss-ritual-section">
       <Reveal>
-        <div className="mb-10 max-w-3xl space-y-4">
+        <div className="section-heading-center ritual-section-heading">
           <p className="section-kicker">{copy.eyebrow}</p>
           <h2 className="section-title">{copy.title}</h2>
-          <p className="section-body">{copy.intro}</p>
+          <p className="section-body section-body-centered">{copy.intro}</p>
         </div>
       </Reveal>
 

@@ -48,14 +48,14 @@ const expectedIdentity = {
 
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
-  assert(html.includes("Ashen Archive"), `Missing site title in ${locale}`);
+  assert(html.includes("Echoes of the Abyss"), `Missing hero title in ${locale}`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
   assert(html.includes('class="abyss-hero"'), `Missing abyss hero shell in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
   assert(html.includes("relic-altar-card"), `Missing ritual relic cards in ${locale}`);
-  assert(html.includes("sigil-filter-grid"), `Missing ritual strip in ${locale}`);
+  assert(html.includes("ritual-command-grid"), `Missing ritual strip in ${locale}`);
   assert(html.includes("EgoCore"), `Missing EgoCore artifact in ${locale}`);
   assert(html.includes("OpenEmotion"), `Missing OpenEmotion artifact in ${locale}`);
 }

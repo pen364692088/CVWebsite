@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, IBM_Plex_Sans } from "next/font/google";
+import { Cinzel, IBM_Plex_Sans } from "next/font/google";
 
 import "./globals.css";
 
-const display = Cormorant_Garamond({
+const display = Cinzel({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "500", "600", "700"],
