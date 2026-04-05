@@ -13,38 +13,25 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
-  const leftItems = dictionary.nav.items.slice(0, 2);
-  const rightItems = dictionary.nav.items.slice(2);
-
   return (
-    <header className="site-header">
-      <div className="site-header-inner">
-        <nav className="header-nav-shell header-nav-shell-left" aria-label="Primary">
-          {leftItems.map((item) => (
-            <a key={item.id} href={`#${item.id}`} className="interactive-link">
-              {item.label}
-            </a>
-          ))}
-        </nav>
+    <header className="site-header site-header-ghost">
+      <nav className="sr-only" aria-label="Primary">
+        {dictionary.nav.items.map((item) => (
+          <a key={item.id} href={`#${item.id}`}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
 
-        <Link href={`/${locale}/`} className="header-mark" aria-label={dictionary.nav.title}>
-          <span className="sr-only">{dictionary.nav.title}</span>
-          <span className="header-ornament-shell" aria-hidden="true">
-            <Image src={assetPath("/hero/abyss-ornament.png")} alt="" width={280} height={44} className="header-ornament" />
-          </span>
-        </Link>
+      <Link href={`/${locale}/`} className="sr-only" aria-label={dictionary.nav.title}>
+        {dictionary.nav.title}
+      </Link>
 
-        <nav className="header-nav-shell header-nav-shell-right" aria-label="Primary">
-          {rightItems.map((item) => (
-            <a key={item.id} href={`#${item.id}`} className="interactive-link">
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="header-locale-shell">
-          <LocaleSwitcher currentLocale={locale} label={dictionary.nav.languageLabel} />
-        </div>
+      <div className="header-locale-shell header-locale-shell-floating">
+        <span className="header-floating-ornament" aria-hidden="true">
+          <Image src={assetPath("/hero/abyss-ornament-v2.png")} alt="" width={166} height={50} className="header-ornament" />
+        </span>
+        <LocaleSwitcher currentLocale={locale} label={dictionary.nav.languageLabel} />
       </div>
     </header>
   );

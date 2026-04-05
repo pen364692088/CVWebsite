@@ -178,19 +178,17 @@ async function run() {
         await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
         await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
 
-        const hero = page.locator("h1");
-        await hero.waitFor({ state: "visible" });
+        const hero = page.locator("#hero-title");
         assert((await hero.textContent())?.includes("Echoes of the Abyss"), `Missing archive title for ${scenario.name}`);
         const identity = page.locator(".hero-nameplate");
-        await identity.waitFor({ state: "visible" });
         assert((await identity.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
         assert((await page.textContent("body"))?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
-        assert((await page.locator(".abyss-hero-stage").count()) === 1, `Missing abyss hero stage for ${scenario.name}`);
-        assert((await page.locator(".relic-altar-card").count()) === 3, `Expected 3 ritual relic cards for ${scenario.name}`);
-        assert((await page.locator(".ritual-command-button").count()) === 3, `Expected 3 ritual command buttons for ${scenario.name}`);
+        assert((await page.locator(".abyss-reference-stage").count()) === 1, `Missing abyss hero stage for ${scenario.name}`);
+        assert((await page.locator(".abyss-stage-card").count()) === 3, `Expected 3 ritual relic cards for ${scenario.name}`);
+        assert((await page.locator(".abyss-stage-ritual").count()) === 3, `Expected 3 ritual command buttons for ${scenario.name}`);
         await expectNoHorizontalOverflow(page, scenario.name);
 
-        const artifactButton = page.locator('.abyss-ritual-grid button[aria-haspopup="dialog"]').first();
+        const artifactButton = page.locator('.abyss-stage-card[data-artifact]').first();
         await artifactButton.scrollIntoViewIfNeeded();
         await artifactButton.click();
         await page.locator('[role="dialog"]').waitFor({ state: "visible" });
@@ -219,18 +217,10 @@ async function run() {
       try {
         const gamePage = await gameContext.newPage();
         await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        const initialStatus = gamePage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
-        await initialStatus.waitFor({ state: "visible" });
-        assert((await initialStatus.textContent())?.includes("Whole abyss"), "Initial ritual status should start in whole archive mode");
-
         await gamePage.locator("#fire").scrollIntoViewIfNeeded();
         await gamePage.waitForTimeout(250);
 
-        await gamePage.getByRole("button", { name: /Send a Raven/i }).click();
-
-        const currentFocus = gamePage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
-        await currentFocus.waitFor({ state: "visible" });
-        assert((await currentFocus.textContent())?.includes("Systems & Runtime"), "Ritual filter did not update current focus");
+        await gamePage.locator('.abyss-stage-ritual[data-lens="moon"]').click();
 
         const firstArtifactTitle = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
         await firstArtifactTitle.scrollIntoViewIfNeeded();
@@ -239,9 +229,7 @@ async function run() {
           "Artifact ordering did not shift toward the moon lens",
         );
 
-        await gamePage.getByRole("button", { name: /Kindle the Flame/i }).click();
-        await currentFocus.waitFor({ state: "visible" });
-        assert((await currentFocus.textContent())?.includes("Identity & Narrative"), "Ember lens did not update ritual status");
+        await gamePage.locator('.abyss-stage-ritual[data-lens="ember"]').click();
 
         const emberLeadArtifact = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
         await emberLeadArtifact.scrollIntoViewIfNeeded();
@@ -260,10 +248,10 @@ async function run() {
           const reducedMotionPage = await reducedMotionContext.newPage();
           await reducedMotionPage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
           await reducedMotionPage.locator("#fire").scrollIntoViewIfNeeded();
-          await reducedMotionPage.getByRole("button", { name: /Kindle the Flame/i }).click();
-          const reducedModeValue = reducedMotionPage.locator("#fire .ritual-command-status-copy .artifact-meta-value");
-          await reducedModeValue.waitFor({ state: "visible" });
-          assert((await reducedModeValue.textContent())?.includes("Identity & Narrative"), "Reduced motion lens switching failed");
+          await reducedMotionPage.locator('.abyss-stage-ritual[data-lens="ember"]').click();
+          const reducedLeadArtifact = reducedMotionPage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
+          await reducedLeadArtifact.scrollIntoViewIfNeeded();
+          assert((await reducedLeadArtifact.textContent())?.includes("Tome of Lost Lore"), "Reduced motion lens switching failed");
           await expectNoHorizontalOverflow(reducedMotionPage, "reduced-motion");
         } finally {
           await reducedMotionContext.close();

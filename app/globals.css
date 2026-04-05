@@ -1306,6 +1306,265 @@ footer {
   padding-block: 2rem 2.3rem;
 }
 
+.site-header-ghost {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 70;
+  border-bottom: none;
+  background: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.site-header-ghost .header-locale-shell-floating {
+  position: absolute;
+  right: clamp(0.8rem, 2vw, 1.35rem);
+  top: 0.8rem;
+  display: grid;
+  gap: 0.25rem;
+  justify-items: end;
+  pointer-events: auto;
+}
+
+.header-floating-ornament {
+  display: inline-flex;
+  width: 4.8rem;
+  opacity: 0.7;
+}
+
+.site-header-ghost .language-select {
+  min-width: 5rem;
+  border-color: rgba(172, 138, 84, 0.34);
+  background:
+    linear-gradient(180deg, rgba(15, 13, 12, 0.9), rgba(7, 8, 10, 0.92)),
+    rgba(7, 8, 10, 0.9);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+.abyss-hero {
+  padding-top: 0.9rem;
+  padding-bottom: 2.6rem;
+}
+
+.abyss-hero-shell {
+  width: min(100%, 68rem);
+}
+
+.abyss-reference-stage {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border: 1px solid rgba(161, 135, 91, 0.32);
+  border-radius: 0.55rem;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.06), transparent 20%),
+    linear-gradient(180deg, rgba(8, 8, 9, 0.98), rgba(4, 4, 5, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(216, 211, 200, 0.05),
+    0 34px 90px rgba(0, 0, 0, 0.52);
+}
+
+.abyss-reference-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0.7rem;
+  border: 1px solid rgba(216, 211, 200, 0.08);
+  border-radius: 0.35rem;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.abyss-reference-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 10%),
+    linear-gradient(180deg, transparent 70%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+.abyss-reference-image {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.abyss-reference-image img {
+  object-fit: cover;
+}
+
+.abyss-particle-field-stage {
+  z-index: 4;
+}
+
+.abyss-stage-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.abyss-stage-hotspot {
+  position: absolute;
+  display: block;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.abyss-stage-hotspot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 225, 174, 0);
+  border-radius: 0.2rem;
+  opacity: 0;
+  transition: opacity var(--motion-fast) ease, border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background-color var(--motion-fast) ease;
+}
+
+.abyss-stage-hotspot:hover::before,
+.abyss-stage-hotspot:focus-visible::before {
+  opacity: 1;
+}
+
+.abyss-stage-nav::before {
+  border-radius: 999px;
+}
+
+.abyss-stage-nav:hover::before,
+.abyss-stage-nav:focus-visible::before {
+  border-color: rgba(191, 162, 110, 0.32);
+  background: rgba(255, 226, 176, 0.03);
+}
+
+.abyss-stage-nav-oaths {
+  left: 5.1%;
+  top: 1.1%;
+  width: 10.6%;
+  height: 4.1%;
+}
+
+.abyss-stage-nav-artifacts {
+  left: 21.1%;
+  top: 1.1%;
+  width: 19.5%;
+  height: 4.1%;
+}
+
+.abyss-stage-nav-lore {
+  left: 68.4%;
+  top: 1.1%;
+  width: 12.5%;
+  height: 4.1%;
+}
+
+.abyss-stage-nav-ritual {
+  left: 82.5%;
+  top: 1.1%;
+  width: 13.2%;
+  height: 4.1%;
+}
+
+.abyss-stage-enter-hotspot {
+  left: 38.1%;
+  top: 35.2%;
+  width: 25.2%;
+  height: 5.2%;
+}
+
+.abyss-stage-enter-hotspot::before {
+  border-radius: 0.28rem;
+}
+
+.abyss-stage-enter-hotspot:hover::before,
+.abyss-stage-enter-hotspot:focus-visible::before {
+  border-color: rgba(255, 208, 140, 0.56);
+  background:
+    radial-gradient(circle at 50% 60%, rgba(243, 180, 121, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(255, 245, 226, 0.08), transparent 46%);
+  box-shadow: 0 0 26px rgba(243, 180, 121, 0.24);
+}
+
+.abyss-stage-card {
+  width: 28.8%;
+}
+
+.abyss-stage-card::before {
+  border-radius: 0.18rem;
+}
+
+.abyss-stage-card:hover::before,
+.abyss-stage-card:focus-visible::before,
+.abyss-stage-card-focused::before {
+  border-color: rgba(201, 106, 43, 0.48);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%, rgba(201, 106, 43, 0.04) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 230, 182, 0.04),
+    0 0 30px rgba(201, 106, 43, 0.18);
+}
+
+.abyss-stage-card-one {
+  left: 2%;
+  top: 52.8%;
+  height: 28.4%;
+}
+
+.abyss-stage-card-two {
+  left: 35%;
+  top: 50.4%;
+  width: 30.2%;
+  height: 31%;
+}
+
+.abyss-stage-card-three {
+  left: 68.8%;
+  top: 52.8%;
+  height: 28.4%;
+}
+
+.abyss-stage-ritual-row {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.abyss-stage-ritual {
+  top: 84.8%;
+  height: 11.8%;
+  pointer-events: auto;
+}
+
+.abyss-stage-ritual::before {
+  border-radius: 0.4rem;
+}
+
+.abyss-stage-ritual:hover::before,
+.abyss-stage-ritual:focus-visible::before,
+.abyss-stage-ritual-active::before {
+  border-color: rgba(201, 106, 43, 0.4);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(243, 180, 121, 0.16), transparent 65%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 48%);
+  box-shadow: 0 0 28px rgba(201, 106, 43, 0.16);
+}
+
+.abyss-stage-ritual-flame {
+  left: 3.8%;
+  width: 24%;
+}
+
+.abyss-stage-ritual-spirit {
+  left: 36%;
+  width: 27%;
+}
+
+.abyss-stage-ritual-raven {
+  left: 71.3%;
+  width: 24.5%;
+}
+
 @keyframes abyss-float {
   0%,
   100% {
@@ -1378,6 +1637,20 @@ footer {
 }
 
 @media (max-width: 767px) {
+  .site-header-ghost .header-locale-shell-floating {
+    right: 0.55rem;
+    top: 0.55rem;
+  }
+
+  .header-floating-ornament {
+    width: 4rem;
+  }
+
+  .site-header-ghost .language-select {
+    min-width: 4.4rem;
+    font-size: 0.66rem;
+  }
+
   .section-shell {
     padding-block: 3.7rem;
   }
@@ -1404,47 +1677,17 @@ footer {
   }
 
   .abyss-hero {
-    padding-inline: 0.45rem;
-    padding-top: 0.25rem;
+    padding-inline: 0.3rem;
+    padding-top: 0.2rem;
+    padding-bottom: 2rem;
   }
 
-  .abyss-hero-stage {
-    min-height: auto;
+  .abyss-hero-shell {
+    width: min(100%, 42rem);
   }
 
-  .abyss-hero-stage::before {
-    inset: 0.6rem;
-  }
-
-  .abyss-hero-content {
-    min-height: auto;
-    padding-top: 5.4rem;
-    padding-inline: 1rem;
-  }
-
-  .abyss-hero-title {
-    font-size: clamp(3.3rem, 16vw, 4.9rem);
-  }
-
-  .hero-subtitle {
-    font-size: 1rem;
-  }
-
-  .abyss-dragon-trace {
-    width: min(44vw, 12rem);
-    top: 9%;
-    left: 2%;
-    opacity: 0.15;
-  }
-
-  .abyss-ritual-dock {
-    padding-inline: 0.9rem;
-    padding-bottom: 1rem;
-  }
-
-  .abyss-ritual-grid,
-  .ritual-command-grid {
-    grid-template-columns: 1fr;
+  .abyss-reference-stage::before {
+    inset: 0.45rem;
   }
 
   .record-header {

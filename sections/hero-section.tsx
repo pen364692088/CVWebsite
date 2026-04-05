@@ -1,19 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "motion/react";
-import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { useMemo, type CSSProperties, type PointerEvent } from "react";
 
 import type { ArtifactView } from "@/data/artifacts";
-import { HERO_ATMOSPHERE_LAYERS, HERO_PARTICLE_LAYOUT, HERO_PARTICLE_PRESETS, type AtmosphereLayer } from "@/data/atmosphere";
+import { HERO_ATMOSPHERE_LAYERS, HERO_PARTICLE_LAYOUT, HERO_PARTICLE_PRESETS } from "@/data/atmosphere";
 import type { Dictionary } from "@/data/dictionaries";
 import type { ArchiveLens } from "@/lib/archive";
 import { assetPath } from "@/lib/site";
 
-import { LightTheFireGame } from "@/components/light-the-fire-game";
-import { Reveal } from "@/components/reveal";
-
 interface HeroSectionProps {
+  navCopy: Dictionary["nav"];
   copy: Dictionary["hero"];
   ritualCopy: Dictionary["game"];
   activeLens: ArchiveLens;
@@ -22,95 +20,66 @@ interface HeroSectionProps {
   onLensChange: (lens: ArchiveLens) => void;
 }
 
-interface AtmosphereLayerImageProps {
-  layer: AtmosphereLayer;
-  motionX: MotionValue<number>;
-  motionY: MotionValue<number>;
-  reducedMotion: boolean;
-  compactViewport: boolean;
-}
+const NAV_CLASSES = [
+  "abyss-stage-nav-oaths",
+  "abyss-stage-nav-artifacts",
+  "abyss-stage-nav-lore",
+  "abyss-stage-nav-ritual",
+] as const;
 
-function AtmosphereLayerImage({ layer, motionX, motionY, reducedMotion, compactViewport }: AtmosphereLayerImageProps) {
-  const x = useSpring(useTransform(motionX, [-1, 1], [-18 * layer.depth, 18 * layer.depth]), {
-    stiffness: 72,
-    damping: 20,
-    mass: 0.5,
-  });
-  const y = useSpring(useTransform(motionY, [-1, 1], [-14 * layer.depth, 14 * layer.depth]), {
-    stiffness: 72,
-    damping: 20,
-    mass: 0.5,
-  });
+const CARD_CLASSES = [
+  "abyss-stage-card-one",
+  "abyss-stage-card-two",
+  "abyss-stage-card-three",
+] as const;
 
-  return (
-    <motion.div
-      className={`abyss-layer abyss-layer-${layer.id}`}
-      style={
-        reducedMotion
-          ? {
-              opacity: layer.mobileOpacity,
-              mixBlendMode: layer.blendMode,
-            }
-          : {
-              opacity: layer.opacity,
-              mixBlendMode: layer.blendMode,
-              x,
-              y,
-              scale: layer.scale ?? 1,
-            }
-      }
-    >
-      <Image
-        src={assetPath(layer.src)}
-        alt={layer.alt}
-        fill
-        priority={layer.id === "matte-scene"}
-        sizes="100vw"
-        className="object-cover"
-        style={{ objectPosition: compactViewport ? layer.mobileObjectPosition ?? layer.objectPosition : layer.objectPosition }}
-      />
-    </motion.div>
-  );
-}
+type ActiveRitualLens = Exclude<ArchiveLens, "all">;
 
-export function HeroSection({ copy, ritualCopy, activeLens, artifacts, onArtifactOpen, onLensChange }: HeroSectionProps) {
+const RITUAL_CLASS_BY_LENS: Record<ActiveRitualLens, string> = {
+  ember: "abyss-stage-ritual-flame",
+  tower: "abyss-stage-ritual-spirit",
+  moon: "abyss-stage-ritual-raven",
+};
+
+export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, onArtifactOpen, onLensChange }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion();
+  const reducedMotion = !!prefersReducedMotion;
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
-  const reducedMotion = !!prefersReducedMotion;
-
-  const dragonOffsetX = useSpring(useTransform(pointerX, [-1, 1], [-10, 10]), {
-    stiffness: 72,
+  const stageX = useSpring(useTransform(pointerX, [-1, 1], [-6, 6]), {
+    stiffness: 70,
     damping: 18,
-    mass: 0.45,
+    mass: 0.5,
   });
-  const dragonOffsetY = useSpring(useTransform(pointerY, [-1, 1], [-8, 8]), {
-    stiffness: 72,
+  const stageY = useSpring(useTransform(pointerY, [-1, 1], [-8, 8]), {
+    stiffness: 70,
     damping: 18,
-    mass: 0.45,
+    mass: 0.5,
   });
 
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const apply = () => setIsCompactViewport(media.matches);
-
-    apply();
-    media.addEventListener("change", apply);
-
-    return () => media.removeEventListener("change", apply);
-  }, []);
-
-  const particleLimit = useMemo(() => {
-    const key = reducedMotion ? "reducedMotionCount" : isCompactViewport ? "mobileCount" : "count";
-
-    return Math.min(
-      HERO_PARTICLE_LAYOUT.length,
-      HERO_PARTICLE_PRESETS.reduce((sum, preset) => sum + preset[key], 0),
-    );
-  }, [isCompactViewport, reducedMotion]);
+  const particleLimit = useMemo(
+    () =>
+      Math.min(
+        HERO_PARTICLE_LAYOUT.length,
+        HERO_PARTICLE_PRESETS.reduce((sum, preset) => sum + (reducedMotion ? preset.reducedMotionCount : preset.count), 0),
+      ),
+    [reducedMotion],
+  );
 
   const visibleParticles = useMemo(() => HERO_PARTICLE_LAYOUT.slice(0, particleLimit), [particleLimit]);
+
+  const ritualOptions = useMemo(
+    () =>
+      (["ember", "tower", "moon"] as const).map((lens: ActiveRitualLens) => {
+        const option = ritualCopy.options.find((item) => item.id === lens);
+        if (!option) {
+          throw new Error(`Missing ritual option for lens: ${lens}`);
+        }
+
+        return { ...option, id: lens } as typeof option & { id: ActiveRitualLens };
+      }),
+    [ritualCopy.options],
+  );
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     if (reducedMotion || window.innerWidth < 900) return;
@@ -130,154 +99,121 @@ export function HeroSection({ copy, ritualCopy, activeLens, artifacts, onArtifac
   return (
     <section className="abyss-hero" aria-labelledby="hero-title">
       <div className="abyss-hero-shell">
-        <div className="abyss-hero-stage" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
-          <div className="abyss-hero-backdrop" aria-hidden="true">
+        <div className="abyss-reference-stage" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
+          <motion.div
+            className="abyss-reference-image"
+            aria-hidden="true"
+            style={reducedMotion ? undefined : { x: stageX, y: stageY }}
+          >
             {HERO_ATMOSPHERE_LAYERS.map((layer) => (
-              <AtmosphereLayerImage
+              <Image
                 key={layer.id}
-                layer={layer}
-                motionX={pointerX}
-                motionY={pointerY}
-                reducedMotion={!!reducedMotion}
-                compactViewport={isCompactViewport}
+                src={assetPath(layer.src)}
+                alt={layer.alt}
+                fill
+                priority
+                sizes="(min-width: 1280px) 64rem, (min-width: 768px) 78vw, 100vw"
+                className="object-cover"
+                style={{ objectPosition: layer.objectPosition }}
               />
             ))}
-            <motion.div
-              className="abyss-dragon-trace"
-              style={reducedMotion ? undefined : { x: dragonOffsetX, y: dragonOffsetY }}
-            >
-              <Image
-                src={assetPath("/hero/abyss-dragon-silhouette.png")}
-                alt=""
-                width={620}
-                height={260}
-                className="h-auto w-full"
-              />
-            </motion.div>
-            <div className="abyss-moon-haze" />
-            <div className="abyss-hero-vignette" />
-            <div className="abyss-particle-field" aria-hidden="true">
-              {visibleParticles.map((particle, index) => {
-                const preset = HERO_PARTICLE_PRESETS[index % HERO_PARTICLE_PRESETS.length];
+          </motion.div>
+
+          <div className="abyss-particle-field abyss-particle-field-stage" aria-hidden="true">
+            {visibleParticles.map((particle, index) => {
+              const preset = HERO_PARTICLE_PRESETS[index % HERO_PARTICLE_PRESETS.length];
+
+              return (
+                <span
+                  key={`${preset.id}-${particle.x}-${particle.y}`}
+                  className={`abyss-particle abyss-particle-${preset.id}`}
+                  style={
+                    {
+                      "--particle-x": particle.x,
+                      "--particle-y": particle.y,
+                      "--particle-scale": String(particle.scale),
+                      "--particle-delay": `${particle.delay}s`,
+                      "--particle-rotate": `${particle.rotate}deg`,
+                      "--particle-duration": `${preset.minDuration + (index % 4) * ((preset.maxDuration - preset.minDuration) / 3)}s`,
+                      "--particle-opacity": String(preset.baseOpacity),
+                      backgroundImage: `url(${assetPath(preset.src)})`,
+                    } as CSSProperties
+                  }
+                />
+              );
+            })}
+          </div>
+
+          <div className="sr-only">
+            <p className="hero-nameplate">{copy.identity}</p>
+            <p className="hero-brandline">{copy.studioCredit}</p>
+            <h1 id="hero-title">{copy.archiveLabel}</h1>
+            <p>{copy.subtitle}</p>
+            <p>{copy.role}</p>
+          </div>
+
+          <div className="abyss-stage-hotspots">
+            {navCopy.items.map((item, index) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className={`abyss-stage-hotspot abyss-stage-nav ${NAV_CLASSES[index]}`}
+                data-nav={item.id}
+              >
+                <span className="sr-only">{item.label}</span>
+              </a>
+            ))}
+
+            <a href="#artifacts" className="abyss-stage-hotspot abyss-stage-enter-hotspot" data-hotspot="enter">
+              <span className="sr-only">{copy.enterLabel}</span>
+            </a>
+
+            {artifacts.map((artifact, index) => {
+              const isFocused = activeLens === "all" || artifact.lenses.includes(activeLens);
+
+              return (
+                <motion.button
+                  key={artifact.slug}
+                  type="button"
+                  className={`abyss-stage-hotspot abyss-stage-card ${CARD_CLASSES[index]} ${
+                    isFocused ? "abyss-stage-card-focused" : ""
+                  }`}
+                  data-artifact={artifact.slug}
+                  aria-haspopup="dialog"
+                  aria-label={`${artifact.displayTitle} / ${artifact.title}`}
+                  whileHover={reducedMotion ? undefined : { scale: 1.01 }}
+                  whileTap={reducedMotion ? undefined : { scale: 0.996 }}
+                  onClick={() => onArtifactOpen(artifact.slug)}
+                >
+                  <span className="sr-only">{artifact.displayTitle}</span>
+                </motion.button>
+              );
+            })}
+
+            <div id="fire" className="abyss-stage-ritual-row" role="group" aria-label={ritualCopy.title} style={{ pointerEvents: "none" }}>
+              {ritualOptions.map((option) => {
+                const isActive = activeLens === option.id;
+
                 return (
-                  <span
-                    key={`${preset.id}-${particle.x}-${particle.y}`}
-                    className={`abyss-particle abyss-particle-${preset.id}`}
-                    style={
-                      {
-                        "--particle-x": particle.x,
-                        "--particle-y": particle.y,
-                        "--particle-scale": String(particle.scale),
-                        "--particle-delay": `${particle.delay}s`,
-                        "--particle-rotate": `${particle.rotate}deg`,
-                        "--particle-duration": `${preset.minDuration + (index % 4) * ((preset.maxDuration - preset.minDuration) / 3)}s`,
-                        "--particle-opacity": String(preset.baseOpacity),
-                        backgroundImage: `url(${assetPath(preset.src)})`,
-                      } as CSSProperties
-                    }
-                  />
+                  <motion.button
+                    key={option.id}
+                    type="button"
+                    className={`abyss-stage-hotspot abyss-stage-ritual ${RITUAL_CLASS_BY_LENS[option.id]} ${
+                      isActive ? "abyss-stage-ritual-active" : ""
+                    }`}
+                    data-lens={option.id}
+                    aria-pressed={isActive}
+                    aria-label={option.label}
+                    style={{ pointerEvents: "auto" }}
+                    whileHover={reducedMotion ? undefined : { scale: 1.01 }}
+                    whileTap={reducedMotion ? undefined : { scale: 0.994 }}
+                    onClick={() => onLensChange(isActive ? "all" : option.id)}
+                  >
+                    <span className="sr-only">{option.label}</span>
+                  </motion.button>
                 );
               })}
             </div>
-          </div>
-
-          <div className="abyss-hero-content">
-            <div className="abyss-hero-copy abyss-hero-copy-centered">
-              <Reveal>
-                <p className="section-kicker hero-stage-kicker">{copy.eyebrow}</p>
-              </Reveal>
-
-              <Reveal delay={0.05}>
-                <div className="hero-stage-lines">
-                  <p className="hero-nameplate">{copy.identity}</p>
-                  <p className="hero-brandline">{copy.studioCredit}</p>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.1}>
-                <div className="space-y-5">
-                  <h1 id="hero-title" className="abyss-hero-title">
-                    {copy.archiveLabel}
-                  </h1>
-                  <p className="hero-subtitle hero-subtitle-centered">{copy.subtitle}</p>
-                  <p className="hero-stage-note">{copy.role}</p>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.28}>
-                <div className="hero-cta-row hero-cta-row-centered">
-                  <a href="#artifacts" className="primary-button hero-main-button">
-                    <span>{copy.enterLabel}</span>
-                  </a>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-
-          <div className="abyss-ritual-dock">
-            <Reveal delay={0.2}>
-              <div className="abyss-ritual-copy abyss-ritual-copy-centered">
-                <div className="abyss-ritual-divider" aria-hidden="true">
-                  <span />
-                  <span className="abyss-ritual-divider-seal" />
-                  <span />
-                </div>
-                <p className="section-kicker">{copy.ritualLabel}</p>
-                <p className="abyss-ritual-text">{copy.ritualIntro}</p>
-              </div>
-            </Reveal>
-
-            <div className="abyss-ritual-grid">
-              {artifacts.map((artifact, index) => {
-                const isActive = activeLens === "all" || artifact.lenses.includes(activeLens);
-
-                return (
-                  <Reveal key={artifact.slug} delay={0.24 + index * 0.05}>
-                    <motion.button
-                      type="button"
-                      className={`relic-altar-card ${artifact.featured ? "relic-altar-card-featured" : ""} ${isActive ? "relic-altar-card-active" : "relic-altar-card-muted"}`}
-                      whileHover={reducedMotion ? undefined : { y: -6 }}
-                      whileTap={reducedMotion ? undefined : { scale: 0.995 }}
-                      transition={{ duration: 0.22 }}
-                      onClick={() => onArtifactOpen(artifact.slug)}
-                      aria-haspopup="dialog"
-                      aria-label={`${copy.cardCtaLabel}: ${artifact.title}`}
-                    >
-                      <div className="relic-altar-glow" aria-hidden="true" />
-                      <div className="relic-altar-runes" aria-hidden="true" />
-                      <div className="artifact-ledger">
-                        <span>{artifact.caseNumber}</span>
-                        <span>{artifact.title}</span>
-                      </div>
-                      <div className={`artifact-image-frame ${artifact.featured ? "aspect-[5/6]" : "aspect-[4/5]"}`}>
-                        <Image
-                          src={assetPath(artifact.cover)}
-                          alt={artifact.title}
-                          fill
-                          sizes="(min-width: 1280px) 22rem, (min-width: 768px) 30vw, 92vw"
-                          className="object-cover"
-                          style={{ objectPosition: artifact.coverPosition }}
-                        />
-                      </div>
-                      <div className="artifact-plaque relic-card-plaque">
-                        <div className="space-y-2">
-                          <h3 className="relic-card-title">{artifact.displayTitle}</h3>
-                          <p className="relic-card-subtitle">{artifact.displayBody}</p>
-                          <p className="relic-card-project">{artifact.displaySubtitle}</p>
-                        </div>
-                        <span className="relic-card-cta">{artifact.displayCta}</span>
-                      </div>
-                    </motion.button>
-                  </Reveal>
-                );
-              })}
-            </div>
-
-            <Reveal delay={0.42}>
-              <div id="fire" className="abyss-command-dock">
-                <LightTheFireGame copy={ritualCopy} activeLens={activeLens} onLensChange={onLensChange} />
-              </div>
-            </Reveal>
           </div>
         </div>
       </div>

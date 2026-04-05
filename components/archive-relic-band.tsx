@@ -58,6 +58,7 @@ export function ArchiveRelicBand({ dictionary, artifacts, contacts, dossier }: A
     <div className="relative overflow-hidden">
       <main>
         <HeroSection
+          navCopy={dictionary.nav}
           copy={dictionary.hero}
           ritualCopy={dictionary.game}
           activeLens={activeLens}

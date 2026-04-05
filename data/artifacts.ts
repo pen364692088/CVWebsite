@@ -56,24 +56,24 @@ const artifacts: Artifact[] = [
   {
     slug: "egocore",
     featured: false,
-    cover: "/artifacts/egocore-cover-v2.jpg",
-    coverPosition: "50% 34%",
+    cover: "/artifacts/egocore-cover-v3.png",
+    coverPosition: "50% 44%",
     lenses: ["moon", "tower"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/egocore-cover-v2.jpg",
-        alt: "Ritual cover for EgoCore with an armored watcher standing inside ruined stone arches.",
+        src: "/artifacts/egocore-cover-v3.png",
+        alt: "Reference-aligned EgoCore card art with a dark armored knight lit by ember traces.",
         label: "EgoCore cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/egocore-dossier-v2.jpg",
-        alt: "Public-safe dossier board for EgoCore combining a sentinel figure, weapon detail, and archive linkage marks.",
+        src: "/artifacts/egocore-dossier-v3.png",
+        alt: "Reference-derived dossier crop for EgoCore from the abyss altar card composition.",
         label: "EgoCore dossier board",
       },
     ],
-    mediaPosition: ["50% 34%", "50% 42%"],
+    mediaPosition: ["50% 44%", "50% 48%"],
     content: {
       en: {
         title: "EgoCore",
@@ -206,24 +206,24 @@ const artifacts: Artifact[] = [
   {
     slug: "ashen-archive",
     featured: true,
-    cover: "/artifacts/ashen-archive-cover-v2.jpg",
-    coverPosition: "50% 42%",
+    cover: "/artifacts/ashen-archive-cover-v3.png",
+    coverPosition: "50% 44%",
     lenses: ["moon", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-cover-v2.jpg",
-        alt: "Ritual cover for Ashen Archive with an upright blade, pale hands, and a restrained ember glow.",
+        src: "/artifacts/ashen-archive-cover-v3.png",
+        alt: "Reference-aligned Ashen Archive card art with a blade planted in ash and candle fire.",
         label: "Ashen Archive cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/ashen-archive-dossier-v2.jpg",
-        alt: "Public-safe dossier board for Ashen Archive with the castle matte, ritual blade, and archive linkage markers.",
+        src: "/artifacts/ashen-archive-dossier-v3.png",
+        alt: "Reference-derived dossier crop for Ashen Archive from the central abyss altar card.",
         label: "Ashen Archive dossier board",
       },
     ],
-    mediaPosition: ["50% 42%", "50% 44%"],
+    mediaPosition: ["50% 44%", "50% 52%"],
     content: {
       en: {
         title: "Ashen Archive",
@@ -356,24 +356,24 @@ const artifacts: Artifact[] = [
   {
     slug: "openemotion",
     featured: false,
-    cover: "/artifacts/openemotion-cover-v2.jpg",
-    coverPosition: "50% 36%",
+    cover: "/artifacts/openemotion-cover-v3.png",
+    coverPosition: "50% 44%",
     lenses: ["tower", "ember"],
     media: [
       {
         kind: "image",
-        src: "/artifacts/openemotion-cover-v2.jpg",
-        alt: "Ritual cover for OpenEmotion with a worn tome resting in darkness and a dim ember trace below.",
+        src: "/artifacts/openemotion-cover-v3.png",
+        alt: "Reference-aligned OpenEmotion card art with a chained tome, candlelight, and ember marks.",
         label: "OpenEmotion cover relic",
       },
       {
         kind: "image",
-        src: "/artifacts/openemotion-dossier-v2.jpg",
-        alt: "Public-safe dossier board for OpenEmotion with a sealed tome, manuscript page, and reflective archive linkage marks.",
+        src: "/artifacts/openemotion-dossier-v3.png",
+        alt: "Reference-derived dossier crop for OpenEmotion from the right-side abyss altar card.",
         label: "OpenEmotion dossier board",
       },
     ],
-    mediaPosition: ["50% 36%", "50% 40%"],
+    mediaPosition: ["50% 44%", "50% 48%"],
     content: {
       en: {
         title: "OpenEmotion",

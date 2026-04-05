@@ -18,18 +18,16 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/hero/abyss-hero-matte-v2.jpg",
-  "out/hero/abyss-dragon-silhouette.png",
-  "out/hero/abyss-ornament.png",
-  "out/atmosphere/smoke-band-v2.jpg",
+  "out/hero/echoes-abyss-stage-v1.png",
+  "out/hero/abyss-ornament-v2.png",
   "out/atmosphere/ember-sprite.png",
   "out/atmosphere/ash-sprite.png",
-  "out/artifacts/egocore-cover-v2.jpg",
-  "out/artifacts/egocore-dossier-v2.jpg",
-  "out/artifacts/ashen-archive-cover-v2.jpg",
-  "out/artifacts/ashen-archive-dossier-v2.jpg",
-  "out/artifacts/openemotion-cover-v2.jpg",
-  "out/artifacts/openemotion-dossier-v2.jpg",
+  "out/artifacts/egocore-cover-v3.png",
+  "out/artifacts/egocore-dossier-v3.png",
+  "out/artifacts/ashen-archive-cover-v3.png",
+  "out/artifacts/ashen-archive-dossier-v3.png",
+  "out/artifacts/openemotion-cover-v3.png",
+  "out/artifacts/openemotion-dossier-v3.png",
 ];
 
 for (const file of expectedFiles) {
@@ -51,11 +49,11 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes("Echoes of the Abyss"), `Missing hero title in ${locale}`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
-  assert(html.includes('class="abyss-hero"'), `Missing abyss hero shell in ${locale}`);
+  assert(html.includes('class="abyss-reference-stage"'), `Missing reference-aligned hero stage in ${locale}`);
   assert(html.includes('id="fire"'), `Missing mini game anchor in ${locale}`);
   assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
-  assert(html.includes("relic-altar-card"), `Missing ritual relic cards in ${locale}`);
-  assert(html.includes("ritual-command-grid"), `Missing ritual strip in ${locale}`);
+  assert(html.includes("abyss-stage-card"), `Missing staged ritual card hotspots in ${locale}`);
+  assert(html.includes("abyss-stage-ritual"), `Missing ritual strip hotspots in ${locale}`);
   assert(html.includes("EgoCore"), `Missing EgoCore artifact in ${locale}`);
   assert(html.includes("OpenEmotion"), `Missing OpenEmotion artifact in ${locale}`);
 }
