@@ -367,7 +367,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       fill
                       sizes="(min-width: 1280px) 22rem, (min-width: 768px) 18rem, 40vw"
-                      className="object-contain transition duration-500 group-hover:scale-[1.02] saturate-75 brightness-90 sepia-[0.14]"
+                      className="abyss-stage-card-art object-contain saturate-75 brightness-90 sepia-[0.14]"
                       style={{ objectPosition: artifact.coverPosition }}
                     />
                   </div>
@@ -416,7 +416,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       aria-hidden="true"
                       fill
                       sizes="(min-width: 1024px) 13vw, 20vw"
-                      className="abyss-stage-ritual-plate object-cover"
+                      className="abyss-stage-ritual-plate object-contain"
                     />
                     <span className="abyss-stage-ritual-label">{option.label}</span>
                   </motion.button>
