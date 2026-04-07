@@ -132,10 +132,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
     hero: {
       eyebrow: "Abyssal Archive",
       archiveLabel: "Echoes of the Abyss",
-      subtitle: "Embrace the darkness. Unveil the forgotten.",
+      subtitle: "Enter the archive. Wake the forgotten.",
       identity: "Zhouyu Liao / 流月工作室",
-      studioCredit: "Ashen Archive · ritual portfolio dossier",
-      role: "Three altar records, one abyssal index.",
+      studioCredit: "Ashen Archive · ritual dossier",
+      role: "Three altar records. One abyssal index.",
       body:
         "A scene-led threshold for three public-safe projects, rebuilt as a dark archive rather than a generic portfolio shell.",
       proofChips: ["Runtime host design", "Governed tooling and audit", "Identity / memory architecture"],
@@ -334,9 +334,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
     hero: {
       eyebrow: "深渊档案馆",
       archiveLabel: "Echoes of the Abyss",
-      subtitle: "拥抱黑暗，揭开遗忘之物。",
+      subtitle: "步入档案馆，唤醒被遗忘之物。",
       identity: "周宇辽 / 流月工作室",
-      studioCredit: "Ashen Archive · 仪式化作品档案",
+      studioCredit: "Ashen Archive · 仪式档案",
       role: "三件祭坛记录，一座深渊索引。",
       body:
         "这是一个以场景为入口的阈限页面：三件公开安全项目，被重新讲述成灰烬、铁与火守护的馆藏遗物。",
@@ -535,9 +535,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
     hero: {
       eyebrow: "Abyssal Archive",
       archiveLabel: "Echoes of the Abyss",
-      subtitle: "Embrace the darkness. Unveil the forgotten.",
+      subtitle: "Enter the archive. Wake the forgotten.",
       identity: "Zhouyu Liao / 流月工作室",
-      studioCredit: "Ashen Archive · ritual portfolio dossier",
+      studioCredit: "Ashen Archive · ritual dossier",
       role: "3 つの祭壇記録、ひとつの abyssal index。",
       body:
         "3 つの public-safe project を、灰・鉄・火に守られた relic として再構成した threshold page です。",
@@ -736,9 +736,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
     hero: {
       eyebrow: "Abyssal Archive",
       archiveLabel: "Echoes of the Abyss",
-      subtitle: "Embrace the darkness. Unveil the forgotten.",
+      subtitle: "Enter the archive. Wake the forgotten.",
       identity: "Zhouyu Liao / 流月工作室",
-      studioCredit: "Ashen Archive · ritual portfolio dossier",
+      studioCredit: "Ashen Archive · ritual dossier",
       role: "세 개의 제단 기록, 하나의 abyssal index.",
       body:
         "세 개의 public-safe 프로젝트를 재와 쇠, 불이 지키는 relic처럼 다시 엮은 threshold page입니다.",

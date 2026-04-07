@@ -57,7 +57,7 @@ const artifacts: Artifact[] = [
     slug: "egocore",
     featured: false,
     cover: "/reference-crops/dark-fantasy-pack/knight.png",
-    coverPosition: "center",
+    coverPosition: "50% 58%",
     lenses: ["moon", "tower"],
     media: [
       {
@@ -79,8 +79,8 @@ const artifacts: Artifact[] = [
         title: "EgoCore",
         displayTitle: "Cursed Knight",
         displaySubtitle: "EgoCore",
-        displayBody: "Bound in shadows",
-        displayCta: "Explore the abyss",
+        displayBody: "Shadow-bound relic",
+        displayCta: "Open the record",
         category: "Runtime Host",
         role: "Architecture / Runtime / Governance",
         summary:
@@ -111,8 +111,8 @@ const artifacts: Artifact[] = [
         title: "EgoCore",
         displayTitle: "受咒骑士",
         displaySubtitle: "EgoCore",
-        displayBody: "缚于暗影",
-        displayCta: "探索深渊",
+        displayBody: "暗影缠身之遗物",
+        displayCta: "打开档案",
         category: "运行时宿主",
         role: "架构 / Runtime / 治理",
         summary:
@@ -142,8 +142,8 @@ const artifacts: Artifact[] = [
         title: "EgoCore",
         displayTitle: "Cursed Knight",
         displaySubtitle: "EgoCore",
-        displayBody: "Bound in shadows",
-        displayCta: "Explore the abyss",
+        displayBody: "Shadow-bound relic",
+        displayCta: "Open the record",
         category: "Runtime Host",
         role: "Architecture / Runtime / Governance",
         summary:
@@ -174,8 +174,8 @@ const artifacts: Artifact[] = [
         title: "EgoCore",
         displayTitle: "Cursed Knight",
         displaySubtitle: "EgoCore",
-        displayBody: "Bound in shadows",
-        displayCta: "Explore the abyss",
+        displayBody: "Shadow-bound relic",
+        displayCta: "Open the record",
         category: "런타임 호스트",
         role: "아키텍처 / Runtime / 거버넌스",
         summary:
@@ -207,7 +207,7 @@ const artifacts: Artifact[] = [
     slug: "ashen-archive",
     featured: true,
     cover: "/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
-    coverPosition: "center",
+    coverPosition: "50% 52%",
     lenses: ["moon", "ember"],
     media: [
       {
@@ -229,8 +229,8 @@ const artifacts: Artifact[] = [
         title: "Ashen Archive",
         displayTitle: "Relics of Fire",
         displaySubtitle: "Ashen Archive",
-        displayBody: "Awaken the flame",
-        displayCta: "Unseal the relic",
+        displayBody: "Flame-kept archive",
+        displayCta: "Open the record",
         category: "Interactive Archive",
         role: "Art Direction / UI Systems / Motion",
         summary:
@@ -261,8 +261,8 @@ const artifacts: Artifact[] = [
         title: "Ashen Archive",
         displayTitle: "火之遗物",
         displaySubtitle: "Ashen Archive",
-        displayBody: "唤醒火焰",
-        displayCta: "解封遗物",
+        displayBody: "由火守望的档案",
+        displayCta: "打开档案",
         category: "交互档案馆",
         role: "美术方向 / UI 系统 / Motion",
         summary:
@@ -292,8 +292,8 @@ const artifacts: Artifact[] = [
         title: "Ashen Archive",
         displayTitle: "Relics of Fire",
         displaySubtitle: "Ashen Archive",
-        displayBody: "Awaken the flame",
-        displayCta: "Unseal the relic",
+        displayBody: "Flame-kept archive",
+        displayCta: "Open the record",
         category: "Interactive Archive",
         role: "Art Direction / UI Systems / Motion",
         summary:
@@ -324,8 +324,8 @@ const artifacts: Artifact[] = [
         title: "Ashen Archive",
         displayTitle: "Relics of Fire",
         displaySubtitle: "Ashen Archive",
-        displayBody: "Awaken the flame",
-        displayCta: "Unseal the relic",
+        displayBody: "Flame-kept archive",
+        displayCta: "Open the record",
         category: "인터랙티브 아카이브",
         role: "아트 디렉션 / UI 시스템 / Motion",
         summary:
@@ -357,7 +357,7 @@ const artifacts: Artifact[] = [
     slug: "openemotion",
     featured: false,
     cover: "/reference-crops/dark-fantasy-pack/book.png",
-    coverPosition: "center",
+    coverPosition: "50% 56%",
     lenses: ["tower", "ember"],
     media: [
       {
@@ -379,8 +379,8 @@ const artifacts: Artifact[] = [
         title: "OpenEmotion",
         displayTitle: "Tome of Lost Lore",
         displaySubtitle: "OpenEmotion",
-        displayBody: "Secrets of the abyss",
-        displayCta: "Unearth dark knowledge",
+        displayBody: "A sealed memory tome",
+        displayCta: "Open the record",
         category: "Reflective Core",
         role: "Identity / Memory / Reflection Design",
         summary:
@@ -411,8 +411,8 @@ const artifacts: Artifact[] = [
         title: "OpenEmotion",
         displayTitle: "失落秘典",
         displaySubtitle: "OpenEmotion",
-        displayBody: "深渊秘辛",
-        displayCta: "发掘黑暗知识",
+        displayBody: "被封存的记忆秘典",
+        displayCta: "打开档案",
         category: "反思核心",
         role: "身份 / 记忆 / Reflection 设计",
         summary:
@@ -442,8 +442,8 @@ const artifacts: Artifact[] = [
         title: "OpenEmotion",
         displayTitle: "Tome of Lost Lore",
         displaySubtitle: "OpenEmotion",
-        displayBody: "Secrets of the abyss",
-        displayCta: "Unearth dark knowledge",
+        displayBody: "A sealed memory tome",
+        displayCta: "Open the record",
         category: "Reflective Core",
         role: "Identity / Memory / Reflection Design",
         summary:
@@ -474,8 +474,8 @@ const artifacts: Artifact[] = [
         title: "OpenEmotion",
         displayTitle: "Tome of Lost Lore",
         displaySubtitle: "OpenEmotion",
-        displayBody: "Secrets of the abyss",
-        displayCta: "Unearth dark knowledge",
+        displayBody: "A sealed memory tome",
+        displayCta: "Open the record",
         category: "반성 코어",
         role: "정체성 / 메모리 / Reflection 설계",
         summary:
