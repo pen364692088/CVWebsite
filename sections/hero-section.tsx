@@ -167,32 +167,32 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
               src={assetPath(HERO_STAGE_ASSETS.dividerTop.src)}
               alt=""
               aria-hidden="true"
-              fill
-              sizes="100vw"
+              width={625}
+              height={76}
               className="abyss-stage-frame abyss-stage-frame-top"
             />
             <Image
               src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
               alt=""
               aria-hidden="true"
-              fill
-              sizes="100vw"
+              width={632}
+              height={64}
               className="abyss-stage-frame abyss-stage-frame-side abyss-stage-frame-left"
             />
             <Image
               src={assetPath(HERO_STAGE_ASSETS.dividerMid.src)}
               alt=""
               aria-hidden="true"
-              fill
-              sizes="100vw"
+              width={632}
+              height={64}
               className="abyss-stage-frame abyss-stage-frame-side abyss-stage-frame-right"
             />
             <Image
               src={assetPath(HERO_STAGE_ASSETS.dividerBottom.src)}
               alt=""
               aria-hidden="true"
-              fill
-              sizes="100vw"
+              width={632}
+              height={73}
               className="abyss-stage-frame abyss-stage-frame-bottom"
             />
             <Image

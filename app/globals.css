@@ -1389,38 +1389,40 @@ footer {
 .abyss-stage-frame {
   position: absolute;
   pointer-events: none;
-  opacity: 0.4;
+  opacity: 0.22;
   mix-blend-mode: screen;
   filter: contrast(0.98);
-  object-fit: cover;
+  object-fit: contain;
   z-index: 3;
 }
 
 .abyss-stage-frame-top,
 .abyss-stage-frame-bottom {
-  inset: 0.18rem 4.1rem;
-  height: 16%;
+  left: 50%;
+  width: min(100% - 10rem, 52rem);
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.abyss-stage-frame-top {
+  top: 0.1rem;
 }
 
 .abyss-stage-frame-bottom {
-  top: auto;
-  inset: auto 4.1rem 0.18rem;
+  bottom: 0.1rem;
+  transform: translateX(-50%);
 }
 
 .abyss-stage-frame-side {
-  inset: 4.5rem 4.5rem 4.2rem;
-  width: 2.35rem;
+  display: none;
 }
 
 .abyss-stage-frame-left {
-  left: 0.18rem;
-  right: auto;
-  transform: scaleX(-1);
+  display: none;
 }
 
 .abyss-stage-frame-right {
-  right: 0.18rem;
-  left: auto;
+  display: none;
 }
 
 .abyss-stage-corner {
@@ -1429,7 +1431,7 @@ footer {
   height: auto;
   z-index: 4;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.34;
   mix-blend-mode: soft-light;
   object-fit: contain;
 }
@@ -2141,14 +2143,13 @@ footer {
 
   .abyss-stage-frame-top,
   .abyss-stage-frame-bottom {
-    inset: 0.12rem 1.4rem;
-    opacity: 0.75;
+    width: calc(100% - 4rem);
+    opacity: 0.56;
   }
 
   .abyss-stage-frame-left,
   .abyss-stage-frame-right {
-    inset: 2.9rem 0.4rem 3rem;
-    width: 1.4rem;
+    display: none;
   }
 
   .abyss-stage-corner {
