@@ -269,7 +269,6 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
               {copy.archiveLabel}
             </h1>
             <p className="abyss-stage-subtitle">{copy.subtitle}</p>
-            <p className="abyss-stage-role">{copy.role}</p>
           </div>
 
           <div className="abyss-stage-hotspots">
@@ -305,6 +304,7 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
             </a>
 
             {artifacts.map((artifact, index) => {
+              const isCenterAltar = index === 1;
               const isFocused = activeLens === "all" || artifact.lenses.includes(activeLens);
 
               return (
@@ -356,10 +356,12 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       className="abyss-stage-card-frame-right object-cover"
                     />
                   </span>
-                  <div className="artifact-ledger abyss-stage-card-ledger">
-                    <span>{copy.projectLabel}</span>
-                    <span>{artifact.title}</span>
-                  </div>
+                  {isCenterAltar ? null : (
+                    <div className="artifact-ledger abyss-stage-card-ledger">
+                      <span>{copy.projectLabel}</span>
+                      <span>{artifact.title}</span>
+                    </div>
+                  )}
                   <div className="artifact-image-frame abyss-stage-card-image">
                     <Image
                       src={assetPath(artifact.cover)}
@@ -371,13 +373,13 @@ export function HeroSection({ navCopy, copy, ritualCopy, activeLens, artifacts, 
                       style={{ objectPosition: artifact.coverPosition }}
                     />
                   </div>
-                  <div className="artifact-plaque relic-card-plaque abyss-stage-card-plaque">
-                    <div className="space-y-2">
-                      <p className="artifact-role">{artifact.displaySubtitle}</p>
+                  <div className={`artifact-plaque relic-card-plaque abyss-stage-card-plaque ${isCenterAltar ? "abyss-stage-card-central-plaque" : ""}`}>
+                    <div className={`space-y-2 ${isCenterAltar ? "abyss-stage-card-central-copy" : ""}`}>
+                      {!isCenterAltar ? <p className="artifact-role">{artifact.displaySubtitle}</p> : null}
                       <h3 className="relic-card-title">{artifact.displayTitle}</h3>
-                      <p className="abyss-stage-card-body">{artifact.displayBody}</p>
+                      {!isCenterAltar ? <p className="abyss-stage-card-body">{artifact.displayBody}</p> : null}
                     </div>
-                    <p className="artifact-open-link">{artifact.displayCta}</p>
+                    {!isCenterAltar ? <p className="artifact-open-link">{artifact.displayCta}</p> : null}
                   </div>
                 </motion.button>
               );
