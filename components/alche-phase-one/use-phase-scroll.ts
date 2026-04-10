@@ -12,6 +12,23 @@ interface UsePhaseScrollOptions {
   sectionRefs: React.MutableRefObject<Record<AlchePhaseId, HTMLElement | null>>;
 }
 
+function readDebugState() {
+  if (typeof window === "undefined") return null;
+
+  const params = new URLSearchParams(window.location.search);
+  const phase = params.get("alchePhase");
+  if (!phase || !ALCHE_PHASE_IDS.includes(phase as AlchePhaseId)) return null;
+
+  const intro = Number(params.get("alcheIntro") ?? "1");
+  const progress = Number(params.get("alcheProgress") ?? (phase === "hero" ? "0" : "1"));
+
+  return {
+    phase: phase as AlchePhaseId,
+    intro: Math.min(Math.max(intro, 0), 1),
+    progress: Math.min(Math.max(progress, 0), 1),
+  };
+}
+
 function findPhaseAtViewport(sectionRefs: Record<AlchePhaseId, HTMLElement | null>) {
   const mid = window.innerHeight * 0.5;
   for (const phaseId of ALCHE_PHASE_IDS) {
@@ -25,10 +42,11 @@ function findPhaseAtViewport(sectionRefs: Record<AlchePhaseId, HTMLElement | nul
 
 export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
   const reducedMotion = useReducedMotion();
+  const debugState = typeof window === "undefined" ? null : readDebugState();
   const lenisRef = useRef<Lenis | null>(null);
-  const [activePhase, setActivePhase] = useState<AlchePhaseId>("hero");
-  const [phaseProgress, setPhaseProgress] = useState(0);
-  const [introProgress, setIntroProgress] = useState(reducedMotion ? 1 : 0);
+  const [activePhase, setActivePhase] = useState<AlchePhaseId>(debugState?.phase ?? "hero");
+  const [phaseProgress, setPhaseProgress] = useState(debugState?.progress ?? 0);
+  const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -36,6 +54,14 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const nextDebugState = readDebugState();
+    if (nextDebugState) {
+      setActivePhase(nextDebugState.phase);
+      setPhaseProgress(nextDebugState.progress);
+      setIntroProgress(nextDebugState.intro);
+      return;
+    }
 
     const intro = { value: reducedMotion ? 1 : 0 };
     const heroSection = sectionRefs.current.hero;
@@ -142,4 +168,3 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
     scrollToPhase,
   };
 }
-

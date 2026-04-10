@@ -31,6 +31,17 @@ export const ALCHE_ROOM = {
   radialSegments: 160,
   heightSegments: 48,
   technicalPlaneCount: 4,
+  wallPanelCount: 14,
+  braceCount: 8,
+} as const;
+
+export const ALCHE_POST = {
+  bloomStrength: 0.14,
+  bloomRadius: 0.38,
+  bloomThreshold: 0.82,
+  chromaticOffset: 0.0011,
+  filmNoise: 0.012,
+  vignette: 0.22,
 } as const;
 
 export const ALCHE_CAMERA_STATES: Record<
@@ -44,6 +55,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: number;
     whiteMix: number;
     hudBias: number;
+    galleryDepth: number;
   }
 > = {
   hero: {
@@ -55,6 +67,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: 0.16,
     whiteMix: 0,
     hudBias: 0,
+    galleryDepth: 0.18,
   },
   works: {
     position: [0.46, 0.04, 5.26],
@@ -65,6 +78,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: 1,
     whiteMix: 0,
     hudBias: 0.24,
+    galleryDepth: 1,
   },
   vision: {
     position: [0.02, 0.02, 4.94],
@@ -75,6 +89,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: 0.38,
     whiteMix: 1,
     hudBias: -0.2,
+    galleryDepth: 0.32,
   },
   service: {
     position: [-0.42, 0.06, 5.4],
@@ -85,6 +100,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: 0.74,
     whiteMix: 0,
     hudBias: 0.42,
+    galleryDepth: 0.56,
   },
   outro: {
     position: [0, 0.02, 5.64],
@@ -95,6 +111,7 @@ export const ALCHE_CAMERA_STATES: Record<
     planeSpread: 0.08,
     whiteMix: 0,
     hudBias: 0,
+    galleryDepth: 0.12,
   },
 };
 
