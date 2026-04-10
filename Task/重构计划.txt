@@ -1,0 +1,692 @@
+示例图1:"D:\Project\AIProject\MyProject\CVWebsite\Task\landing.png"
+示例图2:"D:\Project\AIProject\MyProject\CVWebsite\Task\Motion storyboard_ sealed monolith progression.png"
+
+**结论**
+
+可以。
+下面这版可以直接交给前端，目标不是“做一个会开门的盒子”，而是做一个：
+
+> **Sealed Monolith Hero**
+> 一个封印式黑色界面体，通过极轻微位移、扫描与显影，逐层释放 archive 信息。
+
+最重要的约束先写死：
+
+* **不是 box opening**
+* **不是 door animation**
+* **不是 3D 产品展示**
+* **不是炫技 sci-fi reveal**
+* **动效幅度小，气场大**
+* **静态先成立，动效只是加分**
+
+---
+
+## 为什么
+
+你现在最容易走偏的地方有两个：
+
+第一，前端把它实现成“中间一个大盒子，点一下打开”。
+这会立刻降级。
+
+第二，动效做太满。
+真正高级的是：**用户几乎说不清哪里动了，但能感觉页面活了。**
+
+所以这份 spec 的核心不是“做很多效果”，而是**严格限制效果边界**。
+
+---
+
+## 关键未知
+
+这份 spec 先按下面前提写：
+
+* 首屏是一个单一 hero 场景
+* 技术默认：**Next.js + React + Framer Motion + CSS**
+* 不依赖重 WebGL
+* 桌面端优先，移动端降级
+* monolith 为 2.5D 视觉，不做真实 3D 旋转
+
+如果你后面决定走 Three.js，那是另一套实现，不该混在这版里。
+
+---
+
+# 主方案
+
+# 1. 设计定义
+
+## 1.1 组件名
+
+**SealedMonolithHero**
+
+## 1.2 视觉角色
+
+它是一个**黑色垂直 slab / monolith**，不是盒子，不是门，不是舱门。
+它承担三个角色：
+
+* 品牌主视觉
+* 首屏节奏控制器
+* archive 内容的第一层入口
+
+## 1.3 交互隐喻
+
+用户不是在“打开一个物体”，而是在：
+
+1. 接近一个封印体
+2. 被系统识别
+3. 看到表层轻微退让
+4. 读取被允许显影的一层档案内容
+
+---
+
+# 2. 信息架构
+
+首屏只允许这几类信息出现：
+
+## 2.1 永久可见
+
+* Studio name / brand mark
+* Minimal top navigation
+* Monolith 本体
+* 一个 statement
+* 极少量 index marks
+
+## 2.2 逐层显影
+
+* micro labels
+* archive metadata
+* profile / approach / archive entry 的局部信息
+* very restrained CTA hint
+
+## 2.3 禁止首屏出现
+
+* 大量 project cards
+* 多个内容模块同时出现
+* 大段介绍文案
+* 明显说明式图表
+* 强动画背景
+
+---
+
+# 3. 动效状态机
+
+整个 hero 只允许 4 个主状态。
+
+## 3.1 State A — Dormant
+
+**定义**：完全沉默的初始态。
+**持续时间**：0.0s – 1.2s
+
+### 可见元素
+
+* monolith 本体
+* 品牌名
+* 极少量导航
+* 非常弱的环境明度层次
+
+### 动效
+
+* 无明显位移
+* 无明显显影
+* 只允许极轻微 ambient luminance breathing
+  振幅 <= 2%
+
+### 禁止
+
+* 扫描线
+* 内容出现
+* 表层滑动
+* 明显 hover 提示
+
+---
+
+## 3.2 State B — Recognition
+
+**定义**：系统识别到用户存在，但不热情。
+**持续时间**：1.2s – 2.4s
+
+### 新增元素
+
+* micro index marks
+* 1 条极细 scan line
+* 1–3 个小标签
+* 底部或侧边极弱 metadata hints
+
+### 动效
+
+* scan line：一次缓慢掠过，不循环闪烁
+* micro labels：opacity 0 → 1
+* monolith 边缘亮度：极轻微提升
+
+### 参数建议
+
+* scan line duration: 900ms – 1400ms
+* label fade in: 400ms – 700ms
+* easing: `easeOut` 或自定义 cubic-bezier(0.22, 1, 0.36, 1)
+
+### 禁止
+
+* 发光拉满
+* 高亮像按钮 hover
+* 多条扫描线反复扫
+
+---
+
+## 3.3 State C — Surface Displacement
+
+**定义**：表层退让半层，不是开门。
+**持续时间**：2.4s – 3.6s
+
+### 结构变化
+
+monolith 至少分为 2 层：
+
+* **front slab**
+* **inner archive layer**
+
+此状态只允许 **front slab** 发生极轻微错位。
+
+### 动作定义
+
+* front slab 沿 x 轴位移：**8px – 16px**
+* 可选极轻微 z-depth illusion，通过 shadow / contrast 模拟
+* 内层不是立刻完整出现，只露出“有深度”的证据
+
+### 参数建议
+
+* x displacement: 12px 默认
+* duration: 900ms – 1200ms
+* easing: cubic-bezier(0.32, 0.72, 0, 1)
+
+### 视觉要求
+
+* 更像“表皮错层”
+* 不像“门被拉开”
+* 缝隙不能大
+* 不能看见机械结构、铰链、门轴
+
+### 禁止
+
+* displacement > 16px
+* rotateY / 夸张透视翻转
+* door-like pivot motion
+* 内层大面积亮起
+
+---
+
+## 3.4 State D — Dossier Emergence
+
+**定义**：内层信息显影，不是弹出。
+**持续时间**：3.6s – 5.2s
+
+### 允许显影的内容
+
+只允许一层、少量内容，例如：
+
+* PROFILE
+* APPROACH
+* ARCHIVE
+* 1–2 行 metadata
+* 1 个 very restrained CTA
+
+### 动效
+
+* opacity 0 → 1
+* y 或 x 微位移：4px – 8px
+* clipping reveal 或 mask reveal
+* 细线先出，文字后出，CTA 最后出
+
+### 节奏顺序
+
+1. inner grid / rule lines
+2. section labels
+3. short text blocks
+4. minimal CTA hint
+
+### 参数建议
+
+* grid lines: 300ms – 500ms
+* labels: 400ms
+* text: 500ms – 700ms
+* CTA: 300ms 延迟后淡入
+* stagger: 60ms – 120ms
+
+### 禁止
+
+* 整个内页完整飞出来
+* 卡片大量弹入
+* 元素从远处飞入
+* 内容数过多
+
+---
+
+## 3.5 Hold State
+
+**定义**：显影完成后的稳定态。
+**持续时间**：5.2s – 6.0s 及用户未交互时
+
+### 行为
+
+* 保持现态
+* scan line 停止
+* breathing 极弱保留
+* 等待 scroll / click 进入下一层页面
+
+---
+
+# 4. 时间线总表
+
+## 自动首屏序列
+
+* 0.0 – 1.2s：Dormant
+* 1.2 – 2.4s：Recognition
+* 2.4 – 3.6s：Surface Displacement
+* 3.6 – 5.2s：Dossier Emergence
+* 5.2 – 6.0s：Hold
+
+### 总原则
+
+* 总时长控制在 **5.5s – 6.5s**
+* 宁慢勿碎
+* 宁少勿花
+
+---
+
+# 5. 用户触发规则
+
+## 5.1 首次访问
+
+自动播放一次完整序列。
+
+## 5.2 Hover
+
+如果用户 hover monolith：
+
+* 不重新播放完整序列
+* 只允许：
+
+  * micro labels 亮度微增
+  * scan hint very subtle
+  * CTA hint slightly clarify
+
+### 禁止
+
+* hover 时大幅位移
+* hover 时再打开一层
+
+## 5.3 Click
+
+点击 monolith 或 CTA 后：
+
+* 不做“开盒”
+* 直接过渡到 archive section
+* 方式优先：
+
+  * smooth scroll
+  * 或 monolith 缩为页面结构主轴
+
+## 5.4 Scroll
+
+用户向下滚动时：
+
+* monolith 不消失
+* 逐渐转化为版式骨架的一部分
+* inner archive content 过渡到后续 sections
+
+---
+
+# 6. 视觉分层规范
+
+至少拆成这 6 层：
+
+## Layer 1 — Environment
+
+背景暗场、空间深度、极弱环境雾感。
+不做动态粒子。
+
+## Layer 2 — Monolith Base
+
+黑色主 slab，本体材质层。
+
+## Layer 3 — Surface Detail
+
+表层微纹理、微反光、细分缝、极小 index。
+
+## Layer 4 — Recognition Layer
+
+扫描线、小标签、小标尺、小 metadata。
+
+## Layer 5 — Inner Archive Layer
+
+隐藏信息层，包含 grid、labels、text。
+
+## Layer 6 — Global UI
+
+品牌、导航、顶层框架。
+
+---
+
+# 7. 视觉 token 建议
+
+## 7.1 Color
+
+* `--bg`: #090909
+* `--charcoal`: #111214
+* `--graphite`: #1a1b1d
+* `--bone`: #d9d3c7
+* `--cold-gray`: #8e9094
+* `--signal-muted`: #8e7440
+
+不要高饱和黄。
+不要明显青蓝。
+
+## 7.2 Shadow
+
+* 大阴影：柔、广、浅
+* 不要硬边发光阴影
+* 不要 neon glow
+
+## 7.3 Border
+
+* 0.5px – 1px 细线优先
+* 线比框更重要
+* 大块描边要少
+
+## 7.4 Blur
+
+只用于极弱层次，不做 frosted glass 主效果。
+
+---
+
+# 8. 动效 token 建议
+
+## 8.1 Easing
+
+推荐统一使用 2 套：
+
+### Primary
+
+`cubic-bezier(0.22, 1, 0.36, 1)`
+
+### Secondary
+
+`cubic-bezier(0.32, 0.72, 0, 1)`
+
+## 8.2 Durations
+
+* micro fade: 300ms – 500ms
+* scan pass: 900ms – 1400ms
+* slab displacement: 900ms – 1200ms
+* dossier reveal group: 1200ms – 1600ms
+
+## 8.3 Distances
+
+* micro shift: 4px
+* text reveal shift: 6px
+* slab displacement: 12px 默认，最大 16px
+
+---
+
+# 9. 实现建议
+
+## 9.1 技术推荐
+
+* React
+* Framer Motion
+* CSS variables
+* layered absolute positioning
+* optional clip-path / mask-image
+
+## 9.2 不建议一开始使用
+
+* heavy WebGL
+* Three.js 真实几何体
+* video background
+* overengineered shader
+
+## 9.3 推荐 DOM 结构
+
+```html
+<section class="hero">
+  <div class="hero-ui"></div>
+  <div class="monolith-wrap">
+    <div class="monolith-base">
+      <div class="monolith-surface"></div>
+      <div class="monolith-inner-archive"></div>
+    </div>
+  </div>
+  <div class="top-nav"></div>
+  <div class="brand"></div>
+</section>
+```
+
+---
+
+# 10. Framer Motion 逻辑建议
+
+## 10.1 状态枚举
+
+```ts
+type HeroState =
+  | "dormant"
+  | "recognition"
+  | "displacement"
+  | "emergence"
+  | "hold";
+```
+
+## 10.2 主序列
+
+* mount 后自动进入 `dormant`
+* 1.2s 后切 `recognition`
+* 再切 `displacement`
+* 再切 `emergence`
+* 最后 `hold`
+
+## 10.3 不要做的事
+
+* 不要把全部动画写成 hover variants
+* 不要让 state 跳来跳去
+* 不要滚动和 hover 同时抢控制权
+
+---
+
+# 11. 内容显影规范
+
+内层显影内容量必须受控。
+
+## 11.1 首屏最多显示
+
+* 3 个 section labels
+* 1 个短 statement
+* 1 组 minimal archive entry
+* 1 个 CTA hint
+
+## 11.2 文案长度
+
+* 每块最多 2–3 行
+* 单行尽量短
+* 避免首屏成为说明页
+
+## 11.3 优先显影顺序
+
+* 线
+* 标签
+* 关键词
+* 文本
+* CTA
+
+---
+
+# 12. 滚动转场规范
+
+## 12.1 进入下一屏
+
+当用户 scroll beyond threshold：
+
+* monolith 保留其垂直逻辑
+* inner archive content 变成内容 section 的 structural ancestor
+* 不能像 modal 被关掉
+* 不能像 hero 整块飞走
+
+## 12.2 过渡建议
+
+* monolith 缩小 8% – 12%
+* 固定到上部或侧部
+* 其内部档案逻辑展开为正文 sections
+
+---
+
+# 13. 响应式策略
+
+## 13.1 Desktop
+
+完整实现全部状态。
+
+## 13.2 Tablet
+
+保留全部状态，但：
+
+* slab displacement 更小
+* dossier 内容更少
+* 侧边 metadata 简化
+
+## 13.3 Mobile
+
+直接降级，不追求完整戏剧性。
+
+### 只保留
+
+* Dormant
+* Recognition
+* very light dossier reveal
+
+### 移除
+
+* 明显 displacement
+* 复杂侧边 labels
+* 多层显影节奏
+
+移动端目标不是还原，而是**保住气质**。
+
+---
+
+# 14. Reduced Motion 策略
+
+如果用户启用 `prefers-reduced-motion`：
+
+* 取消 scan line
+* 取消 slab displacement
+* 只保留 opacity reveal
+* 总时长压缩到 1.2s – 1.8s
+
+不能因为 reduced motion 就破坏信息层级。
+
+---
+
+# 15. 性能边界
+
+## 15.1 预算
+
+* 首屏动画尽量只动 `transform` 和 `opacity`
+* 避免频繁 box-shadow repaint
+* 避免大面积 blur 动画
+
+## 15.2 图层数量
+
+* 视觉层可以多
+* 实时动画层要少
+
+## 15.3 资源策略
+
+* 材质纹理尽量预合成
+* 不要实时生成复杂噪声
+
+---
+
+# 16. 明确禁止项
+
+前端实现时以下全部禁止：
+
+* 铰链感
+* 开门感
+* 舱门感
+* 大爆光
+* 蓝色能量核心
+* 满屏粒子
+* 飞入飞出
+* 卡片弹射
+* 明显 3D rotate
+* hover 时大位移
+* 内容像抽屉弹出
+* 游戏登录页味道
+
+---
+
+# 17. 验收标准
+
+## 17.1 视觉验收
+
+* 静态截图成立
+* 动起来比静态更贵，不是更热闹
+* 第一反应不是“盒子打开”
+* 第一反应应接近“封印解封 / 档案显影”
+
+## 17.2 交互验收
+
+* 自动序列只播一次，不烦人
+* hover 不抢戏
+* click / scroll 合理衔接 archive sections
+
+## 17.3 技术验收
+
+* 60fps 优先
+* 不依赖 WebGL
+* reduced motion 可用
+* 移动端不崩气质
+
+---
+
+# 18. 给前端的一句总纲
+
+> Build this as a sealed editorial slab with subtle surface displacement and controlled archive emergence.
+> It must never feel like a box opening, a door animation, or a sci-fi gadget reveal.
+
+---
+
+## 备选
+
+如果前端觉得 displacement 仍太像“开缝”，就切到备选方案：
+
+### **Light-Sweep Reveal**
+
+* monolith 本体不位移
+* 只靠 1 条慢扫描光 + mask reveal
+* dossier 内容像被照出来
+
+这版更克制，但交互反馈会更弱。
+
+---
+
+## 下一步最小动作
+
+现在最值钱的下一步不是继续写抽象描述，
+而是把这份 spec 再压成前端直接能干活的 3 个东西：
+
+1. **组件拆分清单**
+2. **Framer Motion variants 结构**
+3. **首屏 DOM/CSS 层级图**
+
+---
+
+## 验证信号
+
+说明实现对了：
+
+* 你看成品时不会说“哦，是个会开的盒子”
+* 而会说“它在慢慢允许我读取内部层”
+* 动效很少，但越看越贵
+* 没有任何一个瞬间像模板特效
+
+**本轮额外建议**
+
+1. 前端第一版先做 **灰盒 motion prototype**，不要先抠材质。
+2. 先验证 **节奏和位移量**，再加视觉纹理。
+3. 如果第一版已经像“门”，立刻把 displacement 再砍半。
