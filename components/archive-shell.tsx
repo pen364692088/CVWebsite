@@ -5,7 +5,7 @@ import type { Dictionary } from "@/data/dictionaries";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import type { Locale } from "@/lib/i18n";
 
-import { ArchiveRelicBand } from "@/components/archive-relic-band";
+import { ArchiveExperience } from "@/components/archive-experience";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -21,7 +21,13 @@ export function ArchiveShell({ locale, dictionary, artifacts, contacts, dossier 
   return (
     <div className="relative overflow-hidden">
       <SiteHeader locale={locale} dictionary={dictionary} />
-      <ArchiveRelicBand dictionary={dictionary} artifacts={artifacts} contacts={contacts} dossier={dossier} />
+      <ArchiveExperience
+        locale={locale}
+        dictionary={dictionary}
+        artifacts={artifacts}
+        contacts={contacts}
+        dossier={dossier}
+      />
       <SiteFooter dictionary={dictionary} />
     </div>
   );

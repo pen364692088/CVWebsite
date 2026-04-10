@@ -7,7 +7,14 @@ export const SITE = {
   localeStorageKey: "ashen-archive-locale",
 } as const;
 
-export const SECTION_IDS = ["about", "disciplines", "artifacts", "fire", "contact"] as const;
+export const SECTION_IDS = [
+  "threshold",
+  "oath",
+  "egocore",
+  "ashen-archive",
+  "openemotion",
+  "contact-coda",
+] as const;
 
 export function assetPath(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;

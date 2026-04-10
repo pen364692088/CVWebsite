@@ -43,14 +43,14 @@ const expectedIdentity = {
 
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
-  assert(html.includes("Echoes of the Abyss"), `Missing hero title in ${locale}`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
-  assert(html.includes('class="sealed-hero"'), `Missing sealed monolith hero root in ${locale}`);
-  assert(html.includes("sealed-monolith"), `Missing monolith shell in ${locale}`);
-  assert(html.includes("sealed-monolith-dossier"), `Missing dossier emergence layer in ${locale}`);
-  assert(html.includes("sealed-hero-bottomrail"), `Missing hero archive index rail in ${locale}`);
-  assert(html.includes('id="artifacts"'), `Missing artifacts anchor in ${locale}`);
+  assert(html.includes('class="experience-root"'), `Missing experience root in ${locale}`);
+  assert(html.includes('id="threshold"'), `Missing threshold chapter in ${locale}`);
+  assert(html.includes('id="egocore"'), `Missing EgoCore chapter anchor in ${locale}`);
+  assert(html.includes('id="ashen-archive"'), `Missing Ashen Archive chapter anchor in ${locale}`);
+  assert(html.includes('id="openemotion"'), `Missing OpenEmotion chapter anchor in ${locale}`);
+  assert(html.includes('id="contact-coda"'), `Missing contact coda chapter anchor in ${locale}`);
   assert(html.includes("EgoCore"), `Missing EgoCore artifact in ${locale}`);
   assert(html.includes("OpenEmotion"), `Missing OpenEmotion artifact in ${locale}`);
 }
