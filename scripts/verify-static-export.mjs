@@ -18,11 +18,6 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/showcase/triangle-grid-wide.jpg",
-  "out/showcase/triangle-grid-crop-left.jpg",
-  "out/showcase/triangle-grid-crop-right.jpg",
-  "out/showcase/triangle-grid-crop-center.jpg",
-  "out/showcase/a-spectrum-white.jpg",
 ];
 
 for (const file of expectedFiles) {
@@ -42,16 +37,13 @@ const expectedIdentity = {
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
-  assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
-  assert(html.includes('class="showcase-root"'), `Missing showcase root in ${locale}`);
-  assert(html.includes('id="hero-wordmark"'), `Missing hero-wordmark chapter in ${locale}`);
-  assert(html.includes('id="discipline-strip"'), `Missing discipline-strip chapter in ${locale}`);
-  assert(html.includes('id="showcase-wall"'), `Missing showcase-wall chapter in ${locale}`);
-  assert(html.includes('id="manifesto-inversion"'), `Missing manifesto-inversion chapter in ${locale}`);
-  assert(html.includes('id="selected-work"'), `Missing selected-work chapter in ${locale}`);
-  assert(html.includes('id="contact-coda"'), `Missing contact coda chapter anchor in ${locale}`);
-  assert(html.includes("ASHEN"), `Missing ASHEN wordmark in ${locale}`);
-  assert(html.includes("ARCHIVE"), `Missing ARCHIVE wordmark in ${locale}`);
+  assert(html.includes('id="hero"'), `Missing hero phase in ${locale}`);
+  assert(html.includes('id="works"'), `Missing works phase in ${locale}`);
+  assert(html.includes('id="vision"'), `Missing vision phase in ${locale}`);
+  assert(html.includes('id="service"'), `Missing service phase in ${locale}`);
+  assert(html.includes('id="outro"'), `Missing outro phase in ${locale}`);
+  assert(html.includes("ALCHE"), `Missing ALCHE wordmark in ${locale}`);
+  assert(html.includes("TOP PAGE RUNTIME"), `Missing HUD title in ${locale}`);
 }
 
 console.log("Static export verification passed.");

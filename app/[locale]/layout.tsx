@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { showcaseDictionaries } from "@/data/showcase";
+import { alchePhaseOneCopy } from "@/data/alche-phase-one";
 import { DocumentLocale } from "@/components/document-locale";
 import { LOCALES, isLocale } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     return {};
   }
 
-  const dictionary = showcaseDictionaries[locale];
+  const dictionary = alchePhaseOneCopy[locale];
   const path = `/${SITE.basePath.replace(/^\//, "")}/${locale}/`;
 
   return {

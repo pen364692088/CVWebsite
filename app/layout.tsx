@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
-import { Cinzel, IBM_Plex_Sans } from "next/font/google";
+import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 
 import "./globals.css";
-
-const display = Cinzel({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["400", "500", "600", "700"],
-});
 
 const body = IBM_Plex_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   weight: ["400", "500", "600"],
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500"],
+});
+
+const displayAlt = Barlow_Condensed({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${display.variable} ${body.variable}`}>{children}</body>
+      <body className={`${body.variable} ${mono.variable} ${displayAlt.variable}`}>{children}</body>
     </html>
   );
 }

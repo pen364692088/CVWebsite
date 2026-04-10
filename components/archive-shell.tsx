@@ -1,13 +1,10 @@
 "use client";
 
-import type { Dictionary } from "@/data/dictionaries";
-import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import type { Locale } from "@/lib/i18n";
 
-import { ArchiveExperience } from "@/components/archive-experience";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { showcaseDictionaries } from "@/data/showcase";
+import type { Dictionary } from "@/data/dictionaries";
+import type { ContactLink, StudioDossierAsset } from "@/data/profile";
+import { AlchePhaseOneShell } from "@/components/alche-phase-one/alche-phase-one-shell";
 
 interface ArchiveShellProps {
   locale: Locale;
@@ -16,19 +13,10 @@ interface ArchiveShellProps {
   dossier: StudioDossierAsset;
 }
 
-export function ArchiveShell({ locale, dictionary, contacts, dossier }: ArchiveShellProps) {
-  const showcase = showcaseDictionaries[locale];
-
+export function ArchiveShell({ locale }: ArchiveShellProps) {
   return (
     <div className="relative overflow-hidden">
-      <SiteHeader locale={locale} dictionary={dictionary} />
-      <ArchiveExperience
-        locale={locale}
-        dictionary={dictionary}
-        contacts={contacts}
-        dossier={dossier}
-      />
-      <SiteFooter line={showcase.footerLine} />
+      <AlchePhaseOneShell locale={locale} />
     </div>
   );
 }
