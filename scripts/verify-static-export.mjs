@@ -18,13 +18,11 @@ const expectedFiles = [
   "out/zh-CN/index.html",
   "out/ja/index.html",
   "out/ko/index.html",
-  "out/reference-crops/dark-fantasy-pack/ornament-wide.png",
-  "out/reference-crops/dark-fantasy-pack/knight.png",
-  "out/reference-crops/dark-fantasy-pack/book.png",
-  "out/reference-crops/dark-fantasy-pack/flame-sword-altar.png",
-  "out/artifacts/egocore-dossier-v3.png",
-  "out/artifacts/ashen-archive-dossier-v3.png",
-  "out/artifacts/openemotion-dossier-v3.png",
+  "out/showcase/triangle-grid-wide.jpg",
+  "out/showcase/triangle-grid-crop-left.jpg",
+  "out/showcase/triangle-grid-crop-right.jpg",
+  "out/showcase/triangle-grid-crop-center.jpg",
+  "out/showcase/a-spectrum-white.jpg",
 ];
 
 for (const file of expectedFiles) {
@@ -45,14 +43,15 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes("流月工作室"), `Missing studio brand in ${locale}`);
-  assert(html.includes('class="experience-root"'), `Missing experience root in ${locale}`);
-  assert(html.includes('id="threshold"'), `Missing threshold chapter in ${locale}`);
-  assert(html.includes('id="egocore"'), `Missing EgoCore chapter anchor in ${locale}`);
-  assert(html.includes('id="ashen-archive"'), `Missing Ashen Archive chapter anchor in ${locale}`);
-  assert(html.includes('id="openemotion"'), `Missing OpenEmotion chapter anchor in ${locale}`);
+  assert(html.includes('class="showcase-root"'), `Missing showcase root in ${locale}`);
+  assert(html.includes('id="hero-wordmark"'), `Missing hero-wordmark chapter in ${locale}`);
+  assert(html.includes('id="discipline-strip"'), `Missing discipline-strip chapter in ${locale}`);
+  assert(html.includes('id="showcase-wall"'), `Missing showcase-wall chapter in ${locale}`);
+  assert(html.includes('id="manifesto-inversion"'), `Missing manifesto-inversion chapter in ${locale}`);
+  assert(html.includes('id="selected-work"'), `Missing selected-work chapter in ${locale}`);
   assert(html.includes('id="contact-coda"'), `Missing contact coda chapter anchor in ${locale}`);
-  assert(html.includes("EgoCore"), `Missing EgoCore artifact in ${locale}`);
-  assert(html.includes("OpenEmotion"), `Missing OpenEmotion artifact in ${locale}`);
+  assert(html.includes("ASHEN"), `Missing ASHEN wordmark in ${locale}`);
+  assert(html.includes("ARCHIVE"), `Missing ARCHIVE wordmark in ${locale}`);
 }
 
 console.log("Static export verification passed.");

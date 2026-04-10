@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Lenis from "lenis";
 import { useReducedMotion } from "motion/react";
@@ -7,54 +8,64 @@ import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import type { ArtifactView } from "@/data/artifacts";
 import type { Dictionary } from "@/data/dictionaries";
-import { experienceDictionaries } from "@/data/experience";
+import { showcaseDictionaries } from "@/data/showcase";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
-import type { ExperienceChapterId } from "@/lib/archive";
-import { EXPERIENCE_CHAPTERS } from "@/lib/archive";
 import type { Locale } from "@/lib/i18n";
 import { assetPath } from "@/lib/site";
+import { SHOWCASE_SECTION_IDS, type ShowcaseSectionId } from "@/lib/showcase";
 
-import { ArchiveExperienceStage } from "@/components/archive-experience-stage";
+const ShowcaseGeometryCanvas = dynamic(
+  () => import("@/components/showcase-geometry-canvas").then((module) => module.ShowcaseGeometryCanvas),
+  { ssr: false },
+);
 
 interface ArchiveExperienceProps {
   locale: Locale;
   dictionary: Dictionary;
-  artifacts: ArtifactView[];
   contacts: ContactLink[];
   dossier: StudioDossierAsset;
 }
 
-export function ArchiveExperience({
-  locale,
-  dictionary,
-  artifacts,
-  contacts,
-  dossier,
-}: ArchiveExperienceProps) {
-  const experienceCopy = experienceDictionaries[locale];
+function supportsWebGL() {
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
+export function ArchiveExperience({ locale, dictionary, contacts, dossier }: ArchiveExperienceProps) {
+  const copy = showcaseDictionaries[locale];
   const reducedMotion = useReducedMotion();
   const lenisRef = useRef<Lenis | null>(null);
-  const sectionRefs = useRef<Record<ExperienceChapterId, HTMLElement | null>>({
-    threshold: null,
-    oath: null,
-    egocore: null,
-    "ashen-archive": null,
-    openemotion: null,
+  const sectionRefs = useRef<Record<ShowcaseSectionId, HTMLElement | null>>({
+    "hero-wordmark": null,
+    "discipline-strip": null,
+    "showcase-wall": null,
+    "manifesto-inversion": null,
+    "selected-work": null,
     "contact-coda": null,
   });
-  const [activeChapter, setActiveChapter] = useState<ExperienceChapterId>("threshold");
-  const [activeProgress, setActiveProgress] = useState(0);
-  const deferredProgress = useDeferredValue(activeProgress);
+  const [activeSection, setActiveSection] = useState<ShowcaseSectionId>("hero-wordmark");
+  const [heroProgress, setHeroProgress] = useState(0);
+  const [wallProgress, setWallProgress] = useState(0);
+  const [canRenderLive, setCanRenderLive] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const deferredHeroProgress = useDeferredValue(heroProgress);
 
-  const artifactMap = useMemo(
-    () => new Map(artifacts.map((artifact) => [artifact.slug as ExperienceChapterId, artifact])),
-    [artifacts],
+  const heroImage = copy.wall.panels[0].asset;
+  const manifestoImage = copy.wall.panels[4].asset;
+  const navLabelMap = useMemo(
+    () => Object.fromEntries(copy.nav.items.map((item) => [item.id, item.label])) as Record<ShowcaseSectionId, string>,
+    [copy.nav.items],
   );
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
+    setIsHydrated(true);
+    setCanRenderLive(supportsWebGL());
   }, []);
 
   useEffect(() => {
@@ -63,25 +74,35 @@ export function ArchiveExperience({
     if (reducedMotion) {
       const handleScroll = () => {
         const viewportMid = window.innerHeight * 0.5;
-        let nextChapter: ExperienceChapterId = "threshold";
-        let nextProgress = 0;
+        let nextSection: ShowcaseSectionId = "hero-wordmark";
 
-        for (const chapterId of EXPERIENCE_CHAPTERS) {
-          const section = sectionRefs.current[chapterId];
+        for (const sectionId of SHOWCASE_SECTION_IDS) {
+          const section = sectionRefs.current[sectionId];
           if (!section) continue;
 
           const rect = section.getBoundingClientRect();
           if (rect.top <= viewportMid && rect.bottom >= viewportMid) {
-            nextChapter = chapterId;
-            nextProgress = Math.min(Math.max((viewportMid - rect.top) / Math.max(rect.height, 1), 0), 1);
+            nextSection = sectionId;
             break;
           }
         }
 
-        startTransition(() => {
-          setActiveChapter(nextChapter);
-          setActiveProgress(nextProgress);
-        });
+        const heroSection = sectionRefs.current["hero-wordmark"];
+        const wallSection = sectionRefs.current["showcase-wall"];
+
+        if (heroSection) {
+          const rect = heroSection.getBoundingClientRect();
+          const progress = Math.min(Math.max((window.innerHeight - rect.top) / Math.max(rect.height, 1), 0), 1);
+          setHeroProgress(progress);
+        }
+
+        if (wallSection) {
+          const rect = wallSection.getBoundingClientRect();
+          const progress = Math.min(Math.max((window.innerHeight - rect.top) / Math.max(rect.height, 1), 0), 1);
+          setWallProgress(progress);
+        }
+
+        startTransition(() => setActiveSection(nextSection));
       };
 
       handleScroll();
@@ -95,57 +116,74 @@ export function ArchiveExperience({
     }
 
     const lenis = new Lenis({
-      duration: 1.15,
+      duration: 1.05,
       lerp: 0.08,
       smoothWheel: true,
-      wheelMultiplier: 0.9,
+      wheelMultiplier: 0.95,
       touchMultiplier: 1,
     });
     lenisRef.current = lenis;
     lenis.on("scroll", ScrollTrigger.update);
 
     let frame = 0;
-
     const raf = (time: number) => {
       lenis.raf(time);
       frame = window.requestAnimationFrame(raf);
     };
-
     frame = window.requestAnimationFrame(raf);
 
-    const triggers = EXPERIENCE_CHAPTERS.map((chapterId) => {
-      const section = sectionRefs.current[chapterId];
+    const sectionTriggers = SHOWCASE_SECTION_IDS.map((sectionId) => {
+      const section = sectionRefs.current[sectionId];
       if (!section) return null;
 
       return ScrollTrigger.create({
         trigger: section,
         start: "top center",
         end: "bottom center",
-        onEnter: () => startTransition(() => setActiveChapter(chapterId)),
-        onEnterBack: () => startTransition(() => setActiveChapter(chapterId)),
-        onUpdate: (self) => {
-          if (!self.isActive) return;
-          startTransition(() => setActiveProgress(self.progress));
-        },
+        onEnter: () => startTransition(() => setActiveSection(sectionId)),
+        onEnterBack: () => startTransition(() => setActiveSection(sectionId)),
       });
     });
+
+    const heroSection = sectionRefs.current["hero-wordmark"];
+    const wallSection = sectionRefs.current["showcase-wall"];
+    const heroTrigger = heroSection
+      ? ScrollTrigger.create({
+          trigger: heroSection,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+          onUpdate: (self) => setHeroProgress(self.progress),
+        })
+      : null;
+    const wallTrigger = wallSection
+      ? ScrollTrigger.create({
+          trigger: wallSection,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+          onUpdate: (self) => setWallProgress(self.progress),
+        })
+      : null;
 
     ScrollTrigger.refresh();
 
     return () => {
-      triggers.forEach((trigger) => trigger?.kill());
+      sectionTriggers.forEach((trigger) => trigger?.kill());
+      heroTrigger?.kill();
+      wallTrigger?.kill();
       window.cancelAnimationFrame(frame);
       lenis.destroy();
       lenisRef.current = null;
     };
   }, [reducedMotion]);
 
-  function setSectionRef(chapterId: ExperienceChapterId, node: HTMLElement | null) {
-    sectionRefs.current[chapterId] = node;
+  function setSectionRef(sectionId: ShowcaseSectionId, node: HTMLElement | null) {
+    sectionRefs.current[sectionId] = node;
   }
 
-  function handleJump(chapterId: ExperienceChapterId) {
-    const target = sectionRefs.current[chapterId];
+  function handleJump(sectionId: ShowcaseSectionId) {
+    const target = sectionRefs.current[sectionId];
     if (!target) return;
 
     if (!reducedMotion && lenisRef.current) {
@@ -156,211 +194,241 @@ export function ArchiveExperience({
     target.scrollIntoView({ behavior: "auto", block: "start" });
   }
 
-  return (
-    <div className="experience-root">
-      <ArchiveExperienceStage
-        activeChapter={activeChapter}
-        progress={deferredProgress}
-        experienceCopy={experienceCopy}
-        artifacts={artifacts}
-      />
+  const heroShift = reducedMotion ? 0 : deferredHeroProgress * 84;
+  const heroScale = reducedMotion ? 1 : 1 - deferredHeroProgress * 0.08;
+  const wallOffset = reducedMotion ? 0 : (wallProgress - 0.5) * 42;
 
-      <div className="experience-chrome">
-        <div className="experience-toprail">
-          <div>
-            <p className="experience-toprail-brand">{dictionary.nav.title}</p>
-            <p className="experience-toprail-caption">{experienceCopy.scrollLabel}</p>
+  return (
+    <div className="showcase-root">
+      <div className="showcase-grid-backdrop" aria-hidden="true" />
+      <div className="showcase-grid-vignette" aria-hidden="true" />
+      <div className="showcase-grid-pulse" aria-hidden="true" />
+
+      <div className="showcase-chrome">
+        <div className="showcase-toprail">
+          <div className="showcase-toprail-brand">
+            <span>{copy.hero.status}</span>
+            <span>{navLabelMap[activeSection]}</span>
           </div>
-          <nav className="experience-nav" aria-label={experienceCopy.navLabel}>
-            {EXPERIENCE_CHAPTERS.map((chapterId) => (
+          <nav className="showcase-nav" aria-label={copy.nav.ariaLabel}>
+            {copy.nav.items.map((item) => (
               <button
-                key={chapterId}
+                key={item.id}
                 type="button"
-                className={`experience-nav-link ${activeChapter === chapterId ? "experience-nav-link-active" : ""}`}
-                onClick={() => handleJump(chapterId)}
+                className={`showcase-nav-link ${activeSection === item.id ? "showcase-nav-link-active" : ""}`}
+                onClick={() => handleJump(item.id)}
               >
-                {experienceCopy.chapterNav[chapterId]}
+                {item.label}
               </button>
             ))}
           </nav>
         </div>
       </div>
 
-      <main className="experience-main">
+      <main className="showcase-main">
         <section
-          id="threshold"
-          ref={(node) => setSectionRef("threshold", node)}
-          className="experience-chapter experience-chapter-threshold"
+          id="hero-wordmark"
+          ref={(node) => setSectionRef("hero-wordmark", node)}
+          className="showcase-section showcase-section-hero"
         >
-          <div className="experience-panel experience-panel-threshold">
-            <div className="experience-threshold-copy">
-              <p className="experience-kicker">{experienceCopy.threshold.kicker}</p>
-              <h1 className="experience-title">{experienceCopy.threshold.title}</h1>
-              <p className="experience-lead">{experienceCopy.threshold.lead}</p>
-              <p className="experience-body">{experienceCopy.threshold.body}</p>
-              <div className="experience-threshold-actions">
-                <button type="button" className="primary-button" onClick={() => handleJump("oath")}>
-                  {experienceCopy.threshold.primaryCta}
-                </button>
-                <button type="button" className="secondary-button" onClick={() => handleJump("egocore")}>
-                  {experienceCopy.threshold.secondaryCta}
-                </button>
-              </div>
-              <p className="experience-footnote">{experienceCopy.threshold.footnote}</p>
-            </div>
-          </div>
-        </section>
-
-        <section id="oath" ref={(node) => setSectionRef("oath", node)} className="experience-chapter experience-chapter-oath">
-          <div className="experience-panel">
-            <div className="experience-oath-grid">
-              <div className="experience-copy-stack">
-                <p className="experience-kicker">{experienceCopy.oath.kicker}</p>
-                <h2 className="experience-section-title">{experienceCopy.oath.title}</h2>
-                <p className="experience-lead">{experienceCopy.oath.lead}</p>
-                <p className="experience-body">{experienceCopy.oath.body}</p>
-                <div className="experience-proof-row">
-                  {dictionary.hero.proofChips.map((item) => (
-                    <span key={item} className="experience-proof-chip">
-                      {item}
-                    </span>
-                  ))}
+          <div className="showcase-hero-sticky">
+            <div className="showcase-hero-grid">
+              <div className="showcase-hero-copy">
+                <p className="showcase-eyebrow">{copy.hero.eyebrow}</p>
+                <div className="showcase-wordmark-shell" style={{ transform: `translateY(${-heroShift}px) scale(${heroScale})` }}>
+                  <p className="showcase-wordmark-line">ASHEN</p>
+                  <p className="showcase-wordmark-line showcase-wordmark-line-offset">ARCHIVE</p>
+                </div>
+                <p className="showcase-lead">{copy.hero.lead}</p>
+                <p className="showcase-body">{copy.hero.body}</p>
+                <div className="showcase-hero-actions">
+                  <button type="button" className="primary-button" onClick={() => handleJump("showcase-wall")}>
+                    {copy.hero.primaryCta}
+                  </button>
+                  <button type="button" className="secondary-button" onClick={() => handleJump("manifesto-inversion")}>
+                    {copy.hero.secondaryCta}
+                  </button>
+                </div>
+                <div className="showcase-hero-metrics">
+                  <p className="showcase-mini-label">{copy.hero.metricLabel}</p>
+                  <ul className="showcase-mini-list">
+                    {copy.hero.metrics.map((metric) => (
+                      <li key={metric}>{metric}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-              <div className="experience-ledger-panel">
-                <p className="experience-ledger-label">{experienceCopy.oath.railLabel}</p>
-                <h3 className="experience-ledger-title">{dictionary.about.title}</h3>
-                <p className="experience-ledger-body">{dictionary.about.body}</p>
-                <dl className="experience-dossier-grid">
-                  {dictionary.about.dossier.map((item) => (
-                    <div key={item.label} className="experience-dossier-row">
-                      <dt>{item.label}</dt>
-                      <dd>{item.value}</dd>
+
+              <div className="showcase-hero-visual">
+                <div className="showcase-hero-image-shell">
+                  <Image
+                    src={assetPath(heroImage)}
+                    alt=""
+                    fill
+                    priority
+                    sizes="(min-width: 1200px) 48vw, 100vw"
+                    className="showcase-hero-image"
+                  />
+                  {isHydrated && canRenderLive ? (
+                    <div className="showcase-hero-canvas">
+                      <ShowcaseGeometryCanvas
+                        activeSection={activeSection}
+                        heroProgress={deferredHeroProgress}
+                        reducedMotion={Boolean(reducedMotion)}
+                      />
                     </div>
-                  ))}
-                </dl>
+                  ) : null}
+                </div>
+                <div className="showcase-hero-hud">
+                  <span>01 / Wordmark compression</span>
+                  <span>02 / Triangle field</span>
+                  <span>03 / Directed motion</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {(["egocore", "ashen-archive", "openemotion"] as const).map((chapterId) => {
-          const artifact = artifactMap.get(chapterId);
-          if (!artifact) return null;
-          const caseNumber = `A-${String(artifacts.findIndex((item) => item.slug === artifact.slug) + 1).padStart(2, "0")}`;
+        <section
+          id="discipline-strip"
+          ref={(node) => setSectionRef("discipline-strip", node)}
+          className="showcase-section"
+        >
+          <div className="showcase-shell">
+            <header className="showcase-section-heading">
+              <p className="showcase-eyebrow">{copy.disciplines.eyebrow}</p>
+              <h2 className="showcase-section-title">{copy.disciplines.title}</h2>
+              <p className="showcase-body showcase-body-compact">{copy.disciplines.intro}</p>
+            </header>
 
-          return (
-            <section
-              key={chapterId}
-              id={chapterId}
-              ref={(node) => setSectionRef(chapterId, node)}
-              className="experience-chapter experience-chapter-case"
-            >
-              <div className="experience-panel experience-panel-case">
-                <div className="experience-case-copy">
-                  <p className="experience-kicker">
-                    {experienceCopy.caseSection.kickerPrefix} · {caseNumber}
-                  </p>
-                  <h2 className="experience-section-title">{artifact.title}</h2>
-                  <p className="experience-case-meta">
-                    <span>{artifact.category}</span>
-                    <span>{artifact.role}</span>
-                  </p>
-                  <p className="experience-lead">{artifact.summary}</p>
+            <div className="showcase-discipline-grid">
+              {copy.disciplines.items.map((item, index) => (
+                <article key={item.title} className="showcase-discipline-card">
+                  <p className="showcase-discipline-index">{String(index + 1).padStart(2, "0")}</p>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                  <div className="experience-case-grid">
-                    <article className="experience-detail-card">
-                      <h3>{experienceCopy.caseSection.summaryLabel}</h3>
-                      <p>{artifact.what}</p>
-                    </article>
+        <section
+          id="showcase-wall"
+          ref={(node) => setSectionRef("showcase-wall", node)}
+          className="showcase-section showcase-section-wall"
+        >
+          <div className="showcase-shell showcase-wall-layout">
+            <header className="showcase-section-heading showcase-wall-copy">
+              <p className="showcase-eyebrow">{copy.wall.eyebrow}</p>
+              <h2 className="showcase-section-title">{copy.wall.title}</h2>
+              <p className="showcase-body">{copy.wall.intro}</p>
+            </header>
 
-                    <article className="experience-detail-card">
-                      <h3>{experienceCopy.caseSection.evidenceLabel}</h3>
-                      <ul className="experience-list">
-                        {artifact.evidence.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </article>
-
-                    <article className="experience-detail-card">
-                      <h3>{experienceCopy.caseSection.contributionLabel}</h3>
-                      <ul className="experience-list">
-                        {artifact.contribution.map((item) => (
-                          <li key={item.lens + item.text}>{item.text}</li>
-                        ))}
-                      </ul>
-                    </article>
-
-                    <article className="experience-detail-card">
-                      <h3>{experienceCopy.caseSection.technologiesLabel}</h3>
-                      <ul className="experience-tag-list" aria-label={experienceCopy.caseSection.technologiesLabel}>
-                        {artifact.technologies.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </article>
-
-                    <article className="experience-detail-card experience-detail-card-wide">
-                      <h3>{experienceCopy.caseSection.solvedLabel}</h3>
-                      <p>{artifact.solved}</p>
-                    </article>
+            <div className="showcase-wall-grid" style={{ transform: `translate3d(0, ${wallOffset}px, 0)` }}>
+              {copy.wall.panels.map((panel, index) => (
+                <article
+                  key={panel.title}
+                  className={`showcase-wall-panel showcase-wall-panel-${panel.variant}`}
+                  style={{ transitionDelay: `${index * 90}ms` }}
+                >
+                  <div className="showcase-wall-panel-image">
+                    <Image
+                      src={assetPath(panel.asset)}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1200px) 30rem, (min-width: 768px) 45vw, 100vw"
+                      className="showcase-wall-image"
+                    />
                   </div>
-                </div>
-
-                <aside className="experience-case-media">
-                  <p className="experience-media-label">{experienceCopy.caseSection.mediaLabel}</p>
-                  <div className="experience-media-stack">
-                    {artifact.media.map((item, index) =>
-                      item.kind === "video" ? (
-                        <div key={item.src} className="experience-media-frame">
-                          <video
-                            controls
-                            preload="metadata"
-                            poster={item.poster ? assetPath(item.poster) : undefined}
-                            className="experience-media-video"
-                            src={assetPath(item.src)}
-                          >
-                            {item.label}
-                          </video>
-                        </div>
-                      ) : (
-                        <div key={item.src} className="experience-media-frame">
-                          <Image
-                            src={assetPath(item.src)}
-                            alt={item.alt}
-                            fill
-                            sizes="(min-width: 1200px) 34rem, (min-width: 768px) 42vw, 100vw"
-                            className="experience-media-image"
-                            style={{ objectPosition: artifact.mediaPosition?.[index] }}
-                          />
-                        </div>
-                      ),
-                    )}
+                  <div className="showcase-wall-panel-copy">
+                    <p className="showcase-mini-label">{panel.title}</p>
+                    <p>{panel.caption}</p>
                   </div>
-                </aside>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="manifesto-inversion"
+          ref={(node) => setSectionRef("manifesto-inversion", node)}
+          className="showcase-section showcase-section-light"
+        >
+          <div className="showcase-light-shell">
+            <div className="showcase-light-graphic">
+              <Image
+                src={assetPath(manifestoImage)}
+                alt=""
+                fill
+                sizes="(min-width: 1200px) 34vw, 100vw"
+                className="showcase-light-image"
+              />
+            </div>
+
+            <div className="showcase-light-copy">
+              <p className="showcase-light-eyebrow">{copy.manifesto.eyebrow}</p>
+              <h2 className="showcase-light-title">{copy.manifesto.title}</h2>
+              <p className="showcase-light-lead">{copy.manifesto.lead}</p>
+              <p className="showcase-light-body">{copy.manifesto.body}</p>
+              <div className="showcase-principle-grid">
+                {copy.manifesto.principles.map((principle) => (
+                  <article key={principle.label} className="showcase-principle-card">
+                    <h3>{principle.label}</h3>
+                    <p>{principle.body}</p>
+                  </article>
+                ))}
               </div>
-            </section>
-          );
-        })}
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="selected-work"
+          ref={(node) => setSectionRef("selected-work", node)}
+          className="showcase-section"
+        >
+          <div className="showcase-shell">
+            <header className="showcase-section-heading">
+              <p className="showcase-eyebrow">{copy.selectedWork.eyebrow}</p>
+              <h2 className="showcase-section-title">{copy.selectedWork.title}</h2>
+              <p className="showcase-body showcase-body-compact">{copy.selectedWork.intro}</p>
+            </header>
+
+            <div className="showcase-work-grid">
+              {copy.selectedWork.cards.map((card) => (
+                <article key={card.title} className="showcase-work-card">
+                  <h3>{card.title}</h3>
+                  <p>{card.body}</p>
+                  <ul className="showcase-work-bullets">
+                    {card.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section
           id="contact-coda"
           ref={(node) => setSectionRef("contact-coda", node)}
-          className="experience-chapter experience-chapter-contact"
+          className="showcase-section"
         >
-          <div className="experience-panel experience-panel-contact">
-            <div className="experience-copy-stack">
-              <p className="experience-kicker">{experienceCopy.contactCoda.kicker}</p>
-              <h2 className="experience-section-title">{experienceCopy.contactCoda.title}</h2>
-              <p className="experience-lead">{experienceCopy.contactCoda.lead}</p>
-              <p className="experience-body">{experienceCopy.contactCoda.body}</p>
+          <div className="showcase-shell showcase-contact-shell">
+            <div className="showcase-contact-copy">
+              <p className="showcase-eyebrow">{copy.contact.eyebrow}</p>
+              <h2 className="showcase-section-title">{copy.contact.title}</h2>
+              <p className="showcase-lead">{copy.contact.lead}</p>
+              <p className="showcase-body">{copy.contact.body}</p>
             </div>
 
-            <div className="experience-contact-grid">
-              <article className="experience-detail-card">
-                <h3>{experienceCopy.contactCoda.linksLabel}</h3>
-                <ul className="experience-link-list">
+            <div className="showcase-contact-grid">
+              <article className="showcase-contact-card">
+                <p className="showcase-mini-label">{copy.contact.linksLabel}</p>
+                <ul className="showcase-contact-links">
                   {contacts.map((contact) => (
                     <li key={contact.key}>
                       {contact.available ? (
@@ -368,33 +436,32 @@ export function ArchiveExperience({
                           {contact.label}
                         </a>
                       ) : (
-                        <span className="experience-link-disabled">{contact.label || dictionary.contact.unavailableLabel}</span>
+                        <span>{contact.label || dictionary.contact.unavailableLabel}</span>
                       )}
                     </li>
                   ))}
                 </ul>
               </article>
 
-              <article className="experience-detail-card">
-                <h3>{experienceCopy.contactCoda.availabilityLabel}</h3>
-                <p>{dictionary.contact.collaborationBody}</p>
-                <ul className="experience-list">
-                  {dictionary.contact.capabilities.map((item) => (
+              <article className="showcase-contact-card">
+                <p className="showcase-mini-label">{copy.contact.availabilityLabel}</p>
+                <ul className="showcase-work-bullets">
+                  {copy.contact.availability.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
               </article>
 
-              <article className="experience-detail-card">
-                <h3>{experienceCopy.contactCoda.dossierLabel}</h3>
-                <p>{dictionary.contact.dossierBody}</p>
+              <article className="showcase-contact-card">
+                <p className="showcase-mini-label">{copy.contact.dossierLabel}</p>
                 {dossier.available ? (
-                  <a className="text-sm text-amber-100 underline underline-offset-4" href={assetPath(dossier.href)}>
+                  <a className="showcase-contact-dossier" href={assetPath(dossier.href)}>
                     {dictionary.contact.dossierActionLabel}
                   </a>
                 ) : (
-                  <p className="experience-link-disabled">{dictionary.contact.dossierUnavailableLabel}</p>
+                  <p className="showcase-body showcase-body-compact">{dictionary.contact.dossierUnavailableLabel}</p>
                 )}
+                <p className="showcase-contact-note">{copy.contact.note}</p>
               </article>
             </div>
           </div>

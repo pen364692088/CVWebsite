@@ -8,11 +8,11 @@ export const SITE = {
 } as const;
 
 export const SECTION_IDS = [
-  "threshold",
-  "oath",
-  "egocore",
-  "ashen-archive",
-  "openemotion",
+  "hero-wordmark",
+  "discipline-strip",
+  "showcase-wall",
+  "manifesto-inversion",
+  "selected-work",
   "contact-coda",
 ] as const;
 

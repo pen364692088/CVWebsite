@@ -1,18 +1,9 @@
 export const ARCHIVE_LENSES = ["all", "moon", "tower", "ember"] as const;
 export const ARCHIVE_PHASES = ["hero", "disciplines", "sigils"] as const;
-export const EXPERIENCE_CHAPTERS = [
-  "threshold",
-  "oath",
-  "egocore",
-  "ashen-archive",
-  "openemotion",
-  "contact-coda",
-] as const;
 
 export type ArchiveLens = (typeof ARCHIVE_LENSES)[number];
 export type SigilLens = Exclude<ArchiveLens, "all">;
 export type ArchivePhase = (typeof ARCHIVE_PHASES)[number];
-export type ExperienceChapterId = (typeof EXPERIENCE_CHAPTERS)[number];
 
 export interface RelicPreset {
   mode: string;
@@ -108,8 +99,4 @@ export function isArchiveLens(value: string | null): value is ArchiveLens {
 
 export function isArchivePhase(value: string | null): value is ArchivePhase {
   return value !== null && ARCHIVE_PHASES.includes(value as ArchivePhase);
-}
-
-export function isExperienceChapter(value: string | null): value is ExperienceChapterId {
-  return value !== null && EXPERIENCE_CHAPTERS.includes(value as ExperienceChapterId);
 }

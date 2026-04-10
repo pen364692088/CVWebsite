@@ -1,9 +1,7 @@
-import type { Dictionary } from "@/data/dictionaries";
-
-export function SiteFooter({ dictionary }: { dictionary: Dictionary }) {
+export function SiteFooter({ line }: { line: string }) {
   return (
     <footer>
-      <div className="site-footer-line text-sm text-mist">{dictionary.footer.line}</div>
+      <div className="site-footer-line text-sm text-mist">{line}</div>
     </footer>
   );
 }

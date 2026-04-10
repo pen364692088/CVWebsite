@@ -53,6 +53,16 @@
 | `public/artifacts/ashen-archive-dossier-v3.png` | user-provided reference crop | `c:/Users/LEO/Downloads/Échos des abysses _ page d'accueil.png` | Experimental local-study use by explicit user request | Ashen Archive dossier board, v3 | No |
 | `public/artifacts/openemotion-dossier-v3.png` | user-provided reference crop | `c:/Users/LEO/Downloads/Échos des abysses _ page d'accueil.png` | Experimental local-study use by explicit user request | OpenEmotion dossier board, v3 | No |
 
+## Showcase Brand Assets
+
+| Local asset | Source type | External source | License / reuse | Intended section | Attribution needed |
+|---|---|---|---|---|---|
+| `public/showcase/triangle-grid-wide.jpg` | generated via HF raster export | Hugging Face Z-Image Turbo prompt: abstract editorial brand image, black architectural grid wall, luminous iridescent triangle aperture | Original repo asset generated for this site | Hero visual / showcase wall wide panel | No |
+| `public/showcase/triangle-grid-crop-left.jpg` | local crop from generated repo asset | `public/showcase/triangle-grid-wide.jpg` | Derived from original repo asset | Showcase wall square panel | No |
+| `public/showcase/triangle-grid-crop-right.jpg` | local crop from generated repo asset | `public/showcase/triangle-grid-wide.jpg` | Derived from original repo asset | Showcase wall tall panel | No |
+| `public/showcase/triangle-grid-crop-center.jpg` | local crop from generated repo asset | `public/showcase/triangle-grid-wide.jpg` | Derived from original repo asset | Showcase wall center panel | No |
+| `public/showcase/a-spectrum-white.jpg` | generated via HF raster export | Hugging Face Z-Image Turbo prompt: minimal abstract brand image, matte white background, iridescent chromatic A-shaped prism | Original repo asset generated for this site | White inversion manifesto section | No |
+
 ## Notes
 
 - The `v3` experiment uses direct crops from the user-provided reference image because the user explicitly requested close study / near 1:1 replication for local experimentation.
