@@ -9,7 +9,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import { ALCHE_CAMERA_STATES, ALCHE_POST, type AlchePhaseId } from "@/lib/alche-phase-one";
+import { ALCHE_CAMERA_STATES, ALCHE_POST, type AlchePhaseId } from "@/lib/alche-contract";
 
 interface AlchePostProcessingProps {
   activePhase: AlchePhaseId;
@@ -131,15 +131,15 @@ export function AlchePostProcessing({ activePhase, introProgress }: AlchePostPro
     resolution.set(size.width, size.height);
 
     bloomPass.strength =
-      (activePhase === "hero" ? ALCHE_POST.bloomStrength : activePhase === "works" ? 0.22 : 0.16) *
+      (activePhase === "hero" ? ALCHE_POST.bloomStrength : activePhase === "works" ? 0.18 : activePhase === "contact" ? 0.1 : 0.14) *
       Math.max(introProgress, 0.15);
-    bloomPass.radius = activePhase === "works" ? 0.48 : ALCHE_POST.bloomRadius;
-    bloomPass.threshold = activePhase === "vision" ? 0.8 : ALCHE_POST.bloomThreshold;
+    bloomPass.radius = activePhase === "works" ? 0.42 : ALCHE_POST.bloomRadius;
+    bloomPass.threshold = activePhase === "about" ? 0.78 : ALCHE_POST.bloomThreshold;
 
     finalPass.uniforms.uTime.value = state.clock.elapsedTime;
-    finalPass.uniforms.uChromatic.value = activePhase === "works" ? 0.002 : ALCHE_POST.chromaticOffset;
-    finalPass.uniforms.uNoise.value = activePhase === "works" ? 0.032 : ALCHE_POST.filmNoise;
-    finalPass.uniforms.uVignette.value = activePhase === "hero" ? ALCHE_POST.vignette : 0.2;
+    finalPass.uniforms.uChromatic.value = activePhase === "works" ? 0.0014 : ALCHE_POST.chromaticOffset;
+    finalPass.uniforms.uNoise.value = activePhase === "contact" ? 0.01 : activePhase === "works" ? 0.024 : ALCHE_POST.filmNoise;
+    finalPass.uniforms.uVignette.value = activePhase === "hero" ? ALCHE_POST.vignette : activePhase === "contact" ? 0.12 : 0.18;
     finalPass.uniforms.uWhiteMix.value = phase.whiteMix;
 
     composer.render();

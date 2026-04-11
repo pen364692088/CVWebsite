@@ -7,7 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
-import { ALCHE_PHASE_IDS, ALCHE_TIMINGS, type AlchePhaseId } from "@/lib/alche-phase-one";
+import { ALCHE_PHASE_IDS, ALCHE_TIMINGS, clamp01, type AlchePhaseId } from "@/lib/alche-contract";
 
 interface UsePhaseScrollOptions {
   sectionRefs: React.MutableRefObject<Record<AlchePhaseId, HTMLElement | null>>;
@@ -27,9 +27,16 @@ function readDebugState() {
   return {
     phase: phase as AlchePhaseId,
     heroShotId,
-    intro: Math.min(Math.max(intro, 0), 1),
-    progress: Math.min(Math.max(progress, 0), 1),
+    intro: clamp01(intro),
+    progress: clamp01(progress),
   };
+}
+
+function getSectionProgress(node: HTMLElement | null) {
+  if (!node) return 0;
+  const rect = node.getBoundingClientRect();
+  const travel = Math.max(rect.height - window.innerHeight, 1);
+  return clamp01(-rect.top / travel);
 }
 
 function findPhaseAtViewport(sectionRefs: Record<AlchePhaseId, HTMLElement | null>) {
@@ -47,10 +54,22 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
   const reducedMotion = useReducedMotion();
   const debugState = typeof window === "undefined" ? null : readDebugState();
   const lenisRef = useRef<Lenis | null>(null);
+  const activePhaseRef = useRef<AlchePhaseId>(debugState?.phase ?? "hero");
+  const phaseProgressRef = useRef<Record<AlchePhaseId, number>>({
+    hero: debugState?.phase === "hero" ? debugState.progress : 0,
+    works: debugState?.phase === "works" ? debugState.progress : 0,
+    about: debugState?.phase === "about" ? debugState.progress : 0,
+    stella: debugState?.phase === "stella" ? debugState.progress : 0,
+    contact: debugState?.phase === "contact" ? debugState.progress : 0,
+  });
   const [activePhase, setActivePhase] = useState<AlchePhaseId>(debugState?.phase ?? "hero");
   const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
   const [phaseProgress, setPhaseProgress] = useState(debugState?.progress ?? 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
+
+  useEffect(() => {
+    activePhaseRef.current = activePhase;
+  }, [activePhase]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -65,13 +84,13 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
       setHeroShotId(nextDebugState.heroShotId);
       setPhaseProgress(nextDebugState.progress);
       setIntroProgress(nextDebugState.intro);
+      phaseProgressRef.current[nextDebugState.phase] = nextDebugState.progress;
       return;
     }
 
     setHeroShotId(null);
 
     const intro = { value: reducedMotion ? 1 : 0 };
-    const heroSection = sectionRefs.current.hero;
     let frame = 0;
     let lenis: Lenis | null = null;
 
@@ -99,7 +118,7 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
       onUpdate: () => setIntroProgress(intro.value),
     });
 
-    const sectionTriggers = ALCHE_PHASE_IDS.map((phaseId) => {
+    const activeTriggers = ALCHE_PHASE_IDS.map((phaseId) => {
       const section = sectionRefs.current[phaseId];
       if (!section) return null;
 
@@ -107,38 +126,54 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
         trigger: section,
         start: "top center",
         end: "bottom center",
-        onEnter: () => startTransition(() => setActivePhase(phaseId)),
-        onEnterBack: () => startTransition(() => setActivePhase(phaseId)),
+        onEnter: () =>
+          startTransition(() => {
+            setActivePhase(phaseId);
+            setPhaseProgress(phaseProgressRef.current[phaseId] ?? 0);
+          }),
+        onEnterBack: () =>
+          startTransition(() => {
+            setActivePhase(phaseId);
+            setPhaseProgress(phaseProgressRef.current[phaseId] ?? 0);
+          }),
       });
     });
 
-    const heroTrigger = heroSection
-      ? ScrollTrigger.create({
-          trigger: heroSection,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-          onUpdate: (self) => setPhaseProgress(self.progress),
-        })
-      : null;
+    const progressTriggers = ALCHE_PHASE_IDS.map((phaseId) => {
+      const section = sectionRefs.current[phaseId];
+      if (!section) return null;
+
+      return ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        onUpdate: (self) => {
+          phaseProgressRef.current[phaseId] = self.progress;
+          if (phaseId === activePhaseRef.current || self.isActive) {
+            setPhaseProgress(self.progress);
+          }
+        },
+      });
+    });
 
     if (reducedMotion) {
       const onScroll = () => {
-        setActivePhase(findPhaseAtViewport(sectionRefs.current));
-        if (heroSection) {
-          const rect = heroSection.getBoundingClientRect();
-          const progress = Math.min(Math.max((window.innerHeight - rect.top) / Math.max(rect.height, 1), 0), 1);
-          setPhaseProgress(progress);
-        }
+        const phaseId = findPhaseAtViewport(sectionRefs.current);
+        const progress = getSectionProgress(sectionRefs.current[phaseId]);
+        phaseProgressRef.current[phaseId] = progress;
+        setActivePhase(phaseId);
+        setPhaseProgress(progress);
       };
 
       onScroll();
       window.addEventListener("scroll", onScroll, { passive: true });
       window.addEventListener("resize", onScroll);
+
       return () => {
         introTween.kill();
-        heroTrigger?.kill();
-        sectionTriggers.forEach((trigger) => trigger?.kill());
+        activeTriggers.forEach((trigger) => trigger?.kill());
+        progressTriggers.forEach((trigger) => trigger?.kill());
         window.removeEventListener("scroll", onScroll);
         window.removeEventListener("resize", onScroll);
       };
@@ -148,8 +183,8 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
 
     return () => {
       introTween.kill();
-      heroTrigger?.kill();
-      sectionTriggers.forEach((trigger) => trigger?.kill());
+      activeTriggers.forEach((trigger) => trigger?.kill());
+      progressTriggers.forEach((trigger) => trigger?.kill());
       if (frame) window.cancelAnimationFrame(frame);
       lenis?.destroy();
       lenisRef.current = null;

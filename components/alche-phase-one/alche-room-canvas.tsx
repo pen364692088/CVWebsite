@@ -4,8 +4,8 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { ALCHE_HERO_LOCK, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
+import type { AlchePhaseId } from "@/lib/alche-contract";
 import { AlcheRoomScene } from "@/components/alche-phase-one/alche-room-scene";
-import type { AlchePhaseId } from "@/lib/alche-phase-one";
 
 interface AlcheRoomCanvasProps {
   activePhase: AlchePhaseId;

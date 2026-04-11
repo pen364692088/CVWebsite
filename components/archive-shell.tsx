@@ -13,10 +13,10 @@ interface ArchiveShellProps {
   dossier: StudioDossierAsset;
 }
 
-export function ArchiveShell({ locale }: ArchiveShellProps) {
+export function ArchiveShell({ locale, contacts, dossier }: ArchiveShellProps) {
   return (
     <div className="relative overflow-hidden">
-      <AlchePhaseOneShell locale={locale} />
+      <AlchePhaseOneShell locale={locale} contacts={contacts} dossier={dossier} />
     </div>
   );
 }

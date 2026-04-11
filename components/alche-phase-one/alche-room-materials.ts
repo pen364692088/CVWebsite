@@ -2,6 +2,8 @@
 
 import * as THREE from "three";
 
+import { ALCHE_ROOM } from "@/lib/alche-contract";
+
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
   const b = new THREE.Color("#f8fbff");
@@ -24,77 +26,98 @@ export function createCurvedGridMaterial() {
       uWhiteMix: { value: 0 },
       uGlow: { value: 0.7 },
       uExposure: { value: 1 },
+      uFlatten: { value: 0 },
+      uSceneFade: { value: 1 },
     },
     vertexShader: `
-      varying vec2 vUv;
+      uniform float uFlatten;
+
+      varying vec2 vMediaUv;
       varying vec3 vWorldPos;
-      varying vec3 vNormalWorld;
 
       void main() {
-        vUv = uv;
-        vec4 world = modelMatrix * vec4(position, 1.0);
+        float angle = atan(position.x, position.z);
+        float angleUv = angle / 6.28318530718 + 0.5;
+        float heightUv = position.y / ${Number(ALCHE_ROOM.height / 2).toFixed(4)} * 0.5 + 0.5;
+
+        vec3 transformed = position;
+        float planarX = angle * ${ALCHE_ROOM.radius.toFixed(4)};
+        transformed.x = mix(position.x, planarX, uFlatten);
+        transformed.z = mix(position.z, -${ALCHE_ROOM.radius.toFixed(4)}, uFlatten);
+
+        vec4 world = modelMatrix * vec4(transformed, 1.0);
         vWorldPos = world.xyz;
-        vNormalWorld = normalize(mat3(modelMatrix) * normal);
+        vMediaUv = vec2(angleUv, heightUv);
         gl_Position = projectionMatrix * viewMatrix * world;
       }
     `,
     fragmentShader: `
-      varying vec2 vUv;
+      varying vec2 vMediaUv;
       varying vec3 vWorldPos;
-      varying vec3 vNormalWorld;
 
       uniform float uTime;
       uniform float uIntro;
       uniform float uWhiteMix;
       uniform float uGlow;
       uniform float uExposure;
+      uniform float uFlatten;
+      uniform float uSceneFade;
 
       float linePulse(float value, float width) {
         float grid = abs(fract(value - 0.5) - 0.5) / fwidth(value);
         return 1.0 - min(grid / width, 1.0);
       }
 
+      float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+
       void main() {
-        float angle = atan(vWorldPos.x, vWorldPos.z) / 3.14159265359;
-        float height = vWorldPos.y * 1.42;
-        vec2 uv = vec2(angle * 9.5 + 0.5, height * 0.84 + 0.5);
+        vec2 uv = vMediaUv;
+        vec2 cellUv = vec2(uv.x * ${ALCHE_ROOM.cellColumns.toFixed(1)}, uv.y * ${ALCHE_ROOM.cellRows.toFixed(1)});
+        vec2 cellId = floor(cellUv);
+        vec2 local = fract(cellUv);
 
-        float macroAngle = linePulse(uv.x * 12.0, 1.08);
-        float microAngle = linePulse(uv.x * 38.0 + sin(height * 1.4 + uTime * 0.04) * 0.14, 2.6) * 0.22;
-        float macroHeight = linePulse(uv.y * 18.0, 1.16);
-        float microHeight = linePulse(uv.y * 52.0 + sin(angle * 11.0) * 0.18, 3.0) * 0.14;
-        float diagonal = linePulse((angle + height * 0.42 + 1.0) * 14.0, 2.4) * 0.11;
+        float seamV = linePulse(cellUv.x, 0.92);
+        float seamH = linePulse(cellUv.y, 0.92);
+        float microV = linePulse(cellUv.x * 5.0 + sin(uv.y * 22.0 + uTime * 0.03) * 0.08, 2.6) * 0.14;
+        float microH = linePulse(cellUv.y * 5.0 + sin(uv.x * 18.0 - uTime * 0.04) * 0.08, 2.6) * 0.14;
+        float diagonal = linePulse((uv.x + uv.y * 0.72) * 22.0, 2.2) * 0.08;
 
-        float centerBand = smoothstep(1.65, 0.0, abs(vWorldPos.y) * 0.32);
-        float forwardRim = smoothstep(-0.15, 0.82, vNormalWorld.z * 0.5 + 0.5);
-        float sideRim = smoothstep(0.96, 0.18, abs(angle));
-        float lines = max(macroAngle, macroHeight) + microAngle + microHeight + diagonal;
+        float rowBand = smoothstep(0.0, 0.06, local.y) * (1.0 - smoothstep(0.94, 1.0, local.y));
+        float colBand = smoothstep(0.0, 0.08, local.x) * (1.0 - smoothstep(0.92, 1.0, local.x));
+        float inactive = step(0.84, hash21(cellId * 0.073));
 
-        vec3 darkBase = vec3(0.004, 0.0055, 0.008);
-        vec3 lightBase = vec3(0.95, 0.96, 0.975);
-        vec3 darkLines = vec3(0.87, 0.91, 0.98) * (0.08 + centerBand * 0.24 + sideRim * 0.18 + forwardRim * 0.12);
-        vec3 lightLines = vec3(0.14, 0.15, 0.18) * 0.38;
+        float blockA = smoothstep(0.12, 0.14, uv.x) * (1.0 - smoothstep(0.32, 0.34, uv.x));
+        blockA *= smoothstep(0.18, 0.22, uv.y) * (1.0 - smoothstep(0.84, 0.88, uv.y));
+        float blockB = smoothstep(0.58, 0.62, uv.x) * (1.0 - smoothstep(0.84, 0.88, uv.x));
+        blockB *= smoothstep(0.12, 0.16, uv.y) * (1.0 - smoothstep(0.76, 0.82, uv.y));
+        float blockC = smoothstep(0.36, 0.4, uv.x) * (1.0 - smoothstep(0.52, 0.56, uv.x));
+        blockC *= smoothstep(0.54, 0.58, uv.y) * (1.0 - smoothstep(0.82, 0.88, uv.y));
+        float contentBlocks = max(blockA, max(blockB, blockC));
+
+        float heroField = smoothstep(0.88, 0.08, abs(uv.x - 0.5)) * smoothstep(0.94, 0.18, abs(uv.y - 0.46));
+        vec3 darkBase = vec3(0.005, 0.008, 0.012);
+        vec3 lightBase = vec3(0.96, 0.968, 0.98);
+        vec3 darkInk = vec3(0.78, 0.84, 0.94);
+        vec3 lightInk = vec3(0.14, 0.16, 0.2);
         vec3 base = mix(darkBase, lightBase, uWhiteMix);
-        vec3 lineColor = mix(darkLines, lightLines, uWhiteMix) * uGlow * uExposure;
-        vec3 chamberLift = mix(vec3(0.0), vec3(0.018, 0.03, 0.055) * centerBand, 1.0 - uWhiteMix);
+        vec3 ink = mix(darkInk, lightInk, uWhiteMix);
 
-        float opacity = mix(0.96, 0.44, uWhiteMix) * mix(0.0, 1.0, uIntro);
-        vec3 color = base + chamberLift + lineColor * lines;
-        gl_FragColor = vec4(color, opacity);
+        vec3 color = base;
+        color += ink * (seamV * 0.16 + seamH * 0.16 + microV + microH + diagonal) * uGlow * uExposure;
+        color += mix(vec3(0.06, 0.26, 0.22), vec3(0.16), uWhiteMix) * heroField * (1.0 - uWhiteMix) * 0.38;
+        color += ink * contentBlocks * 0.1;
+        color *= mix(1.0, 0.92, inactive * (1.0 - uWhiteMix) * 0.55);
+        color *= mix(1.0, 0.88, uFlatten * 0.22);
+        color += ink * (rowBand + colBand) * 0.02;
+
+        float alpha = mix(0.94, 0.42, uWhiteMix) * uIntro * uSceneFade;
+        gl_FragColor = vec4(color, alpha);
       }
     `,
-  });
-}
-
-export function createChamberPanelMaterial() {
-  return new THREE.MeshStandardMaterial({
-    color: "#090b0f",
-    emissive: "#111824",
-    emissiveIntensity: 0.08,
-    metalness: 0.72,
-    roughness: 0.9,
-    transparent: true,
-    opacity: 0.92,
   });
 }
 
@@ -109,14 +132,17 @@ export function createGalleryPlaneMaterial() {
     },
     vertexShader: `
       varying vec2 vUv;
+      varying vec3 vPosition;
 
       void main() {
         vUv = uv;
+        vPosition = position;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       varying vec2 vUv;
+      varying vec3 vPosition;
 
       uniform float uTime;
       uniform float uVisibility;
@@ -134,24 +160,25 @@ export function createGalleryPlaneMaterial() {
         float frame = smoothstep(0.06, 0.0, min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y)));
         float diagonal = linePulse((uv.x + uv.y * 0.72 + uIndex * 0.17) * 10.0, 1.8) * 0.16;
         float scan = linePulse(uv.y * 38.0 + uTime * 0.2, 2.4) * 0.08;
-        float slabA = smoothstep(0.11, 0.115, uv.y) * (1.0 - smoothstep(0.27, 0.275, uv.y));
-        float slabB = smoothstep(0.45, 0.455, uv.y) * (1.0 - smoothstep(0.67, 0.675, uv.y));
-        float slabC = smoothstep(0.76, 0.765, uv.y) * (1.0 - smoothstep(0.89, 0.895, uv.y));
-        float highlight = smoothstep(0.6, 0.0, abs(centered.x * 0.9 + centered.y * 1.4 - 0.08)) * 0.12;
+        float slabA = smoothstep(0.14, 0.145, uv.y) * (1.0 - smoothstep(0.28, 0.285, uv.y));
+        float slabB = smoothstep(0.43, 0.435, uv.y) * (1.0 - smoothstep(0.72, 0.725, uv.y));
+        float caption = smoothstep(0.79, 0.794, uv.y) * (1.0 - smoothstep(0.9, 0.905, uv.y));
+        float rim = smoothstep(0.7, 0.04, abs(centered.x * 0.88 + centered.y * 1.3 - 0.08)) * 0.16;
 
-        vec3 darkBase = vec3(0.012, 0.015, 0.02);
-        vec3 lightBase = vec3(0.94, 0.95, 0.965);
-        vec3 darkInk = vec3(0.76, 0.83, 0.93);
+        vec3 darkBase = vec3(0.015, 0.018, 0.024);
+        vec3 lightBase = vec3(0.96, 0.965, 0.975);
+        vec3 darkInk = vec3(0.74, 0.82, 0.94);
         vec3 lightInk = vec3(0.14, 0.15, 0.18);
         vec3 base = mix(darkBase, lightBase, uWhiteMix);
         vec3 ink = mix(darkInk, lightInk, uWhiteMix);
 
         vec3 color = base;
-        color += ink * (frame * 0.32 + diagonal + scan);
-        color += ink * (slabA * 0.08 + slabB * 0.1 + slabC * 0.06);
-        color += highlight * mix(vec3(0.34, 0.44, 0.62), vec3(0.18), uWhiteMix);
+        color += ink * (frame * 0.42 + diagonal + scan);
+        color += ink * (slabA * 0.16 + slabB * 0.12 + caption * 0.14);
+        color += rim * mix(vec3(0.38, 0.62, 0.76), vec3(0.18), uWhiteMix);
+        color += mix(vec3(0.02, 0.16, 0.18), vec3(0.04), uWhiteMix) * smoothstep(0.82, 0.06, length(centered * vec2(0.9, 0.72))) * 0.42;
 
-        float alpha = (0.1 + frame * 0.36 + diagonal * 0.35 + slabB * 0.2) * uVisibility;
+        float alpha = (0.18 + frame * 0.42 + diagonal * 0.28 + slabB * 0.16) * uVisibility;
         gl_FragColor = vec4(color, alpha);
       }
     `,
@@ -223,21 +250,27 @@ export function createPrismMaterial(layer: "core" | "shell" = "core") {
       }
 
       vec3 chamberField(vec2 uv, float shift, float whiteMix) {
-        uv = lens(uv + vec2(shift * 0.01, shift * 0.003), 0.03 + shift * 0.015);
-        vec2 centered = uv * 2.0 - 1.0;
-        float angle = centered.x;
-        float height = centered.y;
-        float arc = linePulse((angle + 1.0) * 7.5, 1.2);
-        float vertical = linePulse((height + 1.0) * 10.0, 1.2);
-        float micro = linePulse((angle + height * 0.4 + 1.0) * 20.0, 2.8) * 0.18;
-        float vignette = smoothstep(1.14, 0.16, length(centered * vec2(0.92, 0.8)));
+        uv = lens(uv + vec2(shift * 0.008, shift * 0.003), 0.028 + shift * 0.01);
+        vec2 wallUv = uv;
+        vec2 cellUv = vec2(wallUv.x * 26.0, wallUv.y * 14.0);
+        float seamV = linePulse(cellUv.x, 0.92);
+        float seamH = linePulse(cellUv.y, 0.92);
+        float microV = linePulse(cellUv.x * 4.0, 2.8) * 0.14;
+        float microH = linePulse(cellUv.y * 4.0, 2.8) * 0.14;
+        float coreBand = smoothstep(0.88, 0.1, abs(wallUv.x - 0.5)) * smoothstep(0.94, 0.24, abs(wallUv.y - 0.48));
+        float wordBars = smoothstep(0.28, 0.24, abs(wallUv.y - 0.5));
+
         vec3 darkBase = vec3(0.006, 0.008, 0.011);
         vec3 lightBase = vec3(0.97, 0.975, 0.985);
-        vec3 darkLines = vec3(0.85, 0.9, 0.98) * 0.3;
+        vec3 darkLines = vec3(0.85, 0.9, 0.98) * 0.28;
         vec3 lightLines = vec3(0.15, 0.16, 0.19) * 0.3;
         vec3 base = mix(darkBase, lightBase, whiteMix);
         vec3 lineColor = mix(darkLines, lightLines, whiteMix);
-        return base + lineColor * (arc + vertical + micro) * vignette;
+        vec3 wordGlow = mix(vec3(0.92), vec3(0.16), whiteMix);
+
+        vec3 color = base + lineColor * (seamV + seamH + microV + microH);
+        color += wordGlow * coreBand * wordBars * 0.42;
+        return color;
       }
 
       void main() {
@@ -312,9 +345,33 @@ export function createHaloMaterial() {
         vec3 dark = vec3(0.16, 0.4, 0.84);
         vec3 light = vec3(1.0);
         vec3 color = mix(dark, light, uWhiteMix);
-        gl_FragColor = vec4(color * ring * (0.07 + sweep * 0.1 + pulse * 0.03) * uIntro, ring * 0.24 * uIntro);
+        gl_FragColor = vec4(color * ring * (0.06 + sweep * 0.08 + pulse * 0.03) * uIntro, ring * 0.24 * uIntro);
       }
     `,
+  });
+}
+
+export function createEmissiveWordMaterial(color = "#ffffff") {
+  return new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 2.4,
+    metalness: 0.08,
+    roughness: 0.24,
+    transparent: true,
+    opacity: 1,
+  });
+}
+
+export function createStructureMaterial() {
+  return new THREE.MeshStandardMaterial({
+    color: "#0a0d12",
+    emissive: "#1d2534",
+    emissiveIntensity: 0.2,
+    metalness: 0.42,
+    roughness: 0.76,
+    transparent: true,
+    opacity: 1,
   });
 }
 

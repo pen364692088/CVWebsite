@@ -29,7 +29,7 @@ assert(rootHtml.includes("Choosing your entry path."), "Root locale gateway text
 
 const expectedIdentity = {
   en: "Zhouyu Liao",
-  "zh-CN": "周宇辽",
+  "zh-CN": "Zhouyu Liao",
   ja: "Zhouyu Liao",
   ko: "Zhouyu Liao",
 };
@@ -39,9 +39,9 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
   assert(html.includes('id="hero"'), `Missing hero phase in ${locale}`);
   assert(html.includes('id="works"'), `Missing works phase in ${locale}`);
-  assert(html.includes('id="vision"'), `Missing vision phase in ${locale}`);
-  assert(html.includes('id="service"'), `Missing service phase in ${locale}`);
-  assert(html.includes('id="outro"'), `Missing outro phase in ${locale}`);
+  assert(html.includes('id="about"'), `Missing about phase in ${locale}`);
+  assert(html.includes('id="stella"'), `Missing stella phase in ${locale}`);
+  assert(html.includes('id="contact"'), `Missing contact phase in ${locale}`);
   assert(html.includes("ALCHE"), `Missing ALCHE wordmark in ${locale}`);
   assert(html.includes("TOP PAGE RUNTIME"), `Missing HUD title in ${locale}`);
 }
