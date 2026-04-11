@@ -42,10 +42,10 @@ export const ALCHE_PHASE_HEIGHTS: Record<AlchePhaseId, string> = {
 };
 
 export const ALCHE_SCROLL_TUNING = {
-  duration: 1.18,
-  lerp: 0.055,
-  wheelMultiplier: 0.72,
-  touchMultiplier: 0.9,
+  duration: 2.36,
+  lerp: 0.028,
+  wheelMultiplier: 0.36,
+  touchMultiplier: 0.65,
   activeViewport: 0.38,
   activeTriggerStart: "top 38%",
   activeTriggerEnd: "bottom 38%",
