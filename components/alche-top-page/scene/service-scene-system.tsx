@@ -40,15 +40,16 @@ export function ServiceSceneSystem({ sceneState }: ServiceSceneSystemProps) {
   }, [beamGeometry, frameGeometry, frameMaterial, mediaGeometry, mediaMaterial, plateMaterial]);
 
   useFrame((state, delta) => {
-    const visible = Math.max(sceneState.serviceIn.visible, sceneState.service.visible * (1 - sceneState.stellla.architectureMix * 0.3));
+    const visible = Math.max(sceneState.serviceIn.visible, sceneState.service.visible);
 
     if (groupRef.current) {
+      groupRef.current.visible = visible > 0.001;
       groupRef.current.position.set(
         THREE.MathUtils.damp(groupRef.current.position.x, 0.96, 3, delta),
         THREE.MathUtils.damp(groupRef.current.position.y, -0.04, 3, delta),
         THREE.MathUtils.damp(groupRef.current.position.z, -5.44, 3, delta),
       );
-      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, -0.26 + sceneState.stellla.architectureMix * 0.14, 3, delta);
+      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, -0.26, 3, delta);
     }
 
     mediaMaterial.uniforms.uTime.value = state.clock.elapsedTime;

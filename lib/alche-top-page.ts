@@ -581,17 +581,50 @@ export function deriveTopSceneState(
   serviceCount: number,
 ): AlcheTopSceneState {
   const progress = clamp01(sectionProgress);
-  const worksIntro = activeSection === "works_intro" ? deriveWorksIntroSceneState(progress) : deriveWorksIntroSceneState(activeSection === "works" || activeSection === "works_outro" ? 1 : 0);
-  const works = activeSection === "works" ? deriveWorksSceneState(progress, workCount) : deriveWorksSceneState(activeSection === "works_outro" ? 1 : 0, workCount);
-  const worksOutro = activeSection === "works_outro" ? deriveWorksOutroSceneState(progress) : deriveWorksOutroSceneState(activeSection === "mission_in" || activeSection === "mission" ? 1 : 0);
-  const missionIn = activeSection === "mission_in" ? deriveMissionInSceneState(progress) : deriveMissionInSceneState(activeSection === "mission" || activeSection === "vision" || activeSection === "vision_out" ? 1 : 0);
-  const mission = activeSection === "mission" ? deriveMissionSceneState(progress) : deriveMissionSceneState(activeSection === "vision" || activeSection === "vision_out" ? 1 : 0);
-  const vision = activeSection === "vision" ? deriveVisionSceneState(progress) : deriveVisionSceneState(activeSection === "vision_out" || activeSection === "service_in" ? 1 : 0);
-  const visionOut = activeSection === "vision_out" ? deriveVisionOutSceneState(progress) : deriveVisionOutSceneState(activeSection === "service_in" || activeSection === "service" ? 1 : 0);
-  const serviceIn = activeSection === "service_in" ? deriveServiceInSceneState(progress) : deriveServiceInSceneState(activeSection === "service" || activeSection === "stellla" ? 1 : 0);
-  const service = activeSection === "service" ? deriveServiceSceneState(progress, serviceCount) : deriveServiceSceneState(activeSection === "stellla" ? 1 : 0, serviceCount);
-  const stellla = activeSection === "stellla" ? deriveStelllaSceneState(progress) : deriveStelllaSceneState(activeSection === "outro" ? 1 : 0);
-  const outro = activeSection === "outro" ? deriveOutroSceneState(progress) : deriveOutroSceneState(0);
+  const worksIntro: AlcheWorksIntroSceneState =
+    activeSection === "works_intro"
+      ? deriveWorksIntroSceneState(progress)
+      : { visible: 0, handoffMix: 0, sweepMix: 0, alcheFade: 0 };
+  const works: AlcheWorksSceneState =
+    activeSection === "works"
+      ? deriveWorksSceneState(progress, workCount)
+      : { visible: 0, cardMix: 0, browseProgress: 0, travel: 0, activeIndex: 0, activeBlend: 0 };
+  const worksOutro: AlcheWorksOutroSceneState =
+    activeSection === "works_outro"
+      ? deriveWorksOutroSceneState(progress)
+      : { visible: 0, clearMix: 0, residualMix: 0 };
+  const missionIn: AlcheMissionInSceneState =
+    activeSection === "mission_in"
+      ? deriveMissionInSceneState(progress)
+      : { visible: 0, flattenMix: 0, whiteMix: 0, emblemMix: 0 };
+  const mission: AlcheMissionSceneState =
+    activeSection === "mission"
+      ? deriveMissionSceneState(progress)
+      : { visible: 0, whiteMix: 0, emblemMix: 0 };
+  const vision: AlcheVisionSceneState =
+    activeSection === "vision"
+      ? deriveVisionSceneState(progress)
+      : { visible: 0, lineMix: 0, densityMix: 0, drainMix: 0 };
+  const visionOut: AlcheVisionOutSceneState =
+    activeSection === "vision_out"
+      ? deriveVisionOutSceneState(progress)
+      : { visible: 0, drainMix: 0 };
+  const serviceIn: AlcheServiceInSceneState =
+    activeSection === "service_in"
+      ? deriveServiceInSceneState(progress)
+      : { visible: 0, entryMix: 0, densityMix: 0 };
+  const service: AlcheServiceSceneState =
+    activeSection === "service"
+      ? deriveServiceSceneState(progress, serviceCount)
+      : { visible: 0, densityMix: 0, browse: 0, activeIndex: 0 };
+  const stellla: AlcheStelllaSceneState =
+    activeSection === "stellla"
+      ? deriveStelllaSceneState(progress)
+      : { visible: 0, architectureMix: 0, editorialMix: 0, frameMix: 0 };
+  const outro: AlcheOutroSceneState =
+    activeSection === "outro"
+      ? deriveOutroSceneState(progress)
+      : { visible: 0, stageMix: 0, wordmarkMix: 0, footerMix: 0 };
 
   let camera = ALCHE_TOP_CAMERA_STATES[activeSection];
 
