@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { alcheContractCopy } from "@/data/alche-contract";
+import { alcheTopPageCopy } from "@/data/alche-top-page";
 import { DocumentLocale } from "@/components/document-locale";
 import { LOCALES, isLocale } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     return {};
   }
 
-  const dictionary = alcheContractCopy[locale];
+  const dictionary = alcheTopPageCopy[locale];
   const path = `/${SITE.basePath.replace(/^\//, "")}/${locale}/`;
 
   return {

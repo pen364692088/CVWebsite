@@ -37,13 +37,20 @@ const expectedIdentity = {
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes(expectedIdentity[locale]), `Missing personal identity in ${locale}`);
-  assert(html.includes('id="hero"'), `Missing hero phase in ${locale}`);
+  assert(html.includes('id="kv"'), `Missing kv section in ${locale}`);
+  assert(html.includes('id="works_intro"'), `Missing works_intro section in ${locale}`);
   assert(html.includes('id="works"'), `Missing works phase in ${locale}`);
-  assert(html.includes('id="about"'), `Missing about phase in ${locale}`);
-  assert(html.includes('id="stella"'), `Missing stella phase in ${locale}`);
-  assert(html.includes('id="contact"'), `Missing contact phase in ${locale}`);
+  assert(html.includes('id="works_outro"'), `Missing works_outro section in ${locale}`);
+  assert(html.includes('id="mission"'), `Missing mission section in ${locale}`);
+  assert(html.includes('id="vision"'), `Missing vision section in ${locale}`);
+  assert(html.includes('id="service"'), `Missing service section in ${locale}`);
+  assert(html.includes('id="stellla"'), `Missing stellla section in ${locale}`);
+  assert(html.includes('id="outro"'), `Missing outro section in ${locale}`);
   assert(html.includes("ALCHE"), `Missing ALCHE wordmark in ${locale}`);
-  assert(html.includes("TOP PAGE RUNTIME"), `Missing HUD title in ${locale}`);
+  assert(html.includes("TOP PAGE RUNTIME"), `Missing runtime HUD in ${locale}`);
+  assert(html.includes("data-top-scroll-indicator"), `Missing top scroll indicator in ${locale}`);
+  assert(html.includes("data-top_section=\"works_intro\""), `Missing data-top_section markers in ${locale}`);
+  assert(html.includes("News"), `Missing News rail in ${locale}`);
 }
 
 console.log("Static export verification passed.");

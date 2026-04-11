@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { contactLinks, studioDossierAsset } from "@/data/profile";
-import { dictionaries } from "@/data/dictionaries";
-import { ArchiveShell } from "@/components/archive-shell";
+import { AlcheTopPageShell } from "@/components/alche-top-page/alche-top-page-shell";
 import { isLocale } from "@/lib/i18n";
 
 interface LocalePageProps {
@@ -14,14 +13,7 @@ export default async function LocalePage({ params }: LocalePageProps) {
 
   if (!isLocale(locale)) notFound();
 
-  const dictionary = dictionaries[locale];
-
   return (
-    <ArchiveShell
-      locale={locale}
-      dictionary={dictionary}
-      contacts={contactLinks}
-      dossier={studioDossierAsset}
-    />
+    <AlcheTopPageShell locale={locale} contacts={contactLinks} dossier={studioDossierAsset} />
   );
 }
