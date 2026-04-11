@@ -1,11 +1,13 @@
 "use client";
 
-import { AlcheRoomCanvas } from "@/components/alche-phase-one/alche-room-canvas";
+import { Canvas } from "@react-three/fiber";
+import { useMemo } from "react";
+import * as THREE from "three";
+
+import { AlcheTopPageScene } from "@/components/alche-top-page/scene/alche-top-page-scene";
 import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
-import {
-  deriveLegacySceneBridge,
-  type AlcheTopSectionId,
-} from "@/lib/alche-top-page";
+import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
+import { deriveTopSceneState, type AlcheTopSectionId } from "@/lib/alche-top-page";
 
 interface AlcheTopPageCanvasProps {
   activeSection: AlcheTopSectionId;
@@ -13,6 +15,8 @@ interface AlcheTopPageCanvasProps {
   introProgress: number;
   heroShotId: AlcheHeroShotId | null;
   reducedMotion: boolean;
+  workCount: number;
+  serviceCount: number;
 }
 
 export function AlcheTopPageCanvas({
@@ -21,16 +25,28 @@ export function AlcheTopPageCanvas({
   introProgress,
   heroShotId,
   reducedMotion,
+  workCount,
+  serviceCount,
 }: AlcheTopPageCanvasProps) {
-  const bridge = deriveLegacySceneBridge(activeSection, sectionProgress);
+  const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
+  const sceneState = useMemo(
+    () => deriveTopSceneState(activeSection, sectionProgress, introProgress, heroShotId, workCount, serviceCount),
+    [activeSection, heroShotId, introProgress, sectionProgress, serviceCount, workCount],
+  );
 
   return (
-    <AlcheRoomCanvas
-      activePhase={bridge.activePhase}
-      heroShotId={activeSection === "kv" ? heroShotId : null}
-      phaseProgress={bridge.phaseProgress}
-      introProgress={introProgress}
-      reducedMotion={reducedMotion}
-    />
+    <Canvas
+      dpr={[1, 1.6]}
+      camera={{ position: ALCHE_HERO_LOCK.camera.position, fov: ALCHE_HERO_LOCK.camera.fov }}
+      gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+      onCreated={({ gl }) => {
+        gl.toneMapping = THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = 1.04;
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+        gl.setClearColor("#000000", 1);
+      }}
+    >
+      <AlcheTopPageScene sceneState={sceneState} reducedMotion={reducedMotion} workCount={workCount} captureMode={captureMode} />
+    </Canvas>
   );
 }

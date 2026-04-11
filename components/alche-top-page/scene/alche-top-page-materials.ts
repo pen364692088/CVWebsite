@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-import { ALCHE_ROOM } from "@/lib/alche-contract";
+import { ALCHE_TOP_MEDIA_WALL } from "@/lib/alche-top-page";
 
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
@@ -38,12 +38,12 @@ export function createCurvedGridMaterial() {
       void main() {
         float angle = atan(position.x, position.z);
         float angleUv = angle / 6.28318530718 + 0.5;
-        float heightUv = position.y / ${Number(ALCHE_ROOM.height / 2).toFixed(4)} * 0.5 + 0.5;
+        float heightUv = position.y / ${Number(ALCHE_TOP_MEDIA_WALL.height / 2).toFixed(4)} * 0.5 + 0.5;
 
         vec3 transformed = position;
-        float planarX = angle * ${ALCHE_ROOM.radius.toFixed(4)};
+        float planarX = angle * ${ALCHE_TOP_MEDIA_WALL.radius.toFixed(4)};
         transformed.x = mix(position.x, planarX, uFlatten);
-        transformed.z = mix(position.z, -${ALCHE_ROOM.radius.toFixed(4)}, uFlatten);
+        transformed.z = mix(position.z, -${ALCHE_TOP_MEDIA_WALL.radius.toFixed(4)}, uFlatten);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vWorldPos = world.xyz;
@@ -76,7 +76,7 @@ export function createCurvedGridMaterial() {
 
       void main() {
         vec2 uv = vMediaUv;
-        vec2 cellUv = vec2(uv.x * ${ALCHE_ROOM.cellColumns.toFixed(1)}, uv.y * ${ALCHE_ROOM.cellRows.toFixed(1)});
+        vec2 cellUv = vec2(uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)}, uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)});
         vec2 cellId = floor(cellUv);
         vec2 local = fract(cellUv);
 

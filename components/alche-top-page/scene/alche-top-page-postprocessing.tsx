@@ -9,20 +9,19 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import { ALCHE_CAMERA_STATES, ALCHE_POST, type AlchePhaseId } from "@/lib/alche-contract";
+import { ALCHE_TOP_POST, type AlcheTopSceneState } from "@/lib/alche-top-page";
 
-interface AlchePostProcessingProps {
-  activePhase: AlchePhaseId;
-  introProgress: number;
+interface AlcheTopPagePostProcessingProps {
+  sceneState: AlcheTopSceneState;
 }
 
 const FinalCompositeShader = {
   uniforms: {
     tDiffuse: { value: null },
     uTime: { value: 0 },
-    uChromatic: { value: ALCHE_POST.chromaticOffset },
-    uNoise: { value: ALCHE_POST.filmNoise },
-    uVignette: { value: ALCHE_POST.vignette },
+    uChromatic: { value: ALCHE_TOP_POST.chromaticOffset },
+    uNoise: { value: ALCHE_TOP_POST.filmNoise },
+    uVignette: { value: ALCHE_TOP_POST.vignette },
     uWhiteMix: { value: 0 },
   },
   vertexShader: `
@@ -70,7 +69,7 @@ const FinalCompositeShader = {
   `,
 };
 
-export function AlchePostProcessing({ activePhase, introProgress }: AlchePostProcessingProps) {
+export function AlcheTopPagePostProcessing({ sceneState }: AlcheTopPagePostProcessingProps) {
   const { gl, scene, camera, size } = useThree();
   const composerRef = useRef<EffectComposer | null>(null);
   const finalPassRef = useRef<ShaderPass | null>(null);
@@ -85,10 +84,6 @@ export function AlchePostProcessing({ activePhase, introProgress }: AlchePostPro
     const composer = new EffectComposer(gl);
     const renderPass = new RenderPass(scene, camera);
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 0.2, 0.42, 0.82);
-    bloomPass.threshold = ALCHE_POST.bloomThreshold;
-    bloomPass.strength = ALCHE_POST.bloomStrength;
-    bloomPass.radius = ALCHE_POST.bloomRadius;
-
     const finalPass = new ShaderPass(FinalCompositeShader);
     const outputPass = new OutputPass();
 
@@ -116,7 +111,6 @@ export function AlchePostProcessing({ activePhase, introProgress }: AlchePostPro
   useEffect(() => {
     const composer = composerRef.current;
     if (!composer) return;
-
     composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     composer.setSize(size.width, size.height);
   }, [size.height, size.width]);
@@ -127,20 +121,28 @@ export function AlchePostProcessing({ activePhase, introProgress }: AlchePostPro
     const bloomPass = bloomRef.current;
     if (!composer || !finalPass || !bloomPass) return;
 
-    const phase = ALCHE_CAMERA_STATES[activePhase];
+    const section = sceneState.activeSection;
     resolution.set(size.width, size.height);
 
-    bloomPass.strength =
-      (activePhase === "hero" ? ALCHE_POST.bloomStrength : activePhase === "works" ? 0.18 : activePhase === "contact" ? 0.1 : 0.14) *
-      Math.max(introProgress, 0.15);
-    bloomPass.radius = activePhase === "works" ? 0.42 : ALCHE_POST.bloomRadius;
-    bloomPass.threshold = activePhase === "about" ? 0.78 : ALCHE_POST.bloomThreshold;
+    const whiteMix = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.whiteMix, sceneState.vision.densityMix * 0.42);
+    const bloomStrength =
+      section === "kv" || section === "loading"
+        ? ALCHE_TOP_POST.bloomStrength
+        : section === "works" || section === "works_intro"
+          ? 0.18
+          : section === "outro"
+            ? 0.12
+            : 0.14;
+
+    bloomPass.strength = bloomStrength * Math.max(sceneState.introProgress, 0.15);
+    bloomPass.radius = section === "works" || section === "works_outro" ? 0.42 : ALCHE_TOP_POST.bloomRadius;
+    bloomPass.threshold = whiteMix > 0.4 ? 0.78 : ALCHE_TOP_POST.bloomThreshold;
 
     finalPass.uniforms.uTime.value = state.clock.elapsedTime;
-    finalPass.uniforms.uChromatic.value = activePhase === "works" ? 0.0014 : ALCHE_POST.chromaticOffset;
-    finalPass.uniforms.uNoise.value = activePhase === "contact" ? 0.01 : activePhase === "works" ? 0.024 : ALCHE_POST.filmNoise;
-    finalPass.uniforms.uVignette.value = activePhase === "hero" ? ALCHE_POST.vignette : activePhase === "contact" ? 0.12 : 0.18;
-    finalPass.uniforms.uWhiteMix.value = phase.whiteMix;
+    finalPass.uniforms.uChromatic.value = section === "works" || section === "works_intro" ? 0.0014 : ALCHE_TOP_POST.chromaticOffset;
+    finalPass.uniforms.uNoise.value = section === "outro" ? 0.01 : section === "works" ? 0.024 : ALCHE_TOP_POST.filmNoise;
+    finalPass.uniforms.uVignette.value = section === "kv" || section === "loading" ? ALCHE_TOP_POST.vignette : section === "outro" ? 0.12 : 0.18;
+    finalPass.uniforms.uWhiteMix.value = whiteMix;
 
     composer.render();
   }, 1);

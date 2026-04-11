@@ -1,5 +1,4 @@
-import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
-import type { AlchePhaseId as LegacyAlchePhaseId } from "@/lib/alche-contract";
+import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
 
 export const ALCHE_TOP_SECTION_IDS = [
   "loading",
@@ -53,9 +52,126 @@ export interface AlcheTopSectionState {
   introProgress: number;
 }
 
-export interface AlcheLegacySceneBridge {
-  activePhase: LegacyAlchePhaseId;
-  phaseProgress: number;
+export interface AlcheTopCameraState {
+  position: readonly [number, number, number];
+  target: readonly [number, number, number];
+  fov: number;
+}
+
+export interface AlcheTopMediaWallConfig {
+  radius: number;
+  height: number;
+  radialSegments: number;
+  heightSegments: number;
+  cellColumns: number;
+  cellRows: number;
+}
+
+export interface AlcheKvSceneState {
+  visible: number;
+  wallVisibility: number;
+  wallGlow: number;
+  wallExposure: number;
+  wallWhiteMix: number;
+  wallFlatten: number;
+  wordVisibility: number;
+  prismVisibility: number;
+  prismScale: number;
+  hudVisibility: number;
+}
+
+export interface AlcheWorksIntroSceneState {
+  visible: number;
+  handoffMix: number;
+  sweepMix: number;
+  alcheFade: number;
+}
+
+export interface AlcheWorksSceneState {
+  visible: number;
+  cardMix: number;
+  browseProgress: number;
+  travel: number;
+  activeIndex: number;
+  activeBlend: number;
+}
+
+export interface AlcheWorksOutroSceneState {
+  visible: number;
+  clearMix: number;
+  residualMix: number;
+}
+
+export interface AlcheMissionInSceneState {
+  visible: number;
+  flattenMix: number;
+  whiteMix: number;
+  emblemMix: number;
+}
+
+export interface AlcheMissionSceneState {
+  visible: number;
+  whiteMix: number;
+  emblemMix: number;
+}
+
+export interface AlcheVisionSceneState {
+  visible: number;
+  lineMix: number;
+  densityMix: number;
+  drainMix: number;
+}
+
+export interface AlcheVisionOutSceneState {
+  visible: number;
+  drainMix: number;
+}
+
+export interface AlcheServiceInSceneState {
+  visible: number;
+  entryMix: number;
+  densityMix: number;
+}
+
+export interface AlcheServiceSceneState {
+  visible: number;
+  densityMix: number;
+  browse: number;
+  activeIndex: number;
+}
+
+export interface AlcheStelllaSceneState {
+  visible: number;
+  architectureMix: number;
+  editorialMix: number;
+  frameMix: number;
+}
+
+export interface AlcheOutroSceneState {
+  visible: number;
+  stageMix: number;
+  wordmarkMix: number;
+  footerMix: number;
+}
+
+export interface AlcheTopSceneState {
+  activeSection: AlcheTopSectionId;
+  sectionProgress: number;
+  introProgress: number;
+  heroShotId: AlcheHeroShotId | null;
+  camera: AlcheTopCameraState;
+  kv: AlcheKvSceneState;
+  worksIntro: AlcheWorksIntroSceneState;
+  works: AlcheWorksSceneState;
+  worksOutro: AlcheWorksOutroSceneState;
+  missionIn: AlcheMissionInSceneState;
+  mission: AlcheMissionSceneState;
+  vision: AlcheVisionSceneState;
+  visionOut: AlcheVisionOutSceneState;
+  serviceIn: AlcheServiceInSceneState;
+  service: AlcheServiceSceneState;
+  stellla: AlcheStelllaSceneState;
+  outro: AlcheOutroSceneState;
 }
 
 export const ALCHE_TOP_TIMINGS = {
@@ -76,10 +192,26 @@ export const ALCHE_TOP_SCROLL_TUNING = {
   activeTriggerEnd: "bottom 38%",
 } as const;
 
-const BASE_SCROLL_HEIGHT = 112;
+export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
+  radius: 9.6,
+  height: 11.4,
+  radialSegments: 68,
+  heightSegments: 24,
+  cellColumns: 26,
+  cellRows: 14,
+};
+
+export const ALCHE_TOP_POST = {
+  bloomStrength: 0.22,
+  bloomRadius: 0.52,
+  bloomThreshold: 0.84,
+  chromaticOffset: 0.0011,
+  filmNoise: 0.017,
+  vignette: 0.24,
+} as const;
 
 function sectionHeight(ratio: number) {
-  return `${Math.round(BASE_SCROLL_HEIGHT * ratio)}svh`;
+  return `${Math.round(112 * ratio)}svh`;
 }
 
 export const ALCHE_TOP_SECTIONS: readonly AlcheTopSectionDefinition[] = [
@@ -109,28 +241,81 @@ export const ALCHE_TOP_GROUPS: readonly AlcheTopGroupDefinition[] = [
   { id: "service", label: "SERVICE", scrollTarget: "service", subsections: ["service", "stellla"] },
 ] as const;
 
-export const ALCHE_TOP_NEWS_VISIBILITY: readonly AlcheTopSectionId[] = [
-  "kv",
-  "works_intro",
-  "works",
-  "works_outro",
-] as const;
-
+export const ALCHE_TOP_NEWS_VISIBILITY: readonly AlcheTopSectionId[] = ["kv", "works_intro", "works", "works_outro"] as const;
 export const ALCHE_TOP_HERO_HUD_VISIBILITY: readonly AlcheTopSectionId[] = ["kv", "works_intro"] as const;
-
-export const ALCHE_TOP_WORKS_VISIBILITY: readonly AlcheTopSectionId[] = [
-  "works_intro",
-  "works",
-  "works_outro",
-] as const;
-
+export const ALCHE_TOP_WORKS_VISIBILITY: readonly AlcheTopSectionId[] = ["works_intro", "works", "works_outro"] as const;
 export const ALCHE_TOP_MISSION_VISIBILITY: readonly AlcheTopSectionId[] = ["mission_in", "mission"] as const;
-
 export const ALCHE_TOP_VISION_VISIBILITY: readonly AlcheTopSectionId[] = ["vision", "vision_out"] as const;
-
 export const ALCHE_TOP_SERVICE_VISIBILITY: readonly AlcheTopSectionId[] = ["service_in", "service"] as const;
-
 export const ALCHE_TOP_STELLLA_VISIBILITY: readonly AlcheTopSectionId[] = ["stellla"] as const;
+
+export const ALCHE_TOP_CAMERA_STATES: Record<AlcheTopSectionId, AlcheTopCameraState> = {
+  loading: {
+    position: [ALCHE_HERO_LOCK.camera.position[0], ALCHE_HERO_LOCK.camera.position[1], ALCHE_HERO_LOCK.camera.position[2] + 0.26],
+    target: ALCHE_HERO_LOCK.camera.target,
+    fov: ALCHE_HERO_LOCK.camera.fov + 1.2,
+  },
+  kv: {
+    position: ALCHE_HERO_LOCK.camera.position,
+    target: ALCHE_HERO_LOCK.camera.target,
+    fov: ALCHE_HERO_LOCK.camera.fov,
+  },
+  works_intro: {
+    position: [0.24, 0.16, 5.92],
+    target: [0.24, 0.08, -0.82],
+    fov: 33.2,
+  },
+  works: {
+    position: [0.32, 0.1, 6.42],
+    target: [0.28, 0.02, -1.08],
+    fov: 36.4,
+  },
+  works_outro: {
+    position: [0.16, 0.14, 6.56],
+    target: [0.08, 0.01, -1.52],
+    fov: 35.2,
+  },
+  mission_in: {
+    position: [0.08, 0.14, 6.1],
+    target: [0, 0.02, -1.88],
+    fov: 34,
+  },
+  mission: {
+    position: [0, 0.04, 5.82],
+    target: [0, 0, -2.12],
+    fov: 32.4,
+  },
+  vision: {
+    position: [0.02, 0.02, 5.56],
+    target: [0.02, 0, -2.34],
+    fov: 30.8,
+  },
+  vision_out: {
+    position: [0.16, 0.02, 5.76],
+    target: [0.14, 0, -2.18],
+    fov: 31.8,
+  },
+  service_in: {
+    position: [0.28, 0.08, 5.98],
+    target: [0.42, 0.02, -2.3],
+    fov: 33.2,
+  },
+  service: {
+    position: [0.58, 0.08, 6.22],
+    target: [0.78, -0.02, -2.84],
+    fov: 34.6,
+  },
+  stellla: {
+    position: [0.84, 0.12, 6],
+    target: [1.04, 0.02, -3.46],
+    fov: 32.6,
+  },
+  outro: {
+    position: [-0.42, 0.02, 6.44],
+    target: [-0.36, 0.02, -3.84],
+    fov: 31.6,
+  },
+};
 
 export function clamp01(value: number) {
   return Math.min(Math.max(value, 0), 1);
@@ -144,6 +329,23 @@ export function remapRange(value: number, start: number, end: number) {
 export function smoothstep(value: number) {
   const clamped = clamp01(value);
   return clamped * clamped * (3 - 2 * clamped);
+}
+
+export function lerpCameraState(a: AlcheTopCameraState, b: AlcheTopCameraState, mix: number): AlcheTopCameraState {
+  const t = clamp01(mix);
+  return {
+    position: [
+      a.position[0] + (b.position[0] - a.position[0]) * t,
+      a.position[1] + (b.position[1] - a.position[1]) * t,
+      a.position[2] + (b.position[2] - a.position[2]) * t,
+    ],
+    target: [
+      a.target[0] + (b.target[0] - a.target[0]) * t,
+      a.target[1] + (b.target[1] - a.target[1]) * t,
+      a.target[2] + (b.target[2] - a.target[2]) * t,
+    ],
+    fov: a.fov + (b.fov - a.fov) * t,
+  };
 }
 
 export function getTopGroupForSection(sectionId: AlcheTopSectionId): AlcheTopGroupId | null {
@@ -235,6 +437,130 @@ export function deriveOutroState(progress: number) {
   };
 }
 
+export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroShotId | null, handoffMix = 0): AlcheKvSceneState {
+  const intro = deriveKvState(introProgress);
+  const heroShot = heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
+  return {
+    visible: 1 - handoffMix * 0.58,
+    wallVisibility: intro.wallEstablish,
+    wallGlow: heroShot?.chamberMassing.roomGlow ?? 0.74,
+    wallExposure: heroShot?.chamberMassing.roomExposure ?? 0.76,
+    wallWhiteMix: 0,
+    wallFlatten: 0,
+    wordVisibility: intro.wordReveal * (1 - handoffMix),
+    prismVisibility: Math.max(0.12, 1 - handoffMix * 0.74),
+    prismScale: (heroShot?.prismEmphasis.scale ?? 1) * ALCHE_HERO_LOCK.prism.scale,
+    hudVisibility: intro.hudReveal * (1 - handoffMix * 0.72),
+  };
+}
+
+export function deriveWorksIntroSceneState(progress: number): AlcheWorksIntroSceneState {
+  const state = deriveWorksIntroState(progress);
+  return {
+    visible: state.handoffMix,
+    handoffMix: state.handoffMix,
+    sweepMix: state.sweepMix,
+    alcheFade: state.alcheFade,
+  };
+}
+
+export function deriveWorksSceneState(progress: number, workCount: number): AlcheWorksSceneState {
+  const state = deriveWorksState(progress, workCount);
+  return {
+    visible: state.cardMix,
+    cardMix: state.cardMix,
+    browseProgress: state.browseProgress,
+    travel: state.travel,
+    activeIndex: state.activeIndex,
+    activeBlend: state.activeBlend,
+  };
+}
+
+export function deriveWorksOutroSceneState(progress: number): AlcheWorksOutroSceneState {
+  const state = deriveWorksOutroState(progress);
+  return {
+    visible: Math.max(state.residualMix, 1 - state.clearMix * 0.4),
+    clearMix: state.clearMix,
+    residualMix: state.residualMix,
+  };
+}
+
+export function deriveMissionInSceneState(progress: number): AlcheMissionInSceneState {
+  const state = deriveMissionState(progress);
+  return {
+    visible: Math.max(state.flattenMix, state.whiteMix),
+    flattenMix: state.flattenMix,
+    whiteMix: state.whiteMix,
+    emblemMix: state.emblemMix * 0.78,
+  };
+}
+
+export function deriveMissionSceneState(progress: number): AlcheMissionSceneState {
+  const state = deriveMissionState(progress);
+  return {
+    visible: Math.max(state.whiteMix, state.emblemMix),
+    whiteMix: state.whiteMix,
+    emblemMix: state.emblemMix,
+  };
+}
+
+export function deriveVisionSceneState(progress: number): AlcheVisionSceneState {
+  const state = deriveVisionState(progress);
+  return {
+    visible: Math.max(state.lineMix, state.densityMix),
+    lineMix: state.lineMix,
+    densityMix: state.densityMix,
+    drainMix: state.drainMix,
+  };
+}
+
+export function deriveVisionOutSceneState(progress: number): AlcheVisionOutSceneState {
+  const state = deriveVisionState(progress);
+  return {
+    visible: 1 - state.drainMix * 0.68,
+    drainMix: state.drainMix,
+  };
+}
+
+export function deriveServiceInSceneState(progress: number): AlcheServiceInSceneState {
+  const densityMix = smoothstep(remapRange(progress, 0.0, 0.82));
+  return {
+    visible: densityMix,
+    entryMix: smoothstep(remapRange(progress, 0.08, 0.74)),
+    densityMix,
+  };
+}
+
+export function deriveServiceSceneState(progress: number, itemCount: number): AlcheServiceSceneState {
+  const state = deriveServiceState(progress, itemCount);
+  return {
+    visible: Math.max(state.densityMix, 0.12),
+    densityMix: state.densityMix,
+    browse: state.browse,
+    activeIndex: state.activeIndex,
+  };
+}
+
+export function deriveStelllaSceneState(progress: number): AlcheStelllaSceneState {
+  const state = deriveStelllaState(progress);
+  return {
+    visible: Math.max(state.architectureMix, state.editorialMix),
+    architectureMix: state.architectureMix,
+    editorialMix: state.editorialMix,
+    frameMix: state.frameMix,
+  };
+}
+
+export function deriveOutroSceneState(progress: number): AlcheOutroSceneState {
+  const state = deriveOutroState(progress);
+  return {
+    visible: Math.max(state.stageMix, 0.16),
+    stageMix: state.stageMix,
+    wordmarkMix: state.wordmarkMix,
+    footerMix: state.footerMix,
+  };
+}
+
 export function deriveGroupProgress(sectionId: AlcheTopSectionId, sectionProgress: number) {
   const groupId = getTopGroupForSection(sectionId);
   if (!groupId) return 0;
@@ -246,57 +572,95 @@ export function deriveGroupProgress(sectionId: AlcheTopSectionId, sectionProgres
   return clamp01((index + clamp01(sectionProgress)) / group.subsections.length);
 }
 
-export function deriveLegacySceneBridge(
-  sectionId: AlcheTopSectionId,
+export function deriveTopSceneState(
+  activeSection: AlcheTopSectionId,
   sectionProgress: number,
-): AlcheLegacySceneBridge {
+  introProgress: number,
+  heroShotId: AlcheHeroShotId | null,
+  workCount: number,
+  serviceCount: number,
+): AlcheTopSceneState {
   const progress = clamp01(sectionProgress);
+  const worksIntro = activeSection === "works_intro" ? deriveWorksIntroSceneState(progress) : deriveWorksIntroSceneState(activeSection === "works" || activeSection === "works_outro" ? 1 : 0);
+  const works = activeSection === "works" ? deriveWorksSceneState(progress, workCount) : deriveWorksSceneState(activeSection === "works_outro" ? 1 : 0, workCount);
+  const worksOutro = activeSection === "works_outro" ? deriveWorksOutroSceneState(progress) : deriveWorksOutroSceneState(activeSection === "mission_in" || activeSection === "mission" ? 1 : 0);
+  const missionIn = activeSection === "mission_in" ? deriveMissionInSceneState(progress) : deriveMissionInSceneState(activeSection === "mission" || activeSection === "vision" || activeSection === "vision_out" ? 1 : 0);
+  const mission = activeSection === "mission" ? deriveMissionSceneState(progress) : deriveMissionSceneState(activeSection === "vision" || activeSection === "vision_out" ? 1 : 0);
+  const vision = activeSection === "vision" ? deriveVisionSceneState(progress) : deriveVisionSceneState(activeSection === "vision_out" || activeSection === "service_in" ? 1 : 0);
+  const visionOut = activeSection === "vision_out" ? deriveVisionOutSceneState(progress) : deriveVisionOutSceneState(activeSection === "service_in" || activeSection === "service" ? 1 : 0);
+  const serviceIn = activeSection === "service_in" ? deriveServiceInSceneState(progress) : deriveServiceInSceneState(activeSection === "service" || activeSection === "stellla" ? 1 : 0);
+  const service = activeSection === "service" ? deriveServiceSceneState(progress, serviceCount) : deriveServiceSceneState(activeSection === "stellla" ? 1 : 0, serviceCount);
+  const stellla = activeSection === "stellla" ? deriveStelllaSceneState(progress) : deriveStelllaSceneState(activeSection === "outro" ? 1 : 0);
+  const outro = activeSection === "outro" ? deriveOutroSceneState(progress) : deriveOutroSceneState(0);
 
-  switch (sectionId) {
+  let camera = ALCHE_TOP_CAMERA_STATES[activeSection];
+
+  switch (activeSection) {
     case "loading":
-    case "kv":
-      return { activePhase: "hero", phaseProgress: 0 };
-    case "works_intro": {
-      const introState = deriveWorksIntroState(progress);
-      return { activePhase: "works", phaseProgress: introState.sweepMix * 0.38 };
-    }
-    case "works": {
-      const worksState = deriveWorksState(progress, 4);
-      return { activePhase: "works", phaseProgress: 0.26 + worksState.browseProgress * 0.62 };
-    }
-    case "works_outro": {
-      const outroState = deriveWorksOutroState(progress);
-      return { activePhase: "works", phaseProgress: 0.82 + outroState.clearMix * 0.18 };
-    }
-    case "mission_in": {
-      const missionState = deriveMissionState(progress);
-      return { activePhase: "about", phaseProgress: missionState.flattenMix * 0.3 };
-    }
-    case "mission": {
-      const missionState = deriveMissionState(progress);
-      return { activePhase: "about", phaseProgress: 0.24 + missionState.whiteMix * 0.36 };
-    }
-    case "vision": {
-      const visionState = deriveVisionState(progress);
-      return { activePhase: "about", phaseProgress: 0.58 + visionState.lineMix * 0.32 };
-    }
-    case "vision_out": {
-      const visionState = deriveVisionState(progress);
-      return { activePhase: "stella", phaseProgress: visionState.drainMix * 0.16 };
-    }
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.loading, ALCHE_TOP_CAMERA_STATES.kv, smoothstep(remapRange(introProgress, 0.08, 0.48)));
+      break;
+    case "works_intro":
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.kv, ALCHE_TOP_CAMERA_STATES.works, worksIntro.handoffMix);
+      break;
+    case "works_outro":
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works, ALCHE_TOP_CAMERA_STATES.mission_in, worksOutro.clearMix);
+      break;
+    case "mission_in":
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works_outro, ALCHE_TOP_CAMERA_STATES.mission, missionIn.flattenMix);
+      break;
+    case "vision_out":
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision, ALCHE_TOP_CAMERA_STATES.service_in, visionOut.drainMix);
+      break;
     case "service_in":
-      return { activePhase: "stella", phaseProgress: 0.12 + progress * 0.18 };
-    case "service": {
-      const serviceState = deriveServiceState(progress, 3);
-      return { activePhase: "stella", phaseProgress: 0.28 + serviceState.densityMix * 0.28 };
-    }
-    case "stellla": {
-      const stelllaState = deriveStelllaState(progress);
-      return { activePhase: "stella", phaseProgress: 0.58 + stelllaState.editorialMix * 0.34 };
-    }
-    case "outro": {
-      const outroState = deriveOutroState(progress);
-      return { activePhase: "contact", phaseProgress: 0.18 + outroState.wordmarkMix * 0.82 };
-    }
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision_out, ALCHE_TOP_CAMERA_STATES.service, serviceIn.entryMix);
+      break;
+    case "outro":
+      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.stellla, ALCHE_TOP_CAMERA_STATES.outro, outro.stageMix);
+      break;
+    default:
+      break;
   }
+
+  const kv = deriveKvSceneState(
+    activeSection === "loading" ? introProgress : Math.max(introProgress, 1),
+    activeSection === "kv" || activeSection === "loading" ? heroShotId : null,
+    activeSection === "works_intro" ? worksIntro.handoffMix : activeSection === "works" ? 1 : 0,
+  );
+
+  if (activeSection === "works" || activeSection === "works_outro" || activeSection === "mission_in") {
+    kv.wallVisibility = activeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
+    kv.wordVisibility = 0;
+    kv.prismVisibility = activeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : activeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
+    kv.wallFlatten = activeSection === "mission_in" ? missionIn.flattenMix : 0;
+    kv.wallWhiteMix = activeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
+    kv.visible = activeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;
+  }
+
+  if (activeSection === "mission" || activeSection === "vision" || activeSection === "vision_out" || activeSection === "service_in" || activeSection === "service" || activeSection === "stellla" || activeSection === "outro") {
+    kv.visible = 0;
+    kv.wallVisibility = 0;
+    kv.wordVisibility = 0;
+    kv.prismVisibility = 0;
+    kv.hudVisibility = 0;
+  }
+
+  return {
+    activeSection,
+    sectionProgress: progress,
+    introProgress,
+    heroShotId,
+    camera,
+    kv,
+    worksIntro,
+    works,
+    worksOutro,
+    missionIn,
+    mission,
+    vision,
+    visionOut,
+    serviceIn,
+    service,
+    stellla,
+    outro,
+  };
 }

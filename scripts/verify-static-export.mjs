@@ -41,8 +41,11 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes('id="works_intro"'), `Missing works_intro section in ${locale}`);
   assert(html.includes('id="works"'), `Missing works phase in ${locale}`);
   assert(html.includes('id="works_outro"'), `Missing works_outro section in ${locale}`);
+  assert(html.includes('id="mission_in"'), `Missing mission_in section in ${locale}`);
   assert(html.includes('id="mission"'), `Missing mission section in ${locale}`);
   assert(html.includes('id="vision"'), `Missing vision section in ${locale}`);
+  assert(html.includes('id="vision_out"'), `Missing vision_out section in ${locale}`);
+  assert(html.includes('id="service_in"'), `Missing service_in section in ${locale}`);
   assert(html.includes('id="service"'), `Missing service section in ${locale}`);
   assert(html.includes('id="stellla"'), `Missing stellla section in ${locale}`);
   assert(html.includes('id="outro"'), `Missing outro section in ${locale}`);

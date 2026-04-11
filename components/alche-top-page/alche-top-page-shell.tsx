@@ -183,6 +183,8 @@ export function AlcheTopPageShell({ locale, contacts, dossier }: AlcheTopPageShe
               introProgress={introProgress}
               heroShotId={heroShotId}
               reducedMotion={reducedMotion}
+              workCount={copy.works.items.length}
+              serviceCount={copy.service.items.length}
             />
           ) : (
             <div className={styles.fallback}>WebGL unavailable. The DOM shell remains available.</div>

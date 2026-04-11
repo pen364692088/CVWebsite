@@ -8,7 +8,7 @@ import { chromium, devices } from "playwright";
 
 const root = process.cwd();
 const exportDir = path.join(root, "out");
-const outputDir = path.join(root, ".playwright-artifacts");
+const outputDir = path.join(root, ".playwright-artifacts", "alche-top-page");
 const basePath = "/CVWebsite";
 const baseUrl = "http://127.0.0.1:3000/CVWebsite";
 
@@ -31,6 +31,34 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
+const expectedSections = [
+  "kv",
+  "works_intro",
+  "works",
+  "works_outro",
+  "mission_in",
+  "mission",
+  "vision",
+  "vision_out",
+  "service_in",
+  "service",
+  "stellla",
+  "outro",
+];
+
+const fixedStateShots = [
+  { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
+  { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
+  { name: "works-intro-handoff", search: "?alcheSection=works_intro&alcheProgress=0.55&alcheIntro=1&alcheCapture=1" },
+  { name: "works-settled", search: "?alcheSection=works&alcheProgress=0.55&alcheIntro=1&alcheCapture=1" },
+  { name: "works-outro-clearing", search: "?alcheSection=works_outro&alcheProgress=0.7&alcheIntro=1&alcheCapture=1" },
+  { name: "mission-settled", search: "?alcheSection=mission&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
+  { name: "vision-settled", search: "?alcheSection=vision&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
+  { name: "service-settled", search: "?alcheSection=service&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
+  { name: "stellla-settled", search: "?alcheSection=stellla&alcheProgress=0.7&alcheIntro=1&alcheCapture=1" },
+  { name: "outro-settled", search: "?alcheSection=outro&alcheProgress=0.75&alcheIntro=1&alcheCapture=1" },
+];
+
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
 
@@ -52,9 +80,7 @@ function resolveRequestPath(requestPath) {
 
 async function readRequestFile(requestPath) {
   const candidate = resolveRequestPath(requestPath);
-  if (!candidate) {
-    return null;
-  }
+  if (!candidate) return null;
 
   const candidates = requestPath.endsWith("/")
     ? [path.join(candidate, "index.html")]
@@ -63,9 +89,7 @@ async function readRequestFile(requestPath) {
   for (const filePath of candidates) {
     try {
       const stat = await fs.promises.stat(filePath);
-      if (stat.isFile()) {
-        return filePath;
-      }
+      if (stat.isFile()) return filePath;
     } catch {}
   }
 
@@ -108,9 +132,7 @@ async function waitForServer(url, attempts = 20) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
       const response = await fetch(url);
-      if (response.ok) {
-        return;
-      }
+      if (response.ok) return;
     } catch {}
 
     await delay(250);
@@ -128,12 +150,85 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
   assert(overflow <= 1, `Horizontal overflow detected for ${scenarioName}: ${overflow}px`);
 }
 
+async function assertTopPageShell(page, scenarioName) {
+  assert((await page.locator("[data-top-scroll-indicator]").count()) === 1, `Missing top scroll indicator for ${scenarioName}`);
+  assert((await page.locator("canvas").count()) === 1, `Expected a single canvas for ${scenarioName}`);
+  assert((await page.locator("body").textContent())?.includes("ALCHE"), `Missing ALCHE branding for ${scenarioName}`);
+
+  for (const sectionId of expectedSections) {
+    assert((await page.locator(`[data-top_section="${sectionId}"]`).count()) === 1, `Missing ${sectionId} section for ${scenarioName}`);
+  }
+}
+
+async function runScenario(browser, scenario) {
+  const context = await browser.newContext(
+    scenario.device
+      ? {
+          ...scenario.device,
+          locale: scenario.locale,
+        }
+      : {
+          viewport: scenario.viewport,
+          locale: scenario.locale,
+        },
+  );
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+    await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
+
+    await assertTopPageShell(page, scenario.name);
+    assert((await page.textContent("body"))?.includes("TOP PAGE RUNTIME"), `Missing runtime debug panel for ${scenario.name}`);
+
+    for (const sectionId of ["works_intro", "works", "mission", "vision", "service", "stellla", "outro"]) {
+      await page.locator(`#${sectionId}`).scrollIntoViewIfNeeded();
+      await page.waitForTimeout(120);
+    }
+
+    await expectNoHorizontalOverflow(page, scenario.name);
+    await page.screenshot({
+      path: path.join(outputDir, `${scenario.name}.png`),
+      fullPage: false,
+    });
+  } finally {
+    await context.close();
+  }
+}
+
+async function captureFixedStates(browser) {
+  for (const shot of fixedStateShots) {
+    console.log(`Capturing ${shot.name}...`);
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 1080 },
+      locale: "en-US",
+    });
+
+    try {
+      const page = await context.newPage();
+      await page.goto(`${baseUrl}/en/${shot.search}`, { waitUntil: "networkidle" });
+      await assertTopPageShell(page, shot.name);
+      await page.waitForTimeout(150);
+      await page.evaluate(() => {
+        const canvas = document.querySelector("canvas");
+        if (canvas) canvas.remove();
+      });
+      await page.screenshot({
+        path: path.join(outputDir, `${shot.name}.png`),
+        fullPage: false,
+      });
+      await page.close();
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 async function run() {
   const server = await createStaticServer(3000);
 
   try {
     await waitForServer(`${baseUrl}/en/`);
-
     const browser = await chromium.launch({ headless: true });
 
     try {
@@ -142,123 +237,27 @@ async function run() {
           name: "desktop-en",
           locale: "en-US",
           expectedPath: "/en/",
-          expectedIdentity: "Zhouyu Liao",
           viewport: { width: 1440, height: 1080 },
         },
         {
           name: "tablet-ja",
           locale: "ja-JP",
           expectedPath: "/ja/",
-          expectedIdentity: "Zhouyu Liao",
           viewport: { width: 834, height: 1194 },
         },
         {
           name: "mobile-zh",
           locale: "zh-CN",
           expectedPath: "/zh-CN/",
-          expectedIdentity: "周宇辽",
           device: devices["iPhone 12"],
         },
       ];
 
       for (const scenario of scenarios) {
-        const context = await browser.newContext(
-          scenario.device
-            ? {
-                ...scenario.device,
-                locale: scenario.locale,
-              }
-            : {
-                viewport: scenario.viewport,
-                locale: scenario.locale,
-              },
-        );
-
-        const page = await context.newPage();
-        await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-        await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
-
-        const hero = page.locator("#hero-title");
-        assert((await hero.textContent())?.includes("Echoes of the Abyss"), `Missing archive title for ${scenario.name}`);
-        const identity = page.locator(".hero-nameplate");
-        assert((await identity.textContent())?.includes(scenario.expectedIdentity), `Missing personal identity for ${scenario.name}`);
-        assert((await page.textContent("body"))?.includes("流月工作室"), `Missing studio support line for ${scenario.name}`);
-        assert((await page.locator(".abyss-reference-stage").count()) === 1, `Missing abyss hero stage for ${scenario.name}`);
-        assert((await page.locator(".abyss-stage-card").count()) === 3, `Expected 3 ritual relic cards for ${scenario.name}`);
-        assert((await page.locator(".abyss-stage-ritual").count()) === 3, `Expected 3 ritual command buttons for ${scenario.name}`);
-        await expectNoHorizontalOverflow(page, scenario.name);
-
-        const artifactButton = page.locator('.abyss-stage-card[data-artifact]').first();
-        await artifactButton.scrollIntoViewIfNeeded();
-        await artifactButton.click();
-        await page.locator('[role="dialog"]').waitFor({ state: "visible" });
-        await page.keyboard.press("Escape");
-        await page.locator('[role="dialog"]').waitFor({ state: "hidden" });
-
-        for (const section of ["#about", "#disciplines", "#artifacts", "#fire", "#contact"]) {
-          await page.locator(section).scrollIntoViewIfNeeded();
-          await delay(150);
-        }
-
-        assert((await page.locator("#contact .dossier-panel").count()) === 1, `Missing contact dossier panel for ${scenario.name}`);
-        await page.screenshot({
-          path: path.join(outputDir, `${scenario.name}.png`),
-          fullPage: true,
-        });
-
-        await context.close();
+        await runScenario(browser, scenario);
       }
 
-      const gameContext = await browser.newContext({
-        viewport: { width: 1280, height: 900 },
-        locale: "en-US",
-      });
-
-      try {
-        const gamePage = await gameContext.newPage();
-        await gamePage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-        await gamePage.locator("#fire").scrollIntoViewIfNeeded();
-        await gamePage.waitForTimeout(250);
-
-        await gamePage.locator('.abyss-stage-ritual[data-lens="moon"]').click();
-
-        const firstArtifactTitle = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
-        await firstArtifactTitle.scrollIntoViewIfNeeded();
-        assert(
-          (await firstArtifactTitle.textContent())?.includes("Cursed Knight"),
-          "Artifact ordering did not shift toward the moon lens",
-        );
-
-        await gamePage.locator('.abyss-stage-ritual[data-lens="ember"]').click();
-
-        const emberLeadArtifact = gamePage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
-        await emberLeadArtifact.scrollIntoViewIfNeeded();
-        assert(
-          (await emberLeadArtifact.textContent())?.includes("Tome of Lost Lore"),
-          "Artifact ordering did not shift toward the ember lens",
-        );
-
-        const reducedMotionContext = await browser.newContext({
-          viewport: { width: 1280, height: 900 },
-          locale: "en-US",
-          reducedMotion: "reduce",
-        });
-
-        try {
-          const reducedMotionPage = await reducedMotionContext.newPage();
-          await reducedMotionPage.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
-          await reducedMotionPage.locator("#fire").scrollIntoViewIfNeeded();
-          await reducedMotionPage.locator('.abyss-stage-ritual[data-lens="ember"]').click();
-          const reducedLeadArtifact = reducedMotionPage.locator('#artifacts button[aria-haspopup="dialog"] h3').first();
-          await reducedLeadArtifact.scrollIntoViewIfNeeded();
-          assert((await reducedLeadArtifact.textContent())?.includes("Tome of Lost Lore"), "Reduced motion lens switching failed");
-          await expectNoHorizontalOverflow(reducedMotionPage, "reduced-motion");
-        } finally {
-          await reducedMotionContext.close();
-        }
-      } finally {
-        await gameContext.close();
-      }
+      await captureFixedStates(browser);
     } finally {
       await browser.close();
     }
