@@ -13,10 +13,12 @@ import {
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-phase-one/alche-room-materials";
+import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_CAMERA_STATES, ALCHE_ROOM, type AlchePhaseId } from "@/lib/alche-phase-one";
 
 interface AlcheRoomSceneProps {
   activePhase: AlchePhaseId;
+  heroShotId: AlcheHeroShotId | null;
   phaseProgress: number;
   introProgress: number;
   reducedMotion: boolean;
@@ -111,9 +113,11 @@ function warpPrismGeometry(geometry: THREE.ExtrudeGeometry) {
 
 function CurvedRoom({
   activePhase,
+  heroShotId,
   introProgress,
 }: {
   activePhase: AlchePhaseId;
+  heroShotId: AlcheHeroShotId | null;
   introProgress: number;
 }) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
@@ -140,15 +144,21 @@ function CurvedRoom({
 
   useFrame((state, delta) => {
     const phase = ALCHE_CAMERA_STATES[activePhase];
+    const heroShot = activePhase === "hero" && heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
     if (!roomRef.current) return;
 
     roomRef.current.rotation.y = THREE.MathUtils.damp(roomRef.current.rotation.y, phase.hudBias * 0.06, 2.4, delta);
     material.uniforms.uTime.value = state.clock.elapsedTime;
     material.uniforms.uIntro.value = introProgress;
-    material.uniforms.uGlow.value = THREE.MathUtils.damp(material.uniforms.uGlow.value, phase.roomGlow, 3.8, delta);
+    material.uniforms.uGlow.value = THREE.MathUtils.damp(
+      material.uniforms.uGlow.value,
+      heroShot?.chamberMassing.roomGlow ?? phase.roomGlow,
+      3.8,
+      delta,
+    );
     material.uniforms.uExposure.value = THREE.MathUtils.damp(
       material.uniforms.uExposure.value,
-      phase.roomExposure,
+      heroShot?.chamberMassing.roomExposure ?? phase.roomExposure,
       3.4,
       delta,
     );
@@ -169,12 +179,15 @@ function CurvedRoom({
 
 function ChamberArchitecture({
   activePhase,
+  heroShotId,
   introProgress,
 }: {
   activePhase: AlchePhaseId;
+  heroShotId: AlcheHeroShotId | null;
   introProgress: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const portalRef = useRef<THREE.Group>(null);
   const panelMaterial = useMemo(() => createChamberPanelMaterial(), []);
   const trimMaterial = useMemo(
     () =>
@@ -189,10 +202,19 @@ function ChamberArchitecture({
       }),
     [],
   );
-  const accentMaterial = useMemo(
+  const panelAccentMaterial = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         color: "#d8e3f2",
+        transparent: true,
+        opacity: 0.16,
+      }),
+    [],
+  );
+  const braceMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: "#dfe7f4",
         transparent: true,
         opacity: 0.18,
       }),
@@ -234,16 +256,18 @@ function ChamberArchitecture({
       portalEdges.dispose();
       panelMaterial.dispose();
       trimMaterial.dispose();
-      accentMaterial.dispose();
+      panelAccentMaterial.dispose();
+      braceMaterial.dispose();
       wireMaterial.dispose();
     };
   }, [
-    accentMaterial,
     braceGeometry,
+    braceMaterial,
     capGeometry,
     centralBraceGeometry,
     finGeometry,
     insetGeometry,
+    panelAccentMaterial,
     panelEdges,
     panelGeometry,
     panelMaterial,
@@ -257,6 +281,7 @@ function ChamberArchitecture({
 
   useFrame((_, delta) => {
     const phase = ALCHE_CAMERA_STATES[activePhase];
+    const heroShot = activePhase === "hero" && heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
     if (!groupRef.current) return;
 
     const presence = introProgress < 0.8 ? introProgress / 0.8 : 1;
@@ -274,31 +299,57 @@ function ChamberArchitecture({
       delta,
     );
 
+    const panelBias = heroShot?.chamberMassing.panelBias ?? 1;
+    const braceBias = heroShot?.chamberMassing.braceBias ?? 1;
+    const rearWallBias = heroShot?.chamberMassing.rearWallEmphasis ?? 1;
+
     panelMaterial.emissiveIntensity = THREE.MathUtils.damp(
       panelMaterial.emissiveIntensity,
-      (activePhase === "works" ? 0.12 : 0.08) * presence,
+      (activePhase === "works" ? 0.12 : 0.08) * presence * panelBias,
       3.4,
       delta,
     );
-    panelMaterial.opacity = THREE.MathUtils.damp(panelMaterial.opacity, 0.92 * presence, 3.2, delta);
-    trimMaterial.emissiveIntensity = THREE.MathUtils.damp(
-      trimMaterial.emissiveIntensity,
-      activePhase === "works" ? 0.16 : activePhase === "vision" ? 0.08 : 0.11,
+    panelMaterial.opacity = THREE.MathUtils.damp(
+      panelMaterial.opacity,
+      Math.min(0.96, 0.92 * presence * panelBias),
       3.2,
       delta,
     );
-    accentMaterial.opacity = THREE.MathUtils.damp(
-      accentMaterial.opacity,
-      (activePhase === "works" ? 0.22 : 0.13) * presence,
+    trimMaterial.emissiveIntensity = THREE.MathUtils.damp(
+      trimMaterial.emissiveIntensity,
+      (activePhase === "works" ? 0.16 : activePhase === "vision" ? 0.08 : 0.11) * rearWallBias,
+      3.2,
+      delta,
+    );
+    panelAccentMaterial.opacity = THREE.MathUtils.damp(
+      panelAccentMaterial.opacity,
+      (activePhase === "works" ? 0.22 : 0.13) * presence * panelBias,
+      3.4,
+      delta,
+    );
+    braceMaterial.opacity = THREE.MathUtils.damp(
+      braceMaterial.opacity,
+      (activePhase === "works" ? 0.22 : 0.16) * presence * braceBias,
       3.4,
       delta,
     );
     wireMaterial.opacity = THREE.MathUtils.damp(
       wireMaterial.opacity,
-      (activePhase === "works" ? 0.28 : 0.18) * presence,
+      (activePhase === "works" ? 0.28 : 0.18) * presence * Math.max(panelBias, rearWallBias * 0.92),
       3.2,
       delta,
     );
+
+    if (portalRef.current) {
+      portalRef.current.position.z = THREE.MathUtils.damp(
+        portalRef.current.position.z,
+        -4.28 + (rearWallBias - 1) * -0.24,
+        3,
+        delta,
+      );
+      const nextScale = THREE.MathUtils.damp(portalRef.current.scale.x, 1 + (rearWallBias - 1) * 0.12, 3, delta);
+      portalRef.current.scale.setScalar(nextScale);
+    }
   });
 
   return (
@@ -317,16 +368,16 @@ function ChamberArchitecture({
               <primitive object={trimMaterial} attach="material" />
             </mesh>
             <mesh geometry={ribGeometry} position={[-panel.width * 0.38, 0, 0.07]} scale={[1, panel.height * 0.86, 1]}>
-              <primitive object={accentMaterial} attach="material" />
+              <primitive object={panelAccentMaterial} attach="material" />
             </mesh>
             <mesh geometry={ribGeometry} position={[panel.width * 0.38, 0, 0.07]} scale={[1, panel.height * 0.86, 1]}>
-              <primitive object={accentMaterial} attach="material" />
+              <primitive object={panelAccentMaterial} attach="material" />
             </mesh>
             <mesh geometry={capGeometry} position={[0, panel.height * 0.32, 0.075]} scale={[panel.width * 0.66, 1, 1]}>
-              <primitive object={accentMaterial} attach="material" />
+              <primitive object={panelAccentMaterial} attach="material" />
             </mesh>
             <mesh geometry={capGeometry} position={[0, -panel.height * 0.32, 0.075]} scale={[panel.width * 0.72, 1, 1]}>
-              <primitive object={accentMaterial} attach="material" />
+              <primitive object={panelAccentMaterial} attach="material" />
             </mesh>
             <lineSegments geometry={panelEdges} scale={[panel.width, panel.height, 1]}>
               <primitive object={wireMaterial} attach="material" />
@@ -347,12 +398,12 @@ function ChamberArchitecture({
             position={[x, brace.y, z]}
             rotation={[0, brace.angle, brace.zRotation]}
           >
-            <primitive object={accentMaterial} attach="material" />
+            <primitive object={braceMaterial} attach="material" />
           </mesh>
         );
       })}
 
-      <group position={[0, 0.18, -4.28]}>
+      <group ref={portalRef} position={[0, 0.18, -4.28]}>
         <mesh geometry={portalGeometry}>
           <primitive object={panelMaterial} attach="material" />
         </mesh>
@@ -363,25 +414,25 @@ function ChamberArchitecture({
           <primitive object={wireMaterial} attach="material" />
         </lineSegments>
         <mesh geometry={finGeometry} position={[-2.26, 0.06, 0.16]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
         <mesh geometry={finGeometry} position={[2.26, 0.06, 0.16]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
       </group>
 
       <group position={[0, 0.18, -2.54]}>
         <mesh geometry={centralBraceGeometry} position={[-1.54, 0.48, 0]} rotation={[0, 0, -0.42]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
         <mesh geometry={centralBraceGeometry} position={[1.54, 0.48, 0]} rotation={[0, 0, 0.42]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
         <mesh geometry={centralBraceGeometry} position={[-2.18, 0.48, -0.24]} rotation={[0, 0, -0.42]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
         <mesh geometry={centralBraceGeometry} position={[2.18, 0.48, -0.24]} rotation={[0, 0, 0.42]}>
-          <primitive object={accentMaterial} attach="material" />
+          <primitive object={braceMaterial} attach="material" />
         </mesh>
       </group>
     </group>
@@ -390,11 +441,13 @@ function ChamberArchitecture({
 
 function HeroPrism({
   activePhase,
+  heroShotId,
   phaseProgress,
   introProgress,
   reducedMotion,
 }: {
   activePhase: AlchePhaseId;
+  heroShotId: AlcheHeroShotId | null;
   phaseProgress: number;
   introProgress: number;
   reducedMotion: boolean;
@@ -452,9 +505,37 @@ function HeroPrism({
 
   useFrame((state, delta) => {
     const phase = ALCHE_CAMERA_STATES[activePhase];
-    const floatY = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.62) * 0.05;
-    const phaseRoll = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.18) * 0.024;
-    const targetScale = phase.prismScale * 0.84 * (1 - phaseProgress * 0.018);
+    const heroShot = activePhase === "hero" && heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
+    const freezeHeroShot = Boolean(heroShot);
+    const floatY = reducedMotion || freezeHeroShot ? 0 : Math.sin(state.clock.elapsedTime * 0.62) * 0.05;
+    const phaseRoll = reducedMotion || freezeHeroShot ? 0 : Math.sin(state.clock.elapsedTime * 0.18) * 0.024;
+    const lockPosition = ALCHE_HERO_LOCK.prism.position;
+    const lockRotation = ALCHE_HERO_LOCK.prism.rotation;
+    const lockScale = ALCHE_HERO_LOCK.prism.scale;
+    const targetPosition =
+      activePhase === "hero"
+        ? new THREE.Vector3(
+            lockPosition[0] + (heroShot?.prismEmphasis.positionOffset[0] ?? 0),
+            lockPosition[1] + floatY + (heroShot?.prismEmphasis.positionOffset[1] ?? 0),
+            lockPosition[2] + (heroShot?.prismEmphasis.positionOffset[2] ?? 0),
+          )
+        : new THREE.Vector3(0, floatY, activePhase === "works" ? 0.06 : activePhase === "vision" ? -0.06 : 0);
+    const targetRotation =
+      activePhase === "hero"
+        ? new THREE.Euler(
+            lockRotation[0] + phaseRoll + (heroShot?.prismEmphasis.rotationOffset[0] ?? 0),
+            lockRotation[1] + (heroShot?.prismEmphasis.rotationOffset[1] ?? 0),
+            lockRotation[2] + (heroShot?.prismEmphasis.rotationOffset[2] ?? 0),
+          )
+        : new THREE.Euler(
+            0.22 + phaseRoll,
+            prismRef.current?.rotation.y ?? 0,
+            activePhase === "vision" ? 0.08 : activePhase === "service" ? -0.04 : 0,
+          );
+    const targetScale =
+      activePhase === "hero"
+        ? lockScale * (heroShot?.prismEmphasis.scale ?? 1) * (1 - phaseProgress * 0.012)
+        : phase.prismScale * 0.84 * (1 - phaseProgress * 0.018);
 
     coreMaterial.uniforms.uTime.value = state.clock.elapsedTime;
     coreMaterial.uniforms.uIntro.value = introProgress;
@@ -493,21 +574,14 @@ function HeroPrism({
     );
 
     if (prismRef.current) {
-      prismRef.current.position.y = THREE.MathUtils.damp(prismRef.current.position.y, floatY, 4.2, delta);
-      prismRef.current.position.z = THREE.MathUtils.damp(
-        prismRef.current.position.z,
-        activePhase === "works" ? 0.06 : activePhase === "vision" ? -0.06 : 0,
-        3.6,
-        delta,
-      );
-      prismRef.current.rotation.x = THREE.MathUtils.damp(prismRef.current.rotation.x, 0.22 + phaseRoll, 4, delta);
-      prismRef.current.rotation.y += delta * (reducedMotion ? 0.06 : activePhase === "works" ? 0.11 : 0.084);
-      prismRef.current.rotation.z = THREE.MathUtils.damp(
-        prismRef.current.rotation.z,
-        activePhase === "vision" ? 0.08 : activePhase === "service" ? -0.04 : 0,
-        3,
-        delta,
-      );
+      prismRef.current.position.x = THREE.MathUtils.damp(prismRef.current.position.x, targetPosition.x, 4, delta);
+      prismRef.current.position.y = THREE.MathUtils.damp(prismRef.current.position.y, targetPosition.y, 4, delta);
+      prismRef.current.position.z = THREE.MathUtils.damp(prismRef.current.position.z, targetPosition.z, 3.8, delta);
+      prismRef.current.rotation.x = THREE.MathUtils.damp(prismRef.current.rotation.x, targetRotation.x, 4, delta);
+      prismRef.current.rotation.y = freezeHeroShot
+        ? THREE.MathUtils.damp(prismRef.current.rotation.y, targetRotation.y, 4, delta)
+        : prismRef.current.rotation.y + delta * (reducedMotion ? 0.06 : activePhase === "works" ? 0.11 : 0.084);
+      prismRef.current.rotation.z = THREE.MathUtils.damp(prismRef.current.rotation.z, targetRotation.z, 3, delta);
       prismRef.current.scale.setScalar(THREE.MathUtils.damp(prismRef.current.scale.x, targetScale, 4.2, delta));
     }
 
@@ -533,7 +607,9 @@ function HeroPrism({
     }
 
     if (haloRef.current) {
-      haloRef.current.rotation.z += delta * 0.045;
+      haloRef.current.rotation.z = freezeHeroShot
+        ? THREE.MathUtils.damp(haloRef.current.rotation.z, 0.12, 3, delta)
+        : haloRef.current.rotation.z + delta * 0.045;
       haloRef.current.position.z = -0.74;
       haloRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 0.26) * 0.03);
     }
@@ -727,13 +803,15 @@ function WorksGalleryStub({
 
 export function AlcheRoomScene(props: AlcheRoomSceneProps) {
   const { camera } = useThree();
-  const targetRef = useRef(new THREE.Vector3(...ALCHE_CAMERA_STATES.hero.target));
-  const positionRef = useRef(new THREE.Vector3(...ALCHE_CAMERA_STATES.hero.position));
+  const perspectiveCamera = camera as THREE.PerspectiveCamera;
+  const targetRef = useRef(new THREE.Vector3(...ALCHE_HERO_LOCK.camera.target));
+  const positionRef = useRef(new THREE.Vector3(...ALCHE_HERO_LOCK.camera.position));
   const nextTargetRef = useRef(new THREE.Vector3());
   const nextPositionRef = useRef(new THREE.Vector3());
 
   useFrame((_, delta) => {
     const phase = ALCHE_CAMERA_STATES[props.activePhase];
+    const targetFov = props.activePhase === "hero" ? ALCHE_HERO_LOCK.camera.fov : 33.5;
 
     nextTargetRef.current.set(...phase.target);
     nextPositionRef.current.set(...phase.position);
@@ -741,8 +819,10 @@ export function AlcheRoomScene(props: AlcheRoomSceneProps) {
     targetRef.current.lerp(nextTargetRef.current, 1 - Math.exp(-delta * 3.8));
     positionRef.current.lerp(nextPositionRef.current, 1 - Math.exp(-delta * 3.4));
 
-    camera.position.copy(positionRef.current);
-    camera.lookAt(targetRef.current);
+    perspectiveCamera.position.copy(positionRef.current);
+    perspectiveCamera.fov = THREE.MathUtils.damp(perspectiveCamera.fov, targetFov, 4, delta);
+    perspectiveCamera.updateProjectionMatrix();
+    perspectiveCamera.lookAt(targetRef.current);
   });
 
   return (
@@ -779,8 +859,12 @@ export function AlcheRoomScene(props: AlcheRoomSceneProps) {
       />
       <pointLight position={[0, -2.2, -2.6]} intensity={2.2} color="#8cb2ff" distance={9} />
 
-      <CurvedRoom activePhase={props.activePhase} introProgress={props.introProgress} />
-      <ChamberArchitecture activePhase={props.activePhase} introProgress={props.introProgress} />
+      <CurvedRoom activePhase={props.activePhase} heroShotId={props.heroShotId} introProgress={props.introProgress} />
+      <ChamberArchitecture
+        activePhase={props.activePhase}
+        heroShotId={props.heroShotId}
+        introProgress={props.introProgress}
+      />
       <WorksGalleryStub
         activePhase={props.activePhase}
         introProgress={props.introProgress}
@@ -788,6 +872,7 @@ export function AlcheRoomScene(props: AlcheRoomSceneProps) {
       />
       <HeroPrism
         activePhase={props.activePhase}
+        heroShotId={props.heroShotId}
         phaseProgress={props.phaseProgress}
         introProgress={props.introProgress}
         reducedMotion={props.reducedMotion}

@@ -1,3 +1,5 @@
+import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
+
 export const ALCHE_PHASE_IDS = ["hero", "works", "vision", "service", "outro"] as const;
 
 export type AlchePhaseId = (typeof ALCHE_PHASE_IDS)[number];
@@ -59,11 +61,11 @@ export const ALCHE_CAMERA_STATES: Record<
   }
 > = {
   hero: {
-    position: [0, 0.08, 5.88],
-    target: [0, 0.04, -0.06],
+    position: ALCHE_HERO_LOCK.camera.position,
+    target: ALCHE_HERO_LOCK.camera.target,
     prismScale: 1,
-    roomGlow: 0.74,
-    roomExposure: 0.9,
+    roomGlow: 0.84,
+    roomExposure: 0.86,
     planeSpread: 0.16,
     whiteMix: 0,
     hudBias: 0,

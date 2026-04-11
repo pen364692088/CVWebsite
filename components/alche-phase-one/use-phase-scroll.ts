@@ -6,6 +6,7 @@ import { startTransition, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_PHASE_IDS, ALCHE_TIMINGS, type AlchePhaseId } from "@/lib/alche-phase-one";
 
 interface UsePhaseScrollOptions {
@@ -17,6 +18,7 @@ function readDebugState() {
 
   const params = new URLSearchParams(window.location.search);
   const phase = params.get("alchePhase");
+  const heroShotId = readAlcheHeroShotId(params.get("alcheHeroShot"));
   if (!phase || !ALCHE_PHASE_IDS.includes(phase as AlchePhaseId)) return null;
 
   const intro = Number(params.get("alcheIntro") ?? "1");
@@ -24,6 +26,7 @@ function readDebugState() {
 
   return {
     phase: phase as AlchePhaseId,
+    heroShotId,
     intro: Math.min(Math.max(intro, 0), 1),
     progress: Math.min(Math.max(progress, 0), 1),
   };
@@ -45,6 +48,7 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
   const debugState = typeof window === "undefined" ? null : readDebugState();
   const lenisRef = useRef<Lenis | null>(null);
   const [activePhase, setActivePhase] = useState<AlchePhaseId>(debugState?.phase ?? "hero");
+  const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
   const [phaseProgress, setPhaseProgress] = useState(debugState?.progress ?? 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
 
@@ -58,10 +62,13 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
     const nextDebugState = readDebugState();
     if (nextDebugState) {
       setActivePhase(nextDebugState.phase);
+      setHeroShotId(nextDebugState.heroShotId);
       setPhaseProgress(nextDebugState.progress);
       setIntroProgress(nextDebugState.intro);
       return;
     }
+
+    setHeroShotId(null);
 
     const intro = { value: reducedMotion ? 1 : 0 };
     const heroSection = sectionRefs.current.hero;
@@ -163,6 +170,7 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
   return {
     reducedMotion: Boolean(reducedMotion),
     activePhase,
+    heroShotId,
     phaseProgress,
     introProgress,
     scrollToPhase,

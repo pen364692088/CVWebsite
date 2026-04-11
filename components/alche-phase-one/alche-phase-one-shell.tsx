@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 
 import { alchePhaseOneCopy } from "@/data/alche-phase-one";
@@ -14,6 +14,7 @@ import {
   ALCHE_TIMINGS,
   type AlchePhaseId,
 } from "@/lib/alche-phase-one";
+import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { usePhaseScroll } from "@/components/alche-phase-one/use-phase-scroll";
@@ -28,6 +29,8 @@ const AlcheRoomCanvas = dynamic(
 interface AlchePhaseOneShellProps {
   locale: Locale;
 }
+
+type HeroOverlayStyle = CSSProperties & Record<`--${string}`, string>;
 
 function supportsWebGL() {
   try {
@@ -54,14 +57,17 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
   const hudRef = useRef<HTMLDivElement | null>(null);
   const wordmarkRef = useRef<HTMLHeadingElement | null>(null);
   const [canRenderLive, setCanRenderLive] = useState(true);
-  const { reducedMotion, activePhase, phaseProgress, introProgress, scrollToPhase } = usePhaseScroll({ sectionRefs });
+  const { reducedMotion, activePhase, heroShotId, phaseProgress, introProgress, scrollToPhase } = usePhaseScroll({
+    sectionRefs,
+  });
+  const heroShot = heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
 
   useEffect(() => {
     setCanRenderLive(supportsWebGL());
   }, []);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || heroShotId) return;
 
     const context = gsap.context(() => {
       const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
@@ -105,7 +111,7 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
     }, stageRef);
 
     return () => context.revert();
-  }, [reducedMotion]);
+  }, [heroShotId, reducedMotion]);
 
   function setSectionRef(phase: AlchePhaseId, node: HTMLElement | null) {
     sectionRefs.current[phase] = node;
@@ -119,17 +125,70 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
 
   const futurePhase = activePhase === "hero" ? "works" : activePhase;
   const heroLift = reducedMotion ? 0 : phaseProgress * 54;
-  const heroOpacity = activePhase === "hero" ? 1 : reducedMotion ? 0.82 : 0.54;
+  const heroOpacity =
+    activePhase === "hero" ? (heroShot?.heroOpacity ?? 1) : reducedMotion ? 0.82 : 0.54;
   const cameraDepth = ALCHE_CAMERA_STATES[activePhase].position[2].toFixed(2);
+  const heroRevealProgress = heroShot ? heroShot.introProgress : introProgress;
+  const canvasIntroProgress = heroShot ? Math.max(heroRevealProgress, 0.98) : heroRevealProgress;
+  const hudContrast = heroShot ? heroShot.hudEmphasis.contrast : 0.84;
   const telemetry = useMemo(
     () => [
-      { label: "INTRO", value: `${Math.round(introProgress * 100).toString().padStart(3, "0")}%` },
+      { label: "INTRO", value: `${Math.round(heroRevealProgress * 100).toString().padStart(3, "0")}%` },
       { label: "STATE", value: ALCHE_SCROLL_MACHINE.find((item) => item.id === activePhase)?.code ?? "S-00" },
       { label: "CAM_Z", value: cameraDepth },
       { label: "PRG", value: `${Math.round(phaseProgress * 100).toString().padStart(3, "0")}%` },
     ],
-    [activePhase, cameraDepth, introProgress, phaseProgress],
+    [activePhase, cameraDepth, heroRevealProgress, phaseProgress],
   );
+  const captureNavOpacity = heroShot ? Math.min(Math.max((heroRevealProgress - 0.12) / 0.36, 0), 1) : undefined;
+  const captureWordmarkOpacity = heroShot ? Math.min(Math.max((heroRevealProgress - 0.42) / 0.56, 0), 1) : undefined;
+  const captureCopyOpacity = heroShot ? Math.min(Math.max((heroRevealProgress - 0.46) / 0.5, 0), 1) : undefined;
+  const captureHudOpacity = heroShot ? Math.min(Math.max((heroRevealProgress - 0.58) / 0.36, 0), 1) : undefined;
+  const overlayVars = useMemo(
+    () =>
+      ({
+        "--alche-hero-copy-max-width": ALCHE_HERO_LOCK.typography.heroCopyMaxWidth,
+        "--alche-wordmark-font-size": ALCHE_HERO_LOCK.typography.wordmarkFontSize,
+        "--alche-wordmark-tracking": ALCHE_HERO_LOCK.typography.wordmarkTracking,
+        "--alche-wordmark-line-height": String(ALCHE_HERO_LOCK.typography.wordmarkLineHeight),
+        "--alche-wordmark-left": ALCHE_HERO_LOCK.typography.wordmarkLeft,
+        "--alche-wordmark-top": ALCHE_HERO_LOCK.typography.wordmarkTop,
+        "--alche-wordmark-baseline-offset": ALCHE_HERO_LOCK.typography.wordmarkBaselineOffset,
+        "--alche-hero-body-width": ALCHE_HERO_LOCK.typography.bodyBlockWidth,
+        "--alche-hero-lift": `${heroLift}px`,
+        "--alche-hud-top": ALCHE_HERO_LOCK.hud.top,
+        "--alche-hud-right": ALCHE_HERO_LOCK.hud.right,
+        "--alche-hud-width": ALCHE_HERO_LOCK.hud.width,
+        "--alche-hud-frame-opacity": String(
+          ALCHE_HERO_LOCK.hud.frameOpacity * (heroShot?.hudEmphasis.frameOpacity ?? 1),
+        ),
+        "--alche-hud-telemetry-opacity": String(
+          ALCHE_HERO_LOCK.hud.telemetryOpacity * (heroShot?.hudEmphasis.telemetryOpacity ?? 1),
+        ),
+        "--alche-hud-list-opacity": String(ALCHE_HERO_LOCK.hud.listOpacity * (heroShot?.hudEmphasis.listOpacity ?? 1)),
+        "--alche-hud-contrast": String(hudContrast),
+      }) as HeroOverlayStyle,
+    [heroLift, heroShot, hudContrast],
+  );
+  const wordmarkStyle = heroShot
+    ? (() => {
+        const wordmarkOpacity = captureWordmarkOpacity ?? 1;
+        return {
+          opacity: wordmarkOpacity,
+          filter: `blur(${(1 - wordmarkOpacity) * 10}px)`,
+          letterSpacing: `calc(${ALCHE_HERO_LOCK.typography.wordmarkTracking} - ${(1 - wordmarkOpacity) * 0.03}em)`,
+        } satisfies CSSProperties;
+      })()
+    : undefined;
+  const heroCopyStyle = heroShot
+    ? ({ opacity: captureCopyOpacity } satisfies CSSProperties)
+    : undefined;
+  const hudStyle = heroShot
+    ? ({ opacity: captureHudOpacity } satisfies CSSProperties)
+    : undefined;
+  const navStyle = heroShot
+    ? ({ opacity: captureNavOpacity } satisfies CSSProperties)
+    : undefined;
 
   return (
     <div className={styles.root}>
@@ -138,8 +197,9 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
           {canRenderLive ? (
             <AlcheRoomCanvas
               activePhase={activePhase}
+              heroShotId={heroShotId}
               phaseProgress={phaseProgress}
-              introProgress={introProgress}
+              introProgress={canvasIntroProgress}
               reducedMotion={reducedMotion}
             />
           ) : (
@@ -150,7 +210,7 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
         </div>
 
         <div className={styles.overlay}>
-          <div ref={navRef} className={styles.topBar}>
+          <div ref={navRef} className={styles.topBar} style={navStyle}>
             <div className={styles.brand}>
               <span className={styles.brandMark} aria-hidden="true" />
               <div className={styles.brandText}>
@@ -193,17 +253,17 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
             </div>
           </div>
 
-          <div className={styles.heroOverlay} style={{ opacity: heroOpacity }}>
+          <div className={styles.heroOverlay} style={{ ...overlayVars, opacity: heroOpacity }}>
             <div
               ref={heroCopyRef}
               className={styles.heroCopy}
-              style={{ transform: `translate3d(0, ${-heroLift}px, 0)` }}
+              style={heroCopyStyle}
             >
               <p className={styles.eyebrow}>{copy.hero.eyebrow}</p>
-              <h1 ref={wordmarkRef} className={styles.wordmark}>
+              <h1 ref={wordmarkRef} className={styles.wordmark} style={wordmarkStyle}>
                 ALCHE
               </h1>
-              <div className={styles.wordmarkShadow} aria-hidden="true">
+              <div className={styles.wordmarkShadow} aria-hidden="true" style={wordmarkStyle}>
                 ALCHE
               </div>
               <div className={styles.heroBody}>
@@ -213,7 +273,7 @@ export function AlchePhaseOneShell({ locale }: AlchePhaseOneShellProps) {
               </div>
             </div>
 
-            <aside ref={hudRef} className={styles.hud}>
+            <aside ref={hudRef} className={styles.hud} style={hudStyle}>
               <div className={styles.hudFrame}>
                 <div className={styles.hudHeader}>
                   <p className={styles.hudTitle}>{copy.hud.title}</p>

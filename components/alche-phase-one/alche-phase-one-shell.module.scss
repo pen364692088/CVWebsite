@@ -192,17 +192,16 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 20vw);
-  align-items: center;
   padding: 5.4rem 1.25rem 2rem;
 }
 
 .heroCopy {
-  position: relative;
-  align-self: center;
-  width: min(100%, 86rem);
-  max-width: 82rem;
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  width: min(calc(100% - 2.5rem), var(--alche-hero-copy-max-width, 82rem));
+  max-width: var(--alche-hero-copy-max-width, 82rem);
+  transform: translate3d(0, calc(-50% - var(--alche-hero-lift, 0px)), 0);
 }
 
 .eyebrow {
@@ -217,38 +216,40 @@
 .wordmark {
   position: relative;
   z-index: 2;
-  margin: 0;
+  margin: var(--alche-wordmark-top, 0) 0 0;
   font-family: var(--font-display), "Barlow Condensed", sans-serif;
-  font-size: clamp(7rem, 23vw, 22rem);
-  line-height: 0.82;
+  font-size: var(--alche-wordmark-font-size, clamp(7rem, 23vw, 22rem));
+  line-height: var(--alche-wordmark-line-height, 0.82);
   font-weight: 600;
-  letter-spacing: -0.085em;
+  letter-spacing: var(--alche-wordmark-tracking, -0.085em);
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.985);
   text-wrap: nowrap;
+  transform: translate3d(var(--alche-wordmark-left, 0), var(--alche-wordmark-baseline-offset, 0), 0);
 }
 
 .wordmarkShadow {
   position: absolute;
   left: 0;
-  top: 0.26rem;
+  top: calc(0.26rem + var(--alche-wordmark-top, 0));
   z-index: 1;
   font-family: var(--font-display), "Barlow Condensed", sans-serif;
-  font-size: clamp(7rem, 23vw, 22rem);
-  line-height: 0.82;
+  font-size: var(--alche-wordmark-font-size, clamp(7rem, 23vw, 22rem));
+  line-height: var(--alche-wordmark-line-height, 0.82);
   font-weight: 600;
-  letter-spacing: -0.085em;
+  letter-spacing: var(--alche-wordmark-tracking, -0.085em);
   text-transform: uppercase;
   color: transparent;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
   text-wrap: nowrap;
+  transform: translate3d(var(--alche-wordmark-left, 0), var(--alche-wordmark-baseline-offset, 0), 0);
 }
 
 .heroBody {
   margin-top: 1rem;
   display: grid;
   gap: 0.72rem;
-  width: min(100%, 31rem);
+  width: min(100%, var(--alche-hero-body-width, 31rem));
 }
 
 .lead {
@@ -285,18 +286,20 @@
 }
 
 .hud {
-  align-self: stretch;
-  justify-self: end;
+  position: absolute;
+  top: var(--alche-hud-top, 11rem);
+  right: var(--alche-hud-right, 1.25rem);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  width: min(var(--alche-hud-width, 16rem), calc(100vw - 2.5rem));
 }
 
 .hudFrame {
   position: relative;
-  width: min(17rem, 17vw);
-  margin-top: 3rem;
+  width: 100%;
   padding: 1rem 0 1rem 1rem;
   border-left: 1px solid rgba(255, 255, 255, 0.12);
+  opacity: var(--alche-hud-frame-opacity, 0.78);
 }
 
 .hudFrame::before,
@@ -328,12 +331,12 @@
   font-size: 0.64rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.98);
+  color: rgba(255, 255, 255, calc(0.98 * var(--alche-hud-contrast, 0.84)));
 }
 
 .hudSubtitle {
   margin: 0.55rem 0 0;
-  color: rgba(255, 255, 255, 0.46);
+  color: rgba(255, 255, 255, calc(0.46 * var(--alche-hud-contrast, 0.84)));
   font-size: 0.78rem;
   line-height: 1.52;
 }
@@ -343,6 +346,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
   margin-bottom: 1rem;
+  opacity: var(--alche-hud-telemetry-opacity, 0.94);
 }
 
 .telemetryItem {
@@ -373,6 +377,7 @@
   list-style: none;
   display: grid;
   gap: 0.44rem;
+  opacity: var(--alche-hud-list-opacity, 0.86);
 }
 
 .hudItem {
@@ -404,7 +409,7 @@
   font-size: 0.58rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.76);
+  color: rgba(255, 255, 255, calc(0.76 * var(--alche-hud-contrast, 0.84)));
 }
 
 .stateMachineList {
@@ -427,7 +432,7 @@
   font-size: 0.55rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.36);
+  color: rgba(255, 255, 255, calc(0.36 * var(--alche-hud-contrast, 0.84)));
 }
 
 .stateNode strong {
@@ -435,7 +440,7 @@
   font-size: 0.62rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, calc(0.62 * var(--alche-hud-contrast, 0.84)));
 }
 
 .stateNodeActive {
@@ -460,12 +465,12 @@
   font-size: 0.58rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.84);
+  color: rgba(255, 255, 255, calc(0.84 * var(--alche-hud-contrast, 0.84)));
 }
 
 .notesBody {
   margin: 0;
-  color: rgba(255, 255, 255, 0.44);
+  color: rgba(255, 255, 255, calc(0.44 * var(--alche-hud-contrast, 0.84)));
   font-size: 0.78rem;
   line-height: 1.72;
 }
