@@ -31,17 +31,48 @@ export const ALCHE_TIMINGS = {
   canvasReveal: 1.72,
   loadingFade: 1.08,
   roomRevealDelay: 0.18,
-  scrollDuration: 1.06,
-  scrollLerp: 0.09,
 } as const;
 
 export const ALCHE_PHASE_HEIGHTS: Record<AlchePhaseId, string> = {
-  hero: "188svh",
-  works: "170svh",
-  about: "138svh",
-  stella: "172svh",
-  contact: "126svh",
+  hero: "220svh",
+  works: "250svh",
+  about: "200svh",
+  stella: "240svh",
+  contact: "170svh",
 };
+
+export const ALCHE_SCROLL_TUNING = {
+  duration: 1.18,
+  lerp: 0.055,
+  wheelMultiplier: 0.72,
+  touchMultiplier: 0.9,
+  activeViewport: 0.38,
+  activeTriggerStart: "top 38%",
+  activeTriggerEnd: "bottom 38%",
+} as const;
+
+export const ALCHE_BEAT_WINDOWS = {
+  works: {
+    sweepProgress: [0.0, 0.42],
+    sweepOpacityFade: [0.3, 0.56],
+    cardMix: [0.24, 0.7],
+    browseProgress: [0.52, 1.0],
+  },
+  about: {
+    flattenMix: [0.08, 0.58],
+    whiteSweep: [0.18, 0.72],
+    emblemMix: [0.38, 0.92],
+  },
+  stella: {
+    passageMix: [0.0, 0.62],
+    architectureMix: [0.34, 0.8],
+    editorialMix: [0.72, 0.96],
+  },
+  contact: {
+    drainMix: [0.0, 0.62],
+    footerMix: [0.48, 0.96],
+  },
+} as const;
 
 export const ALCHE_ROOM = {
   radius: 10.5,
@@ -178,10 +209,24 @@ export function smoothstep(value: number) {
 
 export function deriveWorksPresentation(progress: number) {
   const clamped = clamp01(progress);
-  const sweepProgress = smoothstep(remapRange(clamped, 0, 0.3));
-  const sweepOpacity = 1 - smoothstep(remapRange(clamped, 0.2, 0.42));
-  const cardMix = smoothstep(remapRange(clamped, 0.24, 0.54));
-  const browseProgress = smoothstep(remapRange(clamped, 0.42, 1));
+  const sweepProgress = smoothstep(
+    remapRange(clamped, ALCHE_BEAT_WINDOWS.works.sweepProgress[0], ALCHE_BEAT_WINDOWS.works.sweepProgress[1]),
+  );
+  const sweepOpacity =
+    1 -
+    smoothstep(
+      remapRange(
+        clamped,
+        ALCHE_BEAT_WINDOWS.works.sweepOpacityFade[0],
+        ALCHE_BEAT_WINDOWS.works.sweepOpacityFade[1],
+      ),
+    );
+  const cardMix = smoothstep(
+    remapRange(clamped, ALCHE_BEAT_WINDOWS.works.cardMix[0], ALCHE_BEAT_WINDOWS.works.cardMix[1]),
+  );
+  const browseProgress = smoothstep(
+    remapRange(clamped, ALCHE_BEAT_WINDOWS.works.browseProgress[0], ALCHE_BEAT_WINDOWS.works.browseProgress[1]),
+  );
   const travel = browseProgress * Math.max(ALCHE_WORK_CARDS.length - 1, 0);
   const activeIndex = Math.min(ALCHE_WORK_CARDS.length - 1, Math.floor(travel + 0.25));
   const activeBlend = travel - Math.floor(travel);
@@ -200,25 +245,45 @@ export function deriveWorksPresentation(progress: number) {
 export function deriveAboutState(progress: number) {
   const clamped = clamp01(progress);
   return {
-    flattenMix: smoothstep(remapRange(clamped, 0.06, 0.44)),
-    whiteSweep: smoothstep(remapRange(clamped, 0.14, 0.58)),
-    emblemMix: smoothstep(remapRange(clamped, 0.28, 0.82)),
+    flattenMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.about.flattenMix[0], ALCHE_BEAT_WINDOWS.about.flattenMix[1]),
+    ),
+    whiteSweep: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.about.whiteSweep[0], ALCHE_BEAT_WINDOWS.about.whiteSweep[1]),
+    ),
+    emblemMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.about.emblemMix[0], ALCHE_BEAT_WINDOWS.about.emblemMix[1]),
+    ),
   };
 }
 
 export function deriveStellaState(progress: number) {
   const clamped = clamp01(progress);
   return {
-    passageMix: smoothstep(remapRange(clamped, 0.0, 0.48)),
-    architectureMix: smoothstep(remapRange(clamped, 0.24, 0.72)),
-    editorialMix: smoothstep(remapRange(clamped, 0.62, 0.94)),
+    passageMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.stella.passageMix[0], ALCHE_BEAT_WINDOWS.stella.passageMix[1]),
+    ),
+    architectureMix: smoothstep(
+      remapRange(
+        clamped,
+        ALCHE_BEAT_WINDOWS.stella.architectureMix[0],
+        ALCHE_BEAT_WINDOWS.stella.architectureMix[1],
+      ),
+    ),
+    editorialMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.stella.editorialMix[0], ALCHE_BEAT_WINDOWS.stella.editorialMix[1]),
+    ),
   };
 }
 
 export function deriveContactState(progress: number) {
   const clamped = clamp01(progress);
   return {
-    drainMix: smoothstep(remapRange(clamped, 0, 0.48)),
-    footerMix: smoothstep(remapRange(clamped, 0.3, 0.92)),
+    drainMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.contact.drainMix[0], ALCHE_BEAT_WINDOWS.contact.drainMix[1]),
+    ),
+    footerMix: smoothstep(
+      remapRange(clamped, ALCHE_BEAT_WINDOWS.contact.footerMix[0], ALCHE_BEAT_WINDOWS.contact.footerMix[1]),
+    ),
   };
 }

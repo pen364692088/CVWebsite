@@ -7,7 +7,13 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
-import { ALCHE_PHASE_IDS, ALCHE_TIMINGS, clamp01, type AlchePhaseId } from "@/lib/alche-contract";
+import {
+  ALCHE_PHASE_IDS,
+  ALCHE_SCROLL_TUNING,
+  ALCHE_TIMINGS,
+  clamp01,
+  type AlchePhaseId,
+} from "@/lib/alche-contract";
 
 interface UsePhaseScrollOptions {
   sectionRefs: React.MutableRefObject<Record<AlchePhaseId, HTMLElement | null>>;
@@ -40,7 +46,7 @@ function getSectionProgress(node: HTMLElement | null) {
 }
 
 function findPhaseAtViewport(sectionRefs: Record<AlchePhaseId, HTMLElement | null>) {
-  const mid = window.innerHeight * 0.5;
+  const mid = window.innerHeight * ALCHE_SCROLL_TUNING.activeViewport;
   for (const phaseId of ALCHE_PHASE_IDS) {
     const node = sectionRefs[phaseId];
     if (!node) continue;
@@ -96,10 +102,11 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
 
     if (!reducedMotion) {
       lenis = new Lenis({
-        duration: ALCHE_TIMINGS.scrollDuration,
-        lerp: ALCHE_TIMINGS.scrollLerp,
+        duration: ALCHE_SCROLL_TUNING.duration,
+        lerp: ALCHE_SCROLL_TUNING.lerp,
         smoothWheel: true,
-        touchMultiplier: 1,
+        wheelMultiplier: ALCHE_SCROLL_TUNING.wheelMultiplier,
+        touchMultiplier: ALCHE_SCROLL_TUNING.touchMultiplier,
       });
       lenisRef.current = lenis;
       lenis.on("scroll", ScrollTrigger.update);
@@ -124,8 +131,8 @@ export function usePhaseScroll({ sectionRefs }: UsePhaseScrollOptions) {
 
       return ScrollTrigger.create({
         trigger: section,
-        start: "top center",
-        end: "bottom center",
+        start: ALCHE_SCROLL_TUNING.activeTriggerStart,
+        end: ALCHE_SCROLL_TUNING.activeTriggerEnd,
         onEnter: () =>
           startTransition(() => {
             setActivePhase(phaseId);
