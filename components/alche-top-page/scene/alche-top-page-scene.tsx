@@ -16,11 +16,14 @@ import type { AlcheTopSceneState } from "@/lib/alche-top-page";
 interface AlcheTopPageSceneProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
+  kvOnly: boolean;
+  kvGlyphTexturePath: string;
   workCount: number;
+  workImagePaths: string[];
   captureMode: boolean;
 }
 
-export function AlcheTopPageScene({ sceneState, reducedMotion, workCount, captureMode }: AlcheTopPageSceneProps) {
+export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvGlyphTexturePath, workCount, workImagePaths, captureMode }: AlcheTopPageSceneProps) {
   const { camera } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
   const targetRef = useRef(new THREE.Vector3(...sceneState.camera.target));
@@ -50,24 +53,28 @@ export function AlcheTopPageScene({ sceneState, reducedMotion, workCount, captur
     <>
       <color attach="background" args={["#000000"]} />
       <fog attach="fog" args={[fogColor, 5.8, 20.6]} />
-      <ambientLight intensity={ambientIntensity} color="#d9e4f6" />
+      <ambientLight intensity={kvOnly ? 0.1 : ambientIntensity} color="#d9e4f6" />
       <spotLight
         position={[0, 5.4, 3]}
         angle={0.54}
         penumbra={0.92}
-        intensity={32}
+        intensity={kvOnly ? 18 : 32}
         decay={1.7}
         distance={18}
-        color="#f2f5ff"
+        color={kvOnly ? "#7e67ff" : "#f2f5ff"}
       />
-      <pointLight position={[0, -1.2, 2.4]} intensity={1.6} color="#a7c9ff" distance={10} />
+      <pointLight position={[0, -1.2, 2.4]} intensity={kvOnly ? 0.8 : 1.6} color={kvOnly ? "#5f62ff" : "#a7c9ff"} distance={10} />
 
-      <KvSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} />
-      <WorksSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} workCount={workCount} />
-      <ConceptFieldSceneSystem sceneState={sceneState} />
-      <ServiceSceneSystem sceneState={sceneState} />
-      <StelllaSceneSystem sceneState={sceneState} />
-      <OutroSceneSystem sceneState={sceneState} />
+      <KvSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} backgroundOnly={kvOnly} glyphTexturePath={kvGlyphTexturePath} />
+      {kvOnly ? null : (
+        <>
+          <WorksSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} workCount={workCount} workImagePaths={workImagePaths} />
+          <ConceptFieldSceneSystem sceneState={sceneState} />
+          <ServiceSceneSystem sceneState={sceneState} />
+          <StelllaSceneSystem sceneState={sceneState} />
+          <OutroSceneSystem sceneState={sceneState} />
+        </>
+      )}
       {captureMode ? null : <AlcheTopPagePostProcessing sceneState={sceneState} />}
     </>
   );

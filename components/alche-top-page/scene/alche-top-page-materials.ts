@@ -15,12 +15,13 @@ function spectralPalette(t: number) {
   return c.clone().lerp(d, (t - 0.66) / 0.34);
 }
 
-export function createCurvedGridMaterial() {
+export function createCurvedGridMaterial(glyphTexture: THREE.Texture) {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     transparent: true,
     depthWrite: false,
     uniforms: {
+      uGlyphMap: { value: glyphTexture },
       uTime: { value: 0 },
       uIntro: { value: 0 },
       uWhiteMix: { value: 0 },
@@ -55,6 +56,7 @@ export function createCurvedGridMaterial() {
       varying vec2 vMediaUv;
       varying vec3 vWorldPos;
 
+      uniform sampler2D uGlyphMap;
       uniform float uTime;
       uniform float uIntro;
       uniform float uWhiteMix;
@@ -79,42 +81,58 @@ export function createCurvedGridMaterial() {
         vec2 cellUv = vec2(uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)}, uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)});
         vec2 cellId = floor(cellUv);
         vec2 local = fract(cellUv);
+        vec2 panelUv = vec2(uv.x * 7.0, uv.y * 4.0);
 
-        float seamV = linePulse(cellUv.x, 0.92);
-        float seamH = linePulse(cellUv.y, 0.92);
-        float microV = linePulse(cellUv.x * 5.0 + sin(uv.y * 22.0 + uTime * 0.03) * 0.08, 2.6) * 0.14;
-        float microH = linePulse(cellUv.y * 5.0 + sin(uv.x * 18.0 - uTime * 0.04) * 0.08, 2.6) * 0.14;
-        float diagonal = linePulse((uv.x + uv.y * 0.72) * 22.0, 2.2) * 0.08;
+        float coarseV = linePulse(panelUv.x + sin(uv.y * 3.2 + uTime * 0.01) * 0.02, 0.46);
+        float coarseH = linePulse(panelUv.y, 0.46);
+        float seamV = linePulse(cellUv.x, 1.05);
+        float seamH = linePulse(cellUv.y, 1.05);
+        float microV = linePulse(cellUv.x * 4.0 + sin(uv.y * 16.0 + uTime * 0.02) * 0.04, 2.6) * 0.14;
+        float microH = linePulse(cellUv.y * 4.0 + sin(uv.x * 14.0 - uTime * 0.018) * 0.04, 2.6) * 0.14;
 
-        float rowBand = smoothstep(0.0, 0.06, local.y) * (1.0 - smoothstep(0.94, 1.0, local.y));
-        float colBand = smoothstep(0.0, 0.08, local.x) * (1.0 - smoothstep(0.92, 1.0, local.x));
-        float inactive = step(0.84, hash21(cellId * 0.073));
+        float inactive = step(0.82, hash21(cellId * 0.071));
+        float cellMask = (1.0 - inactive) * 0.2;
 
-        float blockA = smoothstep(0.12, 0.14, uv.x) * (1.0 - smoothstep(0.32, 0.34, uv.x));
-        blockA *= smoothstep(0.18, 0.22, uv.y) * (1.0 - smoothstep(0.84, 0.88, uv.y));
-        float blockB = smoothstep(0.58, 0.62, uv.x) * (1.0 - smoothstep(0.84, 0.88, uv.x));
-        blockB *= smoothstep(0.12, 0.16, uv.y) * (1.0 - smoothstep(0.76, 0.82, uv.y));
-        float blockC = smoothstep(0.36, 0.4, uv.x) * (1.0 - smoothstep(0.52, 0.56, uv.x));
-        blockC *= smoothstep(0.54, 0.58, uv.y) * (1.0 - smoothstep(0.82, 0.88, uv.y));
-        float contentBlocks = max(blockA, max(blockB, blockC));
+        float panelA = smoothstep(0.10, 0.12, uv.x) * (1.0 - smoothstep(0.28, 0.30, uv.x));
+        panelA *= smoothstep(0.08, 0.12, uv.y) * (1.0 - smoothstep(0.68, 0.72, uv.y));
+        float panelB = smoothstep(0.34, 0.36, uv.x) * (1.0 - smoothstep(0.58, 0.60, uv.x));
+        panelB *= smoothstep(0.24, 0.28, uv.y) * (1.0 - smoothstep(0.92, 0.96, uv.y));
+        float panelC = smoothstep(0.62, 0.64, uv.x) * (1.0 - smoothstep(0.88, 0.90, uv.x));
+        panelC *= smoothstep(0.06, 0.10, uv.y) * (1.0 - smoothstep(0.58, 0.62, uv.y));
+        float panelD = smoothstep(0.56, 0.58, uv.x) * (1.0 - smoothstep(0.72, 0.74, uv.x));
+        panelD *= smoothstep(0.62, 0.66, uv.y) * (1.0 - smoothstep(0.94, 0.98, uv.y));
+        float panelField = max(max(panelA, panelB), max(panelC, panelD));
 
-        float heroField = smoothstep(0.88, 0.08, abs(uv.x - 0.5)) * smoothstep(0.94, 0.18, abs(uv.y - 0.46));
-        vec3 darkBase = vec3(0.005, 0.008, 0.012);
-        vec3 lightBase = vec3(0.96, 0.968, 0.98);
-        vec3 darkInk = vec3(0.78, 0.84, 0.94);
-        vec3 lightInk = vec3(0.14, 0.16, 0.2);
+        vec2 glyphUv = vec2(fract(uv.x * 1.12 + 0.06), 1.0 - clamp(uv.y, 0.0, 1.0));
+        float glyph = texture2D(uGlyphMap, glyphUv).r;
+        float glyphPresence = smoothstep(0.02, 0.2, glyph) * (0.42 + panelField * 0.78);
+
+        float centerColumn = 1.0 - smoothstep(0.0, 0.25, abs(uv.x - 0.5));
+        float centerGlow = centerColumn * (0.34 + 0.66 * smoothstep(0.08, 0.92, uv.y));
+        float centerPulse = 0.92 + sin(uTime * 0.35 + uv.y * 9.0) * 0.08;
+
+        vec3 darkBase = vec3(0.010, 0.008, 0.020);
+        vec3 lightBase = vec3(0.95, 0.95, 0.98);
+        vec3 darkInk = vec3(0.32, 0.38, 0.76);
+        vec3 lightInk = vec3(0.14, 0.14, 0.18);
         vec3 base = mix(darkBase, lightBase, uWhiteMix);
         vec3 ink = mix(darkInk, lightInk, uWhiteMix);
+        vec3 violet = mix(vec3(0.22, 0.12, 0.72), vec3(0.20), uWhiteMix);
+        vec3 blueViolet = mix(vec3(0.16, 0.26, 0.86), vec3(0.24), uWhiteMix);
+        vec3 lineInk = mix(vec3(0.05, 0.05, 0.08), vec3(0.18), uWhiteMix);
 
         vec3 color = base;
-        color += ink * (seamV * 0.16 + seamH * 0.16 + microV + microH + diagonal) * uGlow * uExposure;
-        color += mix(vec3(0.06, 0.26, 0.22), vec3(0.16), uWhiteMix) * heroField * (1.0 - uWhiteMix) * 0.38;
-        color += ink * contentBlocks * 0.1;
-        color *= mix(1.0, 0.92, inactive * (1.0 - uWhiteMix) * 0.55);
-        color *= mix(1.0, 0.88, uFlatten * 0.22);
-        color += ink * (rowBand + colBand) * 0.02;
+        color += violet * panelField * 0.52 * uExposure;
+        color += blueViolet * cellMask;
+        color += mix(vec3(0.08, 0.07, 0.14), vec3(0.2), uWhiteMix) * (coarseV * 1.14 + coarseH * 1.14);
+        color += lineInk * (seamV * 0.18 + seamH * 0.18 + microV + microH) * (0.84 + uGlow * 0.32);
+        color += mix(vec3(0.42, 0.38, 0.62), vec3(0.28), uWhiteMix) * glyphPresence * 0.78;
+        color += mix(violet, blueViolet, 0.55) * centerGlow * centerPulse * (0.42 + uGlow * 0.28);
+        color += vec3(0.74, 0.78, 1.0) * pow(centerGlow, 2.2) * 0.22;
+        color *= mix(1.0, 0.9, uFlatten * 0.18);
 
-        float alpha = mix(0.94, 0.42, uWhiteMix) * uIntro * uSceneFade;
+        float edgeFade = 1.0 - smoothstep(0.18, 1.1, abs(uv.x - 0.5) * 2.0);
+        float alpha = mix(0.98, 0.46, uWhiteMix) * uIntro * uSceneFade * edgeFade;
         gl_FragColor = vec4(color, alpha);
       }
     `,
@@ -124,6 +142,7 @@ export function createCurvedGridMaterial() {
 export function createGalleryPlaneMaterial() {
   return new THREE.ShaderMaterial({
     transparent: true,
+    depthWrite: false,
     uniforms: {
       uTime: { value: 0 },
       uVisibility: { value: 0 },
@@ -165,20 +184,20 @@ export function createGalleryPlaneMaterial() {
         float caption = smoothstep(0.79, 0.794, uv.y) * (1.0 - smoothstep(0.9, 0.905, uv.y));
         float rim = smoothstep(0.7, 0.04, abs(centered.x * 0.88 + centered.y * 1.3 - 0.08)) * 0.16;
 
-        vec3 darkBase = vec3(0.015, 0.018, 0.024);
+        vec3 darkBase = vec3(0.052, 0.06, 0.076);
         vec3 lightBase = vec3(0.96, 0.965, 0.975);
-        vec3 darkInk = vec3(0.74, 0.82, 0.94);
+        vec3 darkInk = vec3(0.66, 0.76, 0.92);
         vec3 lightInk = vec3(0.14, 0.15, 0.18);
         vec3 base = mix(darkBase, lightBase, uWhiteMix);
         vec3 ink = mix(darkInk, lightInk, uWhiteMix);
 
         vec3 color = base;
-        color += ink * (frame * 0.42 + diagonal + scan);
-        color += ink * (slabA * 0.16 + slabB * 0.12 + caption * 0.14);
-        color += rim * mix(vec3(0.38, 0.62, 0.76), vec3(0.18), uWhiteMix);
-        color += mix(vec3(0.02, 0.16, 0.18), vec3(0.04), uWhiteMix) * smoothstep(0.82, 0.06, length(centered * vec2(0.9, 0.72))) * 0.42;
+        color += ink * (frame * 0.28 + diagonal * 0.52 + scan * 0.62);
+        color += ink * (slabA * 0.08 + slabB * 0.06 + caption * 0.07);
+        color += rim * mix(vec3(0.44, 0.68, 0.84), vec3(0.18), uWhiteMix);
+        color += mix(vec3(0.06, 0.22, 0.26), vec3(0.05), uWhiteMix) * smoothstep(0.82, 0.06, length(centered * vec2(0.9, 0.72))) * 0.26;
 
-        float alpha = (0.18 + frame * 0.42 + diagonal * 0.28 + slabB * 0.16) * uVisibility;
+        float alpha = (0.045 + frame * 0.18 + diagonal * 0.12 + slabB * 0.06) * uVisibility;
         gl_FragColor = vec4(color, alpha);
       }
     `,
@@ -371,7 +390,7 @@ export function createStructureMaterial() {
     metalness: 0.42,
     roughness: 0.76,
     transparent: true,
-    opacity: 1,
+    opacity: 0,
   });
 }
 

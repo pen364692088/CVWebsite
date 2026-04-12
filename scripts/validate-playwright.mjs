@@ -31,32 +31,11 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
-const expectedSections = [
-  "kv",
-  "works_intro",
-  "works",
-  "works_outro",
-  "mission_in",
-  "mission",
-  "vision",
-  "vision_out",
-  "service_in",
-  "service",
-  "stellla",
-  "outro",
-];
+const expectedSections = ["kv"];
 
 const fixedStateShots = [
   { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
   { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
-  { name: "works-intro-handoff", search: "?alcheSection=works_intro&alcheProgress=0.55&alcheIntro=1&alcheCapture=1" },
-  { name: "works-settled", search: "?alcheSection=works&alcheProgress=0.55&alcheIntro=1&alcheCapture=1" },
-  { name: "works-outro-clearing", search: "?alcheSection=works_outro&alcheProgress=0.7&alcheIntro=1&alcheCapture=1" },
-  { name: "mission-settled", search: "?alcheSection=mission&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
-  { name: "vision-settled", search: "?alcheSection=vision&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
-  { name: "service-settled", search: "?alcheSection=service&alcheProgress=0.6&alcheIntro=1&alcheCapture=1" },
-  { name: "stellla-settled", search: "?alcheSection=stellla&alcheProgress=0.7&alcheIntro=1&alcheCapture=1" },
-  { name: "outro-settled", search: "?alcheSection=outro&alcheProgress=0.75&alcheIntro=1&alcheCapture=1" },
 ];
 
 function resolveRequestPath(requestPath) {
@@ -151,13 +130,16 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
 }
 
 async function assertTopPageShell(page, scenarioName) {
-  assert((await page.locator("[data-top-scroll-indicator]").count()) === 1, `Missing top scroll indicator for ${scenarioName}`);
   assert((await page.locator("canvas").count()) === 1, `Expected a single canvas for ${scenarioName}`);
   assert((await page.locator("body").textContent())?.includes("ALCHE"), `Missing ALCHE branding for ${scenarioName}`);
 
   for (const sectionId of expectedSections) {
     assert((await page.locator(`[data-top_section="${sectionId}"]`).count()) === 1, `Missing ${sectionId} section for ${scenarioName}`);
   }
+
+  assert((await page.locator('[data-top_section="works"]').count()) === 0, `Unexpected non-kv sections for ${scenarioName}`);
+  assert((await page.locator("[data-top-scroll-indicator]").count()) === 0, `Unexpected top scroll indicator for ${scenarioName}`);
+  assert((await page.locator('[data-top-panel="works"]').count()) === 0, `Unexpected works panel for ${scenarioName}`);
 }
 
 async function runScenario(browser, scenario) {
@@ -179,12 +161,6 @@ async function runScenario(browser, scenario) {
     await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
 
     await assertTopPageShell(page, scenario.name);
-    assert((await page.textContent("body"))?.includes("TOP PAGE RUNTIME"), `Missing runtime debug panel for ${scenario.name}`);
-
-    for (const sectionId of ["works_intro", "works", "mission", "vision", "service", "stellla", "outro"]) {
-      await page.locator(`#${sectionId}`).scrollIntoViewIfNeeded();
-      await page.waitForTimeout(120);
-    }
 
     await expectNoHorizontalOverflow(page, scenario.name);
     await page.screenshot({
@@ -202,17 +178,70 @@ async function captureFixedStates(browser) {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1080 },
       locale: "en-US",
+      reducedMotion: "reduce",
     });
 
     try {
       const page = await context.newPage();
       await page.goto(`${baseUrl}/en/${shot.search}`, { waitUntil: "networkidle" });
       await assertTopPageShell(page, shot.name);
-      await page.waitForTimeout(150);
-      await page.evaluate(() => {
-        const canvas = document.querySelector("canvas");
-        if (canvas) canvas.remove();
+      const params = new URLSearchParams(shot.search.slice(1));
+      const sectionId = params.get("alcheSection");
+      await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 5000 });
+      await page.evaluate((nextOverride) => {
+        window.__setAlcheDebugOverride?.(nextOverride);
+      }, {
+        section: sectionId,
+        progress: Number(params.get("alcheProgress") ?? (sectionId === "loading" ? "0" : "1")),
+        intro: Number(params.get("alcheIntro") ?? (sectionId === "loading" ? "0.2" : "1")),
+        heroShotId: params.get("alcheHeroShot"),
       });
+      if (sectionId && sectionId !== "loading") {
+        try {
+          await page.waitForFunction(
+            (expectedSection) => {
+              const root = document.querySelector("[data-active-section]");
+              const loadingOverlay = document.querySelector("[data-loading-overlay]");
+              return (
+                root?.getAttribute("data-render-active-section") === expectedSection &&
+                root?.getAttribute("data-render-intro-ready") === "true" &&
+                loadingOverlay?.getAttribute("data-render-hidden") === "true"
+              );
+            },
+            sectionId,
+            { timeout: 2500 },
+          );
+        } catch {
+          await page.waitForFunction(
+            (expectedSection) => {
+              const root = document.querySelector("[data-active-section]");
+              const loadingOverlay = document.querySelector("[data-loading-overlay]");
+              return (
+                root?.getAttribute("data-active-section") === expectedSection &&
+                root?.getAttribute("data-intro-ready") === "true" &&
+                loadingOverlay?.getAttribute("data-hidden") === "true"
+              );
+            },
+            sectionId,
+            { timeout: 5000 },
+          );
+        }
+      } else {
+        try {
+          await page.waitForFunction(
+            () => document.querySelector("[data-active-section]")?.getAttribute("data-render-active-section") === "loading",
+            undefined,
+            { timeout: 2500 },
+          );
+        } catch {
+          await page.waitForFunction(
+            () => document.querySelector("[data-active-section]")?.getAttribute("data-active-section") === "loading",
+            undefined,
+            { timeout: 5000 },
+          );
+        }
+      }
+      await page.waitForTimeout(240);
       await page.screenshot({
         path: path.join(outputDir, `${shot.name}.png`),
         fullPage: false,

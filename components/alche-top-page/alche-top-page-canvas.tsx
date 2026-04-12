@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
 import { AlcheTopPageScene } from "@/components/alche-top-page/scene/alche-top-page-scene";
@@ -15,8 +15,18 @@ interface AlcheTopPageCanvasProps {
   introProgress: number;
   heroShotId: AlcheHeroShotId | null;
   reducedMotion: boolean;
+  kvOnly: boolean;
+  kvGlyphTexturePath: string;
   workCount: number;
+  workImagePaths: string[];
   serviceCount: number;
+}
+
+interface AlcheCanvasCaptureOverride {
+  section: AlcheTopSectionId;
+  progress: number;
+  intro: number;
+  heroShotId: AlcheHeroShotId | null;
 }
 
 export function AlcheTopPageCanvas({
@@ -25,14 +35,39 @@ export function AlcheTopPageCanvas({
   introProgress,
   heroShotId,
   reducedMotion,
+  kvOnly,
+  kvGlyphTexturePath,
   workCount,
+  workImagePaths,
   serviceCount,
 }: AlcheTopPageCanvasProps) {
   const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
+  const [captureOverride, setCaptureOverride] = useState<AlcheCanvasCaptureOverride | null>(null);
+  const resolvedActiveSection = captureOverride?.section ?? activeSection;
+  const resolvedSectionProgress = captureOverride?.progress ?? sectionProgress;
+  const resolvedIntroProgress = captureOverride?.intro ?? introProgress;
+  const resolvedHeroShotId = captureOverride?.heroShotId ?? heroShotId;
   const sceneState = useMemo(
-    () => deriveTopSceneState(activeSection, sectionProgress, introProgress, heroShotId, workCount, serviceCount),
-    [activeSection, heroShotId, introProgress, sectionProgress, serviceCount, workCount],
+    () => deriveTopSceneState(resolvedActiveSection, resolvedSectionProgress, resolvedIntroProgress, resolvedHeroShotId, workCount, serviceCount),
+    [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, serviceCount, workCount],
   );
+  const sceneReducedMotion = reducedMotion || captureMode;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const host = window as typeof window & {
+      __setAlcheSceneOverride?: (nextOverride: AlcheCanvasCaptureOverride | null) => void;
+    };
+
+    host.__setAlcheSceneOverride = (nextOverride) => {
+      setCaptureOverride(nextOverride);
+    };
+
+    return () => {
+      delete host.__setAlcheSceneOverride;
+    };
+  }, []);
 
   return (
     <Canvas
@@ -46,7 +81,15 @@ export function AlcheTopPageCanvas({
         gl.setClearColor("#000000", 1);
       }}
     >
-      <AlcheTopPageScene sceneState={sceneState} reducedMotion={reducedMotion} workCount={workCount} captureMode={captureMode} />
+      <AlcheTopPageScene
+        sceneState={sceneState}
+        reducedMotion={sceneReducedMotion}
+        kvOnly={kvOnly}
+        kvGlyphTexturePath={kvGlyphTexturePath}
+        workCount={workCount}
+        workImagePaths={workImagePaths}
+        captureMode={captureMode}
+      />
     </Canvas>
   );
 }

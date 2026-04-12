@@ -1,6 +1,6 @@
 "use client";
 
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
@@ -9,7 +9,6 @@ import { ALCHE_TOP_MEDIA_WALL, clamp01, type AlcheTopSceneState } from "@/lib/al
 import {
   createCurvedGridMaterial,
   createEmissiveWordMaterial,
-  createHaloMaterial,
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
@@ -18,11 +17,14 @@ import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components
 interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
+  backgroundOnly?: boolean;
+  glyphTexturePath: string;
 }
 
-function CurvedMediaWall({ sceneState, reducedMotion }: KvSceneSystemProps) {
+function CurvedMediaWall({ sceneState, reducedMotion, glyphTexturePath }: KvSceneSystemProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
-  const material = useMemo(() => createCurvedGridMaterial(), []);
+  const glyphTexture = useLoader(THREE.TextureLoader, glyphTexturePath);
+  const material = useMemo(() => createCurvedGridMaterial(glyphTexture), [glyphTexture]);
   const geometry = useMemo(
     () =>
       new THREE.CylinderGeometry(
@@ -37,6 +39,13 @@ function CurvedMediaWall({ sceneState, reducedMotion }: KvSceneSystemProps) {
   );
 
   useEffect(() => {
+    glyphTexture.colorSpace = THREE.SRGBColorSpace;
+    glyphTexture.wrapS = THREE.RepeatWrapping;
+    glyphTexture.wrapT = THREE.ClampToEdgeWrapping;
+    glyphTexture.needsUpdate = true;
+  }, [glyphTexture]);
+
+  useEffect(() => {
     return () => {
       geometry.dispose();
       material.dispose();
@@ -46,7 +55,7 @@ function CurvedMediaWall({ sceneState, reducedMotion }: KvSceneSystemProps) {
   useFrame((state, delta) => {
     if (!roomRef.current) return;
 
-    const pointerYaw = reducedMotion ? 0 : state.pointer.x * (sceneState.activeSection === "kv" ? 0.06 : 0.025);
+    const pointerYaw = reducedMotion ? 0 : state.pointer.x * (sceneState.activeSection === "kv" ? 0.038 : 0.016);
     const wallVisible = sceneState.kv.wallVisibility * sceneState.kv.visible;
 
     roomRef.current.rotation.y = THREE.MathUtils.damp(roomRef.current.rotation.y, pointerYaw, 2.4, delta);
@@ -85,23 +94,31 @@ function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps
     if (!groupRef.current) return;
 
     const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
-    const pointer = reducedMotion ? 0 : state.pointer.x * 0.12;
+    const pointer = reducedMotion ? 0 : state.pointer.x * 0.08;
+
+    groupRef.current.visible = visibility > 0.001;
+    if (!groupRef.current.visible) {
+      material.opacity = 0;
+      material.emissiveIntensity = 0;
+      return;
+    }
 
     groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, pointer, 2.8, delta);
     groupRef.current.position.y = THREE.MathUtils.damp(
       groupRef.current.position.y,
-      (reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.28) * 0.05) * visibility,
+      -0.12 + (reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.22) * 0.03) * visibility,
       2.8,
       delta,
     );
-    groupRef.current.scale.setScalar(THREE.MathUtils.damp(groupRef.current.scale.x, 1 + visibility * 0.02, 3, delta));
+    groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, -3.06, 3, delta);
+    groupRef.current.scale.setScalar(THREE.MathUtils.damp(groupRef.current.scale.x, 1.32 + visibility * 0.05, 3, delta));
     material.opacity = THREE.MathUtils.damp(material.opacity, visibility, 4, delta);
-    material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 1.6 + visibility * 4.4, 4, delta);
+    material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 2.2 + visibility * 5.2, 4, delta);
   });
 
   return (
-    <group ref={groupRef} position={[0, 0.02, -3.34]} scale={1.18}>
-      <WordSegments word="ALCHE" material={material} scale={1.18} depth={0.24} />
+    <group ref={groupRef} position={[0, -0.12, -3.06]} scale={1.32} visible={false}>
+      <WordSegments word="ALCHE" material={material} scale={1.18} depth={0.045} />
     </group>
   );
 }
@@ -110,7 +127,6 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
   const { size } = useThree();
   const prismRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
   const shellRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
-  const haloRef = useRef<THREE.Mesh<THREE.RingGeometry, THREE.ShaderMaterial>>(null);
   const edgeRef = useRef<THREE.LineSegments<THREE.EdgesGeometry, THREE.LineBasicMaterial>>(null);
   const geometry = useMemo(() => {
     const created = new THREE.ExtrudeGeometry(createPrismAShape(1.18), {
@@ -126,10 +142,8 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
     return created;
   }, []);
   const edgesGeometry = useMemo(() => new THREE.EdgesGeometry(geometry, 18), [geometry]);
-  const haloGeometry = useMemo(() => new THREE.RingGeometry(1.62, 2.88, 192), []);
   const coreMaterial = useMemo(() => createPrismMaterial("core"), []);
   const shellMaterial = useMemo(() => createPrismMaterial("shell"), []);
-  const haloMaterial = useMemo(() => createHaloMaterial(), []);
   const targetPosition = useMemo(() => new THREE.Vector3(), []);
   const targetRotation = useMemo(() => new THREE.Euler(), []);
 
@@ -137,12 +151,10 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
     return () => {
       geometry.dispose();
       edgesGeometry.dispose();
-      haloGeometry.dispose();
       coreMaterial.dispose();
       shellMaterial.dispose();
-      haloMaterial.dispose();
     };
-  }, [coreMaterial, edgesGeometry, geometry, haloGeometry, haloMaterial, shellMaterial]);
+  }, [coreMaterial, edgesGeometry, geometry, shellMaterial]);
 
   useFrame((state, delta) => {
     const heroShot = sceneState.heroShotId ? ALCHE_HERO_SHOTS[sceneState.heroShotId] : null;
@@ -156,21 +168,23 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
     const introHandoff = sceneState.worksIntro.handoffMix;
     const missionFade = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.emblemMix);
     const residualVisibility = sceneState.kv.prismVisibility * sceneState.kv.visible;
+    const worksIntroResidualFade =
+      sceneState.activeSection === "works_intro" ? 1 - THREE.MathUtils.smoothstep(introHandoff, 0.12, 0.78) * 0.82 : 1;
 
     if (sceneState.activeSection === "kv" || sceneState.activeSection === "loading" || sceneState.activeSection === "works_intro") {
       targetPosition.set(
-        lockPosition[0] + (heroShot?.prismEmphasis.positionOffset[0] ?? 0) + introHandoff * 0.22,
-        lockPosition[1] + floatY + (heroShot?.prismEmphasis.positionOffset[1] ?? 0),
-        lockPosition[2] + (heroShot?.prismEmphasis.positionOffset[2] ?? 0) - introHandoff * 0.34,
+        lockPosition[0] + (heroShot?.prismEmphasis.positionOffset[0] ?? 0) + introHandoff * 0.54,
+        lockPosition[1] + floatY + (heroShot?.prismEmphasis.positionOffset[1] ?? 0) - introHandoff * 0.06,
+        lockPosition[2] + (heroShot?.prismEmphasis.positionOffset[2] ?? 0) - introHandoff * 1.02,
       );
       targetRotation.set(
         lockRotation[0] + pointerPitch + (heroShot?.prismEmphasis.rotationOffset[0] ?? 0),
-        lockRotation[1] + pointerYaw + (heroShot?.prismEmphasis.rotationOffset[1] ?? 0) - introHandoff * 0.24,
+        lockRotation[1] + pointerYaw + (heroShot?.prismEmphasis.rotationOffset[1] ?? 0) - introHandoff * 0.5,
         lockRotation[2] + (heroShot?.prismEmphasis.rotationOffset[2] ?? 0),
       );
     } else if (sceneState.activeSection === "works" || sceneState.activeSection === "works_outro") {
-      targetPosition.set(0.34, -0.04 + floatY, -0.86);
-      targetRotation.set(0.12, 0.08, 0);
+      targetPosition.set(0.54, -0.06 + floatY, -1.46);
+      targetRotation.set(0.1, 0.18, 0);
     } else if (sceneState.activeSection === "mission_in") {
       targetPosition.set(0.06, 0.02, -1.14);
       targetRotation.set(0.02, 0.0, 0.0);
@@ -183,17 +197,20 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
       sceneState.activeSection === "kv" || sceneState.activeSection === "loading"
         ? sceneState.kv.prismScale
         : sceneState.activeSection === "works_intro"
-          ? THREE.MathUtils.lerp(sceneState.kv.prismScale, 0.78, introHandoff)
+          ? THREE.MathUtils.lerp(sceneState.kv.prismScale, 0.22, THREE.MathUtils.smoothstep(introHandoff, 0.16, 0.86))
           : sceneState.activeSection === "works"
-            ? 0.68 - sceneState.works.cardMix * 0.08
+            ? 0.28 - sceneState.works.cardMix * 0.08
             : sceneState.activeSection === "works_outro"
-              ? 0.52 - sceneState.worksOutro.clearMix * 0.18
+              ? 0.14 - sceneState.worksOutro.clearMix * 0.08
               : 0.3 - missionFade * 0.18;
 
     const whiteMix = clamp01(sceneState.missionIn.whiteMix + sceneState.mission.whiteMix * 0.86 + sceneState.vision.lineMix * 0.4);
-    const coreOpacityTarget = residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionFade : 1);
-    const shellOpacityTarget = coreOpacityTarget * 0.34;
-    const edgeOpacityTarget = sceneState.activeSection === "mission_in" ? 0.42 * (1 - sceneState.missionIn.emblemMix) : coreOpacityTarget * 0.54;
+    const coreOpacityTarget = residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionFade : worksIntroResidualFade);
+    const shellOpacityTarget = coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.24 : 0.34);
+    const edgeOpacityTarget =
+      sceneState.activeSection === "mission_in"
+        ? 0.42 * (1 - sceneState.missionIn.emblemMix)
+        : coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.28 : 0.54);
 
     coreMaterial.uniforms.uTime.value = state.clock.elapsedTime;
     coreMaterial.uniforms.uIntro.value = sceneState.introProgress;
@@ -208,10 +225,6 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
     shellMaterial.uniforms.uWhiteMix.value = coreMaterial.uniforms.uWhiteMix.value;
     shellMaterial.uniforms.uIntensity.value = THREE.MathUtils.damp(shellMaterial.uniforms.uIntensity.value, 0.48, 4, delta);
     shellMaterial.uniforms.uOpacity.value = THREE.MathUtils.damp(shellMaterial.uniforms.uOpacity.value, shellOpacityTarget, 4, delta);
-
-    haloMaterial.uniforms.uTime.value = state.clock.elapsedTime;
-    haloMaterial.uniforms.uIntro.value = sceneState.introProgress;
-    haloMaterial.uniforms.uWhiteMix.value = coreMaterial.uniforms.uWhiteMix.value;
 
     if (prismRef.current) {
       prismRef.current.position.x = THREE.MathUtils.damp(prismRef.current.position.x, targetPosition.x, 4, delta);
@@ -234,23 +247,12 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
       edgeRef.current.rotation.copy(prismRef.current.rotation);
       edgeRef.current.scale.setScalar(prismRef.current.scale.x * 1.003);
       edgeRef.current.material.color.copy(createPrismEdgeColor(state.clock.elapsedTime * 0.06, coreMaterial.uniforms.uWhiteMix.value));
-      edgeRef.current.material.opacity = THREE.MathUtils.damp(edgeRef.current.material.opacity, edgeOpacityTarget, 4, delta);
-    }
-
-    if (haloRef.current && prismRef.current) {
-      haloRef.current.position.set(prismRef.current.position.x, prismRef.current.position.y, prismRef.current.position.z - 0.84);
-      haloRef.current.rotation.z += delta * 0.03;
-      const haloScale = sceneState.activeSection === "kv" ? 1 : sceneState.activeSection.startsWith("works") ? 0.82 : 0.36;
-      haloRef.current.scale.setScalar(THREE.MathUtils.damp(haloRef.current.scale.x, haloScale, 4, delta));
+      edgeRef.current.material.opacity = THREE.MathUtils.damp(edgeRef.current.material.opacity, edgeOpacityTarget * 0.82, 4, delta);
     }
   });
 
   return (
     <>
-      <mesh ref={haloRef} geometry={haloGeometry}>
-        <primitive object={haloMaterial} attach="material" />
-      </mesh>
-
       <mesh ref={shellRef} geometry={geometry}>
         <primitive object={shellMaterial} attach="material" />
       </mesh>
@@ -266,12 +268,12 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
   );
 }
 
-export function KvSceneSystem(props: KvSceneSystemProps) {
+export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSystemProps) {
   return (
     <>
       <CurvedMediaWall {...props} />
-      <FloatingAlcheWordmark {...props} />
-      <HeroPrism {...props} />
+      {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
+      {backgroundOnly ? null : <HeroPrism {...props} />}
     </>
   );
 }

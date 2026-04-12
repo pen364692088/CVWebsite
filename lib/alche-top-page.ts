@@ -18,11 +18,16 @@ export const ALCHE_TOP_SECTION_IDS = [
 
 export type AlcheTopSectionId = (typeof ALCHE_TOP_SECTION_IDS)[number];
 
+export const ALCHE_TOP_RUNTIME_MODE = "kv-only" as const;
+
 export const ALCHE_SCROLLABLE_SECTION_IDS = ALCHE_TOP_SECTION_IDS.filter(
   (sectionId): sectionId is Exclude<AlcheTopSectionId, "loading"> => sectionId !== "loading",
 );
 
 export type AlcheScrollableSectionId = (typeof ALCHE_SCROLLABLE_SECTION_IDS)[number];
+
+export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] =
+  ALCHE_TOP_RUNTIME_MODE === "kv-only" ? ["kv"] : ALCHE_SCROLLABLE_SECTION_IDS;
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
 
@@ -251,29 +256,29 @@ export const ALCHE_TOP_STELLLA_VISIBILITY: readonly AlcheTopSectionId[] = ["stel
 
 export const ALCHE_TOP_CAMERA_STATES: Record<AlcheTopSectionId, AlcheTopCameraState> = {
   loading: {
-    position: [ALCHE_HERO_LOCK.camera.position[0], ALCHE_HERO_LOCK.camera.position[1], ALCHE_HERO_LOCK.camera.position[2] + 0.26],
-    target: ALCHE_HERO_LOCK.camera.target,
-    fov: ALCHE_HERO_LOCK.camera.fov + 1.2,
+    position: [0.08, 0.14, 5.68],
+    target: [0.02, 0.02, -0.86],
+    fov: 31.6,
   },
   kv: {
-    position: ALCHE_HERO_LOCK.camera.position,
-    target: ALCHE_HERO_LOCK.camera.target,
-    fov: ALCHE_HERO_LOCK.camera.fov,
+    position: [0.02, 0.08, 5.38],
+    target: [0.04, 0.02, -1.02],
+    fov: 30.2,
   },
   works_intro: {
-    position: [0.24, 0.16, 5.92],
-    target: [0.24, 0.08, -0.82],
-    fov: 33.2,
+    position: [0.18, 0.14, 5.84],
+    target: [0.28, 0.06, -1.02],
+    fov: 31.8,
   },
   works: {
-    position: [0.32, 0.1, 6.42],
-    target: [0.28, 0.02, -1.08],
-    fov: 36.4,
+    position: [0.46, 0.08, 6.18],
+    target: [0.58, 0.02, -1.38],
+    fov: 33.6,
   },
   works_outro: {
-    position: [0.16, 0.14, 6.56],
-    target: [0.08, 0.01, -1.52],
-    fov: 35.2,
+    position: [0.22, 0.1, 6.32],
+    target: [0.14, 0.02, -1.72],
+    fov: 33.2,
   },
   mission_in: {
     position: [0.08, 0.14, 6.1],
@@ -353,6 +358,11 @@ export function getTopGroupForSection(sectionId: AlcheTopSectionId): AlcheTopGro
   return ALCHE_TOP_SECTION_MAP[sectionId].groupId;
 }
 
+export function normalizeTopRuntimeSection(sectionId: AlcheTopSectionId): AlcheTopSectionId {
+  if (ALCHE_TOP_RUNTIME_MODE !== "kv-only") return sectionId;
+  return sectionId === "loading" ? "loading" : "kv";
+}
+
 export function deriveKvState(introProgress: number) {
   return {
     wallEstablish: smoothstep(remapRange(introProgress, 0.08, 0.42)),
@@ -363,16 +373,16 @@ export function deriveKvState(introProgress: number) {
 
 export function deriveWorksIntroState(progress: number) {
   return {
-    handoffMix: smoothstep(remapRange(progress, 0.0, 0.72)),
-    sweepMix: smoothstep(remapRange(progress, 0.12, 0.82)),
-    alcheFade: smoothstep(remapRange(progress, 0.18, 0.54)),
+    handoffMix: smoothstep(remapRange(progress, 0.0, 0.82)),
+    sweepMix: smoothstep(remapRange(progress, 0.06, 0.74)),
+    alcheFade: smoothstep(remapRange(progress, 0.08, 0.42)),
   };
 }
 
 export function deriveWorksState(progress: number, workCount: number) {
   const clamped = clamp01(progress);
-  const cardMix = smoothstep(remapRange(clamped, 0.08, 0.58));
-  const browseProgress = smoothstep(remapRange(clamped, 0.32, 1.0));
+  const cardMix = smoothstep(remapRange(clamped, 0.14, 0.68));
+  const browseProgress = smoothstep(remapRange(clamped, 0.46, 1.0));
   const travel = browseProgress * Math.max(workCount - 1, 0);
   const activeIndex = Math.min(workCount - 1, Math.floor(travel + 0.35));
 
@@ -387,8 +397,8 @@ export function deriveWorksState(progress: number, workCount: number) {
 
 export function deriveWorksOutroState(progress: number) {
   return {
-    clearMix: smoothstep(remapRange(progress, 0.0, 0.84)),
-    residualMix: 1 - smoothstep(remapRange(progress, 0.36, 1.0)),
+    clearMix: smoothstep(remapRange(progress, 0.08, 0.78)),
+    residualMix: 1 - smoothstep(remapRange(progress, 0.26, 0.88)),
   };
 }
 
@@ -443,8 +453,8 @@ export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroS
   return {
     visible: 1 - handoffMix * 0.58,
     wallVisibility: intro.wallEstablish,
-    wallGlow: heroShot?.chamberMassing.roomGlow ?? 0.74,
-    wallExposure: heroShot?.chamberMassing.roomExposure ?? 0.76,
+    wallGlow: heroShot?.chamberMassing.roomGlow ?? 0.96,
+    wallExposure: heroShot?.chamberMassing.roomExposure ?? 0.94,
     wallWhiteMix: 0,
     wallFlatten: 0,
     wordVisibility: intro.wordReveal * (1 - handoffMix),
@@ -580,55 +590,56 @@ export function deriveTopSceneState(
   workCount: number,
   serviceCount: number,
 ): AlcheTopSceneState {
+  const runtimeSection = normalizeTopRuntimeSection(activeSection);
   const progress = clamp01(sectionProgress);
   const worksIntro: AlcheWorksIntroSceneState =
-    activeSection === "works_intro"
+    runtimeSection === "works_intro"
       ? deriveWorksIntroSceneState(progress)
       : { visible: 0, handoffMix: 0, sweepMix: 0, alcheFade: 0 };
   const works: AlcheWorksSceneState =
-    activeSection === "works"
+    runtimeSection === "works"
       ? deriveWorksSceneState(progress, workCount)
       : { visible: 0, cardMix: 0, browseProgress: 0, travel: 0, activeIndex: 0, activeBlend: 0 };
   const worksOutro: AlcheWorksOutroSceneState =
-    activeSection === "works_outro"
+    runtimeSection === "works_outro"
       ? deriveWorksOutroSceneState(progress)
       : { visible: 0, clearMix: 0, residualMix: 0 };
   const missionIn: AlcheMissionInSceneState =
-    activeSection === "mission_in"
+    runtimeSection === "mission_in"
       ? deriveMissionInSceneState(progress)
       : { visible: 0, flattenMix: 0, whiteMix: 0, emblemMix: 0 };
   const mission: AlcheMissionSceneState =
-    activeSection === "mission"
+    runtimeSection === "mission"
       ? deriveMissionSceneState(progress)
       : { visible: 0, whiteMix: 0, emblemMix: 0 };
   const vision: AlcheVisionSceneState =
-    activeSection === "vision"
+    runtimeSection === "vision"
       ? deriveVisionSceneState(progress)
       : { visible: 0, lineMix: 0, densityMix: 0, drainMix: 0 };
   const visionOut: AlcheVisionOutSceneState =
-    activeSection === "vision_out"
+    runtimeSection === "vision_out"
       ? deriveVisionOutSceneState(progress)
       : { visible: 0, drainMix: 0 };
   const serviceIn: AlcheServiceInSceneState =
-    activeSection === "service_in"
+    runtimeSection === "service_in"
       ? deriveServiceInSceneState(progress)
       : { visible: 0, entryMix: 0, densityMix: 0 };
   const service: AlcheServiceSceneState =
-    activeSection === "service"
+    runtimeSection === "service"
       ? deriveServiceSceneState(progress, serviceCount)
       : { visible: 0, densityMix: 0, browse: 0, activeIndex: 0 };
   const stellla: AlcheStelllaSceneState =
-    activeSection === "stellla"
+    runtimeSection === "stellla"
       ? deriveStelllaSceneState(progress)
       : { visible: 0, architectureMix: 0, editorialMix: 0, frameMix: 0 };
   const outro: AlcheOutroSceneState =
-    activeSection === "outro"
+    runtimeSection === "outro"
       ? deriveOutroSceneState(progress)
       : { visible: 0, stageMix: 0, wordmarkMix: 0, footerMix: 0 };
 
-  let camera = ALCHE_TOP_CAMERA_STATES[activeSection];
+  let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
-  switch (activeSection) {
+  switch (runtimeSection) {
     case "loading":
       camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.loading, ALCHE_TOP_CAMERA_STATES.kv, smoothstep(remapRange(introProgress, 0.08, 0.48)));
       break;
@@ -655,21 +666,25 @@ export function deriveTopSceneState(
   }
 
   const kv = deriveKvSceneState(
-    activeSection === "loading" ? introProgress : Math.max(introProgress, 1),
-    activeSection === "kv" || activeSection === "loading" ? heroShotId : null,
-    activeSection === "works_intro" ? worksIntro.handoffMix : activeSection === "works" ? 1 : 0,
+    runtimeSection === "loading" ? introProgress : Math.max(introProgress, 1),
+    runtimeSection === "kv" || runtimeSection === "loading" ? heroShotId : null,
+    runtimeSection === "works_intro" ? worksIntro.handoffMix : runtimeSection === "works" ? 1 : 0,
   );
 
-  if (activeSection === "works" || activeSection === "works_outro" || activeSection === "mission_in") {
-    kv.wallVisibility = activeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
-    kv.wordVisibility = 0;
-    kv.prismVisibility = activeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : activeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
-    kv.wallFlatten = activeSection === "mission_in" ? missionIn.flattenMix : 0;
-    kv.wallWhiteMix = activeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
-    kv.visible = activeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;
+  if (runtimeSection === "works_intro") {
+    kv.wordVisibility *= 1 - worksIntro.alcheFade;
   }
 
-  if (activeSection === "mission" || activeSection === "vision" || activeSection === "vision_out" || activeSection === "service_in" || activeSection === "service" || activeSection === "stellla" || activeSection === "outro") {
+  if (runtimeSection === "works" || runtimeSection === "works_outro" || runtimeSection === "mission_in") {
+    kv.wallVisibility = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
+    kv.wordVisibility = 0;
+    kv.prismVisibility = runtimeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : runtimeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
+    kv.wallFlatten = runtimeSection === "mission_in" ? missionIn.flattenMix : 0;
+    kv.wallWhiteMix = runtimeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
+    kv.visible = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;
+  }
+
+  if (runtimeSection === "mission" || runtimeSection === "vision" || runtimeSection === "vision_out" || runtimeSection === "service_in" || runtimeSection === "service" || runtimeSection === "stellla" || runtimeSection === "outro") {
     kv.visible = 0;
     kv.wallVisibility = 0;
     kv.wordVisibility = 0;
@@ -678,7 +693,7 @@ export function deriveTopSceneState(
   }
 
   return {
-    activeSection,
+    activeSection: runtimeSection,
     sectionProgress: progress,
     introProgress,
     heroShotId,

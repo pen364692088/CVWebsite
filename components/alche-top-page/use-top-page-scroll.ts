@@ -9,12 +9,14 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import {
   ALCHE_SCROLLABLE_SECTION_IDS,
+  ALCHE_TOP_RENDERABLE_SECTIONS,
   ALCHE_TOP_SCROLL_TUNING,
   ALCHE_TOP_SECTION_IDS,
   ALCHE_TOP_TIMINGS,
   clamp01,
   deriveGroupProgress,
   getTopGroupForSection,
+  normalizeTopRuntimeSection,
   type AlcheScrollableSectionId,
   type AlcheTopGroupId,
   type AlcheTopSectionId,
@@ -38,11 +40,12 @@ function readDebugState(): DebugState | null {
   const section = params.get("alcheSection") ?? params.get("alchePhase");
   const heroShotId = readAlcheHeroShotId(params.get("alcheHeroShot"));
   if (!section || !ALCHE_TOP_SECTION_IDS.includes(section as AlcheTopSectionId)) return null;
+  const normalizedSection = normalizeTopRuntimeSection(section as AlcheTopSectionId);
 
   return {
-    section: section as AlcheTopSectionId,
-    progress: clamp01(Number(params.get("alcheProgress") ?? (section === "loading" ? "0" : "1"))),
-    intro: clamp01(Number(params.get("alcheIntro") ?? (section === "loading" ? "0.2" : "1"))),
+    section: normalizedSection,
+    progress: clamp01(Number(params.get("alcheProgress") ?? (normalizedSection === "loading" ? "0" : "1"))),
+    intro: clamp01(Number(params.get("alcheIntro") ?? (normalizedSection === "loading" ? "0.2" : "1"))),
     heroShotId,
   };
 }
@@ -57,7 +60,7 @@ function getSectionProgress(node: HTMLElement | null) {
 function findSectionAtViewport(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
 
-  for (const sectionId of ALCHE_SCROLLABLE_SECTION_IDS) {
+  for (const sectionId of ALCHE_TOP_RENDERABLE_SECTIONS) {
     const node = sectionRefs[sectionId];
     if (!node) continue;
     const rect = node.getBoundingClientRect();
@@ -86,6 +89,15 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
   const [sectionProgress, setSectionProgress] = useState(debugState?.progress ?? 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
   const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
+  const renderDebugState = typeof window === "undefined" ? null : readDebugState();
+  const resolvedTrackedSection =
+    renderDebugState?.section === "loading"
+      ? "kv"
+      : ((renderDebugState?.section as AlcheScrollableSectionId | undefined) ?? trackedSection);
+  const resolvedActiveSection = renderDebugState?.section ?? activeSection;
+  const resolvedSectionProgress = renderDebugState?.progress ?? sectionProgress;
+  const resolvedIntroProgress = renderDebugState?.intro ?? introProgress;
+  const resolvedHeroShotId = renderDebugState?.heroShotId ?? heroShotId;
 
   useEffect(() => {
     trackedSectionRef.current = trackedSection;
@@ -165,7 +177,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       },
     });
 
-    const activeTriggers = ALCHE_SCROLLABLE_SECTION_IDS.map((sectionId) => {
+    const activeTriggers = ALCHE_TOP_RENDERABLE_SECTIONS.map((sectionId) => {
       const section = sectionRefs.current[sectionId];
       if (!section) return null;
 
@@ -178,7 +190,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       });
     });
 
-    const progressTriggers = ALCHE_SCROLLABLE_SECTION_IDS.map((sectionId) => {
+    const progressTriggers = ALCHE_TOP_RENDERABLE_SECTIONS.map((sectionId) => {
       const section = sectionRefs.current[sectionId];
       if (!section) return null;
 
@@ -229,8 +241,11 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     };
   }, [reducedMotion, sectionRefs]);
 
-  const activeGroup = useMemo<AlcheTopGroupId | null>(() => getTopGroupForSection(activeSection), [activeSection]);
-  const groupProgress = useMemo(() => deriveGroupProgress(activeSection, sectionProgress), [activeSection, sectionProgress]);
+  const activeGroup = useMemo<AlcheTopGroupId | null>(() => getTopGroupForSection(resolvedActiveSection), [resolvedActiveSection]);
+  const groupProgress = useMemo(
+    () => deriveGroupProgress(resolvedActiveSection, resolvedSectionProgress),
+    [resolvedActiveSection, resolvedSectionProgress],
+  );
 
   function scrollToSection(target: HTMLElement | null) {
     if (!target) return;
@@ -245,13 +260,13 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
 
   return {
     reducedMotion: Boolean(reducedMotion),
-    activeSection,
-    trackedSection,
+    activeSection: resolvedActiveSection,
+    trackedSection: resolvedTrackedSection,
     activeGroup,
-    sectionProgress,
+    sectionProgress: resolvedSectionProgress,
     groupProgress,
-    introProgress,
-    heroShotId,
+    introProgress: resolvedIntroProgress,
+    heroShotId: resolvedHeroShotId,
     scrollToSection,
   };
 }
