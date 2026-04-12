@@ -125,7 +125,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
-  const workImagePaths = copy.works.items.map((item) => assetPath(item.imageSrc));
   const kvGlyphTexturePath = assetPath("/alche-top-page/kv/hero-wall-glyphs.png");
 
   useEffect(() => {
@@ -226,7 +225,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               kvOnly={kvOnly}
               kvGlyphTexturePath={kvGlyphTexturePath}
               workCount={copy.works.items.length}
-              workImagePaths={workImagePaths}
               serviceCount={copy.service.items.length}
             />
           ) : (

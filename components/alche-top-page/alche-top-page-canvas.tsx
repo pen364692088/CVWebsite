@@ -18,7 +18,6 @@ interface AlcheTopPageCanvasProps {
   kvOnly: boolean;
   kvGlyphTexturePath: string;
   workCount: number;
-  workImagePaths: string[];
   serviceCount: number;
 }
 
@@ -38,7 +37,6 @@ export function AlcheTopPageCanvas({
   kvOnly,
   kvGlyphTexturePath,
   workCount,
-  workImagePaths,
   serviceCount,
 }: AlcheTopPageCanvasProps) {
   const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
@@ -87,7 +85,6 @@ export function AlcheTopPageCanvas({
         kvOnly={kvOnly}
         kvGlyphTexturePath={kvGlyphTexturePath}
         workCount={workCount}
-        workImagePaths={workImagePaths}
         captureMode={captureMode}
       />
     </Canvas>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ComponentProps } from "react";
 import * as THREE from "three";
 
 import { AlcheTopPagePostProcessing } from "@/components/alche-top-page/scene/alche-top-page-postprocessing";
@@ -19,11 +19,10 @@ interface AlcheTopPageSceneProps {
   kvOnly: boolean;
   kvGlyphTexturePath: string;
   workCount: number;
-  workImagePaths: string[];
   captureMode: boolean;
 }
 
-export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvGlyphTexturePath, workCount, workImagePaths, captureMode }: AlcheTopPageSceneProps) {
+export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvGlyphTexturePath, workCount, captureMode }: AlcheTopPageSceneProps) {
   const { camera } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
   const targetRef = useRef(new THREE.Vector3(...sceneState.camera.target));
@@ -48,6 +47,7 @@ export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvGlyphTe
 
   const ambientIntensity =
     sceneState.activeSection === "mission" || sceneState.activeSection === "vision" || sceneState.activeSection === "vision_out" ? 0.24 : 0.08;
+  const worksSceneProps = { sceneState, reducedMotion, workCount } as unknown as ComponentProps<typeof WorksSceneSystem>;
 
   return (
     <>
@@ -68,7 +68,7 @@ export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvGlyphTe
       <KvSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} backgroundOnly={kvOnly} glyphTexturePath={kvGlyphTexturePath} />
       {kvOnly ? null : (
         <>
-          <WorksSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} workCount={workCount} workImagePaths={workImagePaths} />
+          <WorksSceneSystem {...worksSceneProps} />
           <ConceptFieldSceneSystem sceneState={sceneState} />
           <ServiceSceneSystem sceneState={sceneState} />
           <StelllaSceneSystem sceneState={sceneState} />
