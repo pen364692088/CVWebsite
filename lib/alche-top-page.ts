@@ -208,6 +208,13 @@ export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
 
 export const ALCHE_TOP_WALL_TILE_DENSITY = 12 as const;
 export const ALCHE_TOP_KV_WALL_ARC_STRENGTH = 1.95 as const;
+export const ALCHE_TOP_MOONFLOW = {
+  y: 0.18,
+  depthMix: 0.5,
+  thickness: 0.016,
+  widthRatio: 0.64,
+  tracking: 0.14,
+} as const;
 
 export const ALCHE_TOP_POST = {
   bloomStrength: 0.22,

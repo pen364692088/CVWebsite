@@ -6,6 +6,7 @@ import * as THREE from "three";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
+  ALCHE_TOP_MOONFLOW,
   ALCHE_TOP_KV_WALL_ARC_STRENGTH,
   ALCHE_TOP_MEDIA_WALL,
   ALCHE_TOP_WALL_TILE_DENSITY,
@@ -18,6 +19,7 @@ import {
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
+import { createRoundedWordGeometry } from "@/components/alche-top-page/scene/moonflow-geometry";
 import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
 
 interface KvSceneSystemProps {
@@ -134,6 +136,66 @@ function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps
       <WordSegments word="ALCHE" material={material} scale={1.18} depth={0.045} />
     </group>
   );
+}
+
+function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
+  const { camera, size } = useThree();
+  const titleRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshStandardMaterial>>(null);
+  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
+  const targetPosition = useMemo(
+    () => new THREE.Vector3(0, ALCHE_TOP_MOONFLOW.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix),
+    [effectiveRadius],
+  );
+  const { geometry, width } = useMemo(
+    () => createRoundedWordGeometry("MOONFLOW", ALCHE_TOP_MOONFLOW.thickness, ALCHE_TOP_MOONFLOW.tracking),
+    [],
+  );
+  const material = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#070707",
+        roughness: 0.92,
+        metalness: 0.04,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
+  useFrame((_, delta) => {
+    if (!titleRef.current) return;
+
+    const perspectiveCamera = camera as THREE.PerspectiveCamera;
+    const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
+    const distance = perspectiveCamera.position.distanceTo(targetPosition);
+    const viewportHeight = 2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov * 0.5)) * distance;
+    const viewportWidth = viewportHeight * (size.width / Math.max(size.height, 1));
+    const targetScale = (viewportWidth * ALCHE_TOP_MOONFLOW.widthRatio) / Math.max(width, 0.0001);
+
+    titleRef.current.visible = visibility > 0.001;
+    if (!titleRef.current.visible) {
+      material.opacity = 0;
+      return;
+    }
+
+    titleRef.current.position.x = THREE.MathUtils.damp(titleRef.current.position.x, targetPosition.x, 3.6, delta);
+    titleRef.current.position.y = THREE.MathUtils.damp(titleRef.current.position.y, targetPosition.y, 3.6, delta);
+    titleRef.current.position.z = THREE.MathUtils.damp(titleRef.current.position.z, targetPosition.z, 3.6, delta);
+    titleRef.current.rotation.set(0, 0, 0);
+    const nextScale = THREE.MathUtils.damp(Math.abs(titleRef.current.scale.x), targetScale, 3.8, delta);
+    titleRef.current.scale.set(-nextScale, nextScale, nextScale);
+    material.opacity = THREE.MathUtils.damp(material.opacity, visibility * 0.98, 4.2, delta);
+  });
+
+  return <mesh ref={titleRef} geometry={geometry} material={material} visible={false} position={[0, ALCHE_TOP_MOONFLOW.y, 0]} />;
 }
 
 function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
@@ -285,6 +347,7 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
   return (
     <>
       <CurvedMediaWall {...props} />
+      {backgroundOnly ? <MoonflowTitle {...props} /> : null}
       {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
       {backgroundOnly ? null : <HeroPrism {...props} />}
     </>
