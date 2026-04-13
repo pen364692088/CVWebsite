@@ -218,7 +218,8 @@ export const ALCHE_TOP_MOONFLOW = {
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
-  path: "/alche-top-page/kv/tetrahedron-cutout-simple.glb",
+  path: "/alche-top-page/kv/tetrahedron-cutout-standard-uv-grid.glb",
+  texturePath: "/alche-top-page/kv/tetrahedron-cutout-white-grid.png",
   y: 0.08,
   depthOffset: 0.38,
   targetHeight: 1.84,

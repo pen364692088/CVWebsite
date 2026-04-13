@@ -27,32 +27,6 @@ import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
 
-function ensureGeneratedUv(geometry: THREE.BufferGeometry) {
-  if (geometry.getAttribute("uv")) return geometry;
-
-  const cloned = geometry.clone().toNonIndexed();
-  const position = cloned.getAttribute("position");
-  if (!position) return cloned;
-
-  cloned.computeBoundingBox();
-  const bounds = cloned.boundingBox;
-  if (!bounds) return cloned;
-
-  const size = new THREE.Vector3();
-  bounds.getSize(size);
-  const uv = new Float32Array(position.count * 2);
-
-  for (let index = 0; index < position.count; index += 1) {
-    const x = position.getX(index);
-    const y = position.getY(index);
-    uv[index * 2] = size.x > 0 ? (x - bounds.min.x) / size.x : 0.5;
-    uv[index * 2 + 1] = size.y > 0 ? (y - bounds.min.y) / size.y : 0.5;
-  }
-
-  cloned.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-  return cloned;
-}
-
 interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
@@ -238,10 +212,10 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
   return <primitive ref={textRef} object={text} visible={false} />;
 }
 
-function CenterHeroModel({ sceneState, wallTexturePath }: KvSceneSystemProps) {
+function CenterHeroModel({ sceneState }: Pick<KvSceneSystemProps, "sceneState">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
-  const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
+  const baseTexture = useLoader(THREE.TextureLoader, assetPath(ALCHE_TOP_CENTER_MODEL.texturePath));
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const targetPosition = useMemo(
     () => new THREE.Vector3(0, ALCHE_TOP_CENTER_MODEL.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix + ALCHE_TOP_CENTER_MODEL.depthOffset),
@@ -251,9 +225,9 @@ function CenterHeroModel({ sceneState, wallTexturePath }: KvSceneSystemProps) {
     const cloned = gltf.scene.clone(true);
     const map = baseTexture.clone();
     map.colorSpace = THREE.SRGBColorSpace;
-    map.wrapS = THREE.RepeatWrapping;
-    map.wrapT = THREE.RepeatWrapping;
-    map.repeat.set(7, 7);
+    map.flipY = false;
+    map.wrapS = THREE.ClampToEdgeWrapping;
+    map.wrapT = THREE.ClampToEdgeWrapping;
     map.minFilter = THREE.LinearFilter;
     map.magFilter = THREE.LinearFilter;
     map.generateMipmaps = false;
@@ -262,7 +236,6 @@ function CenterHeroModel({ sceneState, wallTexturePath }: KvSceneSystemProps) {
     cloned.traverse((child) => {
       if (!("isMesh" in child) || child.isMesh !== true) return;
       const mesh = child as THREE.Mesh;
-      mesh.geometry = ensureGeneratedUv(mesh.geometry);
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.renderOrder = 4;
