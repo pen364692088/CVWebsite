@@ -128,7 +128,7 @@ export function AlcheTopPagePostProcessing({ sceneState }: AlcheTopPagePostProce
     const whiteMix = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.whiteMix, sceneState.vision.densityMix * 0.42);
     const bloomStrength =
       kvOnly
-        ? 0.16
+        ? 0.02
         : section === "kv" || section === "loading"
           ? ALCHE_TOP_POST.bloomStrength
         : section === "works" || section === "works_intro"
@@ -138,13 +138,13 @@ export function AlcheTopPagePostProcessing({ sceneState }: AlcheTopPagePostProce
             : 0.14;
 
     bloomPass.strength = bloomStrength * Math.max(sceneState.introProgress, 0.15);
-    bloomPass.radius = kvOnly ? 0.34 : section === "works" || section === "works_outro" ? 0.42 : ALCHE_TOP_POST.bloomRadius;
-    bloomPass.threshold = whiteMix > 0.4 ? 0.78 : ALCHE_TOP_POST.bloomThreshold;
+    bloomPass.radius = kvOnly ? 0.12 : section === "works" || section === "works_outro" ? 0.42 : ALCHE_TOP_POST.bloomRadius;
+    bloomPass.threshold = kvOnly ? 0.99 : whiteMix > 0.4 ? 0.78 : ALCHE_TOP_POST.bloomThreshold;
 
     finalPass.uniforms.uTime.value = state.clock.elapsedTime;
-    finalPass.uniforms.uChromatic.value = kvOnly ? 0.00072 : section === "works" || section === "works_intro" ? 0.0014 : ALCHE_TOP_POST.chromaticOffset;
-    finalPass.uniforms.uNoise.value = kvOnly ? 0.01 : section === "outro" ? 0.01 : section === "works" ? 0.024 : ALCHE_TOP_POST.filmNoise;
-    finalPass.uniforms.uVignette.value = kvOnly ? 0.16 : section === "kv" || section === "loading" ? ALCHE_TOP_POST.vignette : section === "outro" ? 0.12 : 0.18;
+    finalPass.uniforms.uChromatic.value = kvOnly ? 0.0 : section === "works" || section === "works_intro" ? 0.0014 : ALCHE_TOP_POST.chromaticOffset;
+    finalPass.uniforms.uNoise.value = kvOnly ? 0.002 : section === "outro" ? 0.01 : section === "works" ? 0.024 : ALCHE_TOP_POST.filmNoise;
+    finalPass.uniforms.uVignette.value = kvOnly ? 0.04 : section === "kv" || section === "loading" ? ALCHE_TOP_POST.vignette : section === "outro" ? 0.12 : 0.18;
     finalPass.uniforms.uWhiteMix.value = whiteMix;
 
     composer.render();

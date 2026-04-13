@@ -15,13 +15,13 @@ function spectralPalette(t: number) {
   return c.clone().lerp(d, (t - 0.66) / 0.34);
 }
 
-export function createCurvedGridMaterial(glyphTexture: THREE.Texture) {
+export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     transparent: true,
     depthWrite: false,
     uniforms: {
-      uGlyphMap: { value: glyphTexture },
+      uWallMap: { value: wallTexture },
       uTime: { value: 0 },
       uIntro: { value: 0 },
       uWhiteMix: { value: 0 },
@@ -34,7 +34,6 @@ export function createCurvedGridMaterial(glyphTexture: THREE.Texture) {
       uniform float uFlatten;
 
       varying vec2 vMediaUv;
-      varying vec3 vWorldPos;
 
       void main() {
         float angle = atan(position.x, position.z);
@@ -47,16 +46,14 @@ export function createCurvedGridMaterial(glyphTexture: THREE.Texture) {
         transformed.z = mix(position.z, -${ALCHE_TOP_MEDIA_WALL.radius.toFixed(4)}, uFlatten);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
-        vWorldPos = world.xyz;
         vMediaUv = vec2(angleUv, heightUv);
         gl_Position = projectionMatrix * viewMatrix * world;
       }
     `,
     fragmentShader: `
       varying vec2 vMediaUv;
-      varying vec3 vWorldPos;
 
-      uniform sampler2D uGlyphMap;
+      uniform sampler2D uWallMap;
       uniform float uTime;
       uniform float uIntro;
       uniform float uWhiteMix;
@@ -65,74 +62,20 @@ export function createCurvedGridMaterial(glyphTexture: THREE.Texture) {
       uniform float uFlatten;
       uniform float uSceneFade;
 
-      float linePulse(float value, float width) {
-        float grid = abs(fract(value - 0.5) - 0.5) / fwidth(value);
-        return 1.0 - min(grid / width, 1.0);
-      }
-
-      float hash21(vec2 p) {
-        p = fract(p * vec2(123.34, 456.21));
-        p += dot(p, p + 45.32);
-        return fract(p.x * p.y);
-      }
-
       void main() {
         vec2 uv = vMediaUv;
-        vec2 cellUv = vec2(uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)}, uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)});
-        vec2 cellId = floor(cellUv);
-        vec2 local = fract(cellUv);
-        vec2 panelUv = vec2(uv.x * 7.0, uv.y * 4.0);
+        vec3 texSample = texture2D(uWallMap, uv).rgb;
+        float luminance = dot(texSample, vec3(0.2126, 0.7152, 0.0722));
+        float sideShade = 1.0 - smoothstep(0.18, 1.0, abs(uv.x - 0.5) * 2.0) * 0.06;
+        float verticalShade = 1.0 - abs(uv.y - 0.5) * 0.05;
+        float introExposure = mix(0.94, 1.0, smoothstep(0.0, 0.92, uIntro));
 
-        float coarseV = linePulse(panelUv.x + sin(uv.y * 3.2 + uTime * 0.01) * 0.02, 0.46);
-        float coarseH = linePulse(panelUv.y, 0.46);
-        float seamV = linePulse(cellUv.x, 1.05);
-        float seamH = linePulse(cellUv.y, 1.05);
-        float microV = linePulse(cellUv.x * 4.0 + sin(uv.y * 16.0 + uTime * 0.02) * 0.04, 2.6) * 0.14;
-        float microH = linePulse(cellUv.y * 4.0 + sin(uv.x * 14.0 - uTime * 0.018) * 0.04, 2.6) * 0.14;
+        vec3 lineColor = mix(vec3(0.76, 0.78, 0.805), vec3(0.982, 0.986, 0.99), luminance);
+        vec3 color = lineColor * sideShade * verticalShade * introExposure * uExposure;
+        color = mix(color, vec3(dot(color, vec3(0.3333333))), uWhiteMix * 0.06);
+        color *= mix(1.0, 0.97, uFlatten * 0.1);
 
-        float inactive = step(0.82, hash21(cellId * 0.071));
-        float cellMask = (1.0 - inactive) * 0.2;
-
-        float panelA = smoothstep(0.10, 0.12, uv.x) * (1.0 - smoothstep(0.28, 0.30, uv.x));
-        panelA *= smoothstep(0.08, 0.12, uv.y) * (1.0 - smoothstep(0.68, 0.72, uv.y));
-        float panelB = smoothstep(0.34, 0.36, uv.x) * (1.0 - smoothstep(0.58, 0.60, uv.x));
-        panelB *= smoothstep(0.24, 0.28, uv.y) * (1.0 - smoothstep(0.92, 0.96, uv.y));
-        float panelC = smoothstep(0.62, 0.64, uv.x) * (1.0 - smoothstep(0.88, 0.90, uv.x));
-        panelC *= smoothstep(0.06, 0.10, uv.y) * (1.0 - smoothstep(0.58, 0.62, uv.y));
-        float panelD = smoothstep(0.56, 0.58, uv.x) * (1.0 - smoothstep(0.72, 0.74, uv.x));
-        panelD *= smoothstep(0.62, 0.66, uv.y) * (1.0 - smoothstep(0.94, 0.98, uv.y));
-        float panelField = max(max(panelA, panelB), max(panelC, panelD));
-
-        vec2 glyphUv = vec2(fract(uv.x * 1.12 + 0.06), 1.0 - clamp(uv.y, 0.0, 1.0));
-        float glyph = texture2D(uGlyphMap, glyphUv).r;
-        float glyphPresence = smoothstep(0.02, 0.2, glyph) * (0.42 + panelField * 0.78);
-
-        float centerColumn = 1.0 - smoothstep(0.0, 0.25, abs(uv.x - 0.5));
-        float centerGlow = centerColumn * (0.34 + 0.66 * smoothstep(0.08, 0.92, uv.y));
-        float centerPulse = 0.92 + sin(uTime * 0.35 + uv.y * 9.0) * 0.08;
-
-        vec3 darkBase = vec3(0.010, 0.008, 0.020);
-        vec3 lightBase = vec3(0.95, 0.95, 0.98);
-        vec3 darkInk = vec3(0.32, 0.38, 0.76);
-        vec3 lightInk = vec3(0.14, 0.14, 0.18);
-        vec3 base = mix(darkBase, lightBase, uWhiteMix);
-        vec3 ink = mix(darkInk, lightInk, uWhiteMix);
-        vec3 violet = mix(vec3(0.22, 0.12, 0.72), vec3(0.20), uWhiteMix);
-        vec3 blueViolet = mix(vec3(0.16, 0.26, 0.86), vec3(0.24), uWhiteMix);
-        vec3 lineInk = mix(vec3(0.05, 0.05, 0.08), vec3(0.18), uWhiteMix);
-
-        vec3 color = base;
-        color += violet * panelField * 0.52 * uExposure;
-        color += blueViolet * cellMask;
-        color += mix(vec3(0.08, 0.07, 0.14), vec3(0.2), uWhiteMix) * (coarseV * 1.14 + coarseH * 1.14);
-        color += lineInk * (seamV * 0.18 + seamH * 0.18 + microV + microH) * (0.84 + uGlow * 0.32);
-        color += mix(vec3(0.42, 0.38, 0.62), vec3(0.28), uWhiteMix) * glyphPresence * 0.78;
-        color += mix(violet, blueViolet, 0.55) * centerGlow * centerPulse * (0.42 + uGlow * 0.28);
-        color += vec3(0.74, 0.78, 1.0) * pow(centerGlow, 2.2) * 0.22;
-        color *= mix(1.0, 0.9, uFlatten * 0.18);
-
-        float edgeFade = 1.0 - smoothstep(0.18, 1.1, abs(uv.x - 0.5) * 2.0);
-        float alpha = mix(0.98, 0.46, uWhiteMix) * uIntro * uSceneFade * edgeFade;
+        float alpha = 0.995 * uIntro * uSceneFade;
         gl_FragColor = vec4(color, alpha);
       }
     `,

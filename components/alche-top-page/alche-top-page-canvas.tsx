@@ -16,7 +16,7 @@ interface AlcheTopPageCanvasProps {
   heroShotId: AlcheHeroShotId | null;
   reducedMotion: boolean;
   kvOnly: boolean;
-  kvGlyphTexturePath: string;
+  kvWallTexturePath: string;
   workCount: number;
   serviceCount: number;
 }
@@ -35,7 +35,7 @@ export function AlcheTopPageCanvas({
   heroShotId,
   reducedMotion,
   kvOnly,
-  kvGlyphTexturePath,
+  kvWallTexturePath,
   workCount,
   serviceCount,
 }: AlcheTopPageCanvasProps) {
@@ -83,7 +83,7 @@ export function AlcheTopPageCanvas({
         sceneState={sceneState}
         reducedMotion={sceneReducedMotion}
         kvOnly={kvOnly}
-        kvGlyphTexturePath={kvGlyphTexturePath}
+        kvWallTexturePath={kvWallTexturePath}
         workCount={workCount}
         captureMode={captureMode}
       />

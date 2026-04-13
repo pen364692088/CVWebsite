@@ -18,13 +18,13 @@ interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
   backgroundOnly?: boolean;
-  glyphTexturePath: string;
+  wallTexturePath: string;
 }
 
-function CurvedMediaWall({ sceneState, reducedMotion, glyphTexturePath }: KvSceneSystemProps) {
+function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
-  const glyphTexture = useLoader(THREE.TextureLoader, glyphTexturePath);
-  const material = useMemo(() => createCurvedGridMaterial(glyphTexture), [glyphTexture]);
+  const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
+  const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
   const geometry = useMemo(
     () =>
       new THREE.CylinderGeometry(
@@ -39,11 +39,15 @@ function CurvedMediaWall({ sceneState, reducedMotion, glyphTexturePath }: KvScen
   );
 
   useEffect(() => {
-    glyphTexture.colorSpace = THREE.SRGBColorSpace;
-    glyphTexture.wrapS = THREE.RepeatWrapping;
-    glyphTexture.wrapT = THREE.ClampToEdgeWrapping;
-    glyphTexture.needsUpdate = true;
-  }, [glyphTexture]);
+    wallTexture.colorSpace = THREE.SRGBColorSpace;
+    wallTexture.wrapS = THREE.RepeatWrapping;
+    wallTexture.wrapT = THREE.RepeatWrapping;
+    wallTexture.minFilter = THREE.LinearFilter;
+    wallTexture.magFilter = THREE.LinearFilter;
+    wallTexture.generateMipmaps = false;
+    wallTexture.repeat.set(ALCHE_TOP_MEDIA_WALL.cellColumns, ALCHE_TOP_MEDIA_WALL.cellRows);
+    wallTexture.needsUpdate = true;
+  }, [wallTexture]);
 
   useEffect(() => {
     return () => {
@@ -55,10 +59,9 @@ function CurvedMediaWall({ sceneState, reducedMotion, glyphTexturePath }: KvScen
   useFrame((state, delta) => {
     if (!roomRef.current) return;
 
-    const pointerYaw = reducedMotion ? 0 : state.pointer.x * (sceneState.activeSection === "kv" ? 0.038 : 0.016);
     const wallVisible = sceneState.kv.wallVisibility * sceneState.kv.visible;
 
-    roomRef.current.rotation.y = THREE.MathUtils.damp(roomRef.current.rotation.y, pointerYaw, 2.4, delta);
+    roomRef.current.rotation.y = THREE.MathUtils.damp(roomRef.current.rotation.y, 0, 2.4, delta);
     material.uniforms.uTime.value = state.clock.elapsedTime;
     material.uniforms.uIntro.value = sceneState.introProgress;
     material.uniforms.uGlow.value = THREE.MathUtils.damp(material.uniforms.uGlow.value, sceneState.kv.wallGlow, 3.4, delta);

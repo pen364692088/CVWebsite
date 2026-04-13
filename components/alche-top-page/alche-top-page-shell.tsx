@@ -125,7 +125,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
-  const kvGlyphTexturePath = assetPath("/alche-top-page/kv/hero-wall-glyphs.png");
+  const kvWallTexturePath = assetPath("/alche-top-page/kv/hero-wall-grid-white.png");
 
   useEffect(() => {
     setCanRenderLive(supportsWebGL());
@@ -223,7 +223,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               heroShotId={currentHeroShotId}
               reducedMotion={reducedMotion}
               kvOnly={kvOnly}
-              kvGlyphTexturePath={kvGlyphTexturePath}
+              kvWallTexturePath={kvWallTexturePath}
               workCount={copy.works.items.length}
               serviceCount={copy.service.items.length}
             />
