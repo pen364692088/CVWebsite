@@ -223,6 +223,12 @@ export const ALCHE_TOP_CENTER_MODEL = {
   y: 0.08,
   depthOffset: 0.38,
   targetHeight: 1.84,
+  baseRotationX: -0.22,
+  baseRotationY: 0.58,
+  baseRotationZ: 0.18,
+  pointerYawStrength: 0.14,
+  pointerPitchStrength: 0.06,
+  rotationDamp: 3.8,
 } as const;
 
 export const ALCHE_TOP_POST = {

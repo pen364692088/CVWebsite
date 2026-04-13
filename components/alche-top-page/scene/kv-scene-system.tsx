@@ -212,7 +212,7 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
   return <primitive ref={textRef} object={text} visible={false} />;
 }
 
-function CenterHeroModel({ sceneState }: Pick<KvSceneSystemProps, "sceneState">) {
+function CenterHeroModel({ sceneState, reducedMotion }: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
   const baseTexture = useLoader(THREE.TextureLoader, assetPath(ALCHE_TOP_CENTER_MODEL.texturePath));
@@ -276,19 +276,51 @@ function CenterHeroModel({ sceneState }: Pick<KvSceneSystemProps, "sceneState">)
     };
   }, [texturedScene]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!groupRef.current) return;
 
     const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
+    const pointerYaw = reducedMotion ? 0 : state.pointer.x * ALCHE_TOP_CENTER_MODEL.pointerYawStrength;
+    const pointerPitch = reducedMotion ? 0 : state.pointer.y * ALCHE_TOP_CENTER_MODEL.pointerPitchStrength;
     groupRef.current.visible = visibility > 0.001;
     if (!groupRef.current.visible) return;
 
-    groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, targetPosition.x, 3.8, delta);
-    groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, targetPosition.y, 3.8, delta);
-    groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, targetPosition.z, 3.8, delta);
-    groupRef.current.rotation.x = THREE.MathUtils.damp(groupRef.current.rotation.x, -0.22, 3.8, delta);
-    groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, 0.58, 3.8, delta);
-    groupRef.current.rotation.z = THREE.MathUtils.damp(groupRef.current.rotation.z, 0.18, 3.8, delta);
+    groupRef.current.position.x = THREE.MathUtils.damp(
+      groupRef.current.position.x,
+      targetPosition.x,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.position.y = THREE.MathUtils.damp(
+      groupRef.current.position.y,
+      targetPosition.y,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.position.z = THREE.MathUtils.damp(
+      groupRef.current.position.z,
+      targetPosition.z,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.rotation.x = THREE.MathUtils.damp(
+      groupRef.current.rotation.x,
+      ALCHE_TOP_CENTER_MODEL.baseRotationX + pointerPitch,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.rotation.y = THREE.MathUtils.damp(
+      groupRef.current.rotation.y,
+      ALCHE_TOP_CENTER_MODEL.baseRotationY + pointerYaw,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.rotation.z = THREE.MathUtils.damp(
+      groupRef.current.rotation.z,
+      ALCHE_TOP_CENTER_MODEL.baseRotationZ,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
   });
 
   return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;
