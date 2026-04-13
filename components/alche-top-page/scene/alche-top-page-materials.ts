@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-import { ALCHE_TOP_MEDIA_WALL } from "@/lib/alche-top-page";
+import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
@@ -62,16 +62,42 @@ export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
       uniform float uFlatten;
       uniform float uSceneFade;
 
+      float linePulse(float value, float width) {
+        float grid = abs(fract(value - 0.5) - 0.5) / fwidth(value);
+        return 1.0 - min(grid / width, 1.0);
+      }
+
       void main() {
         vec2 uv = vMediaUv;
         vec3 texSample = texture2D(uWallMap, uv).rgb;
         float luminance = dot(texSample, vec3(0.2126, 0.7152, 0.0722));
+        vec2 microGridUv = vec2(
+          uv.x * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
+          uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
+        );
+        vec2 macroGridUv = vec2(
+          uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
+          uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
+        );
+        float microV = linePulse(microGridUv.x, 1.05);
+        float microH = linePulse(microGridUv.y, 1.05);
+        float macroV = linePulse(macroGridUv.x, 1.2);
+        float macroH = linePulse(macroGridUv.y, 1.2);
+        float microGrid = clamp(microV + microH, 0.0, 1.0);
+        float macroGrid = clamp(macroV + macroH, 0.0, 1.0);
+        float marker = (1.0 - smoothstep(0.74, 0.96, luminance)) * 0.22;
         float sideShade = 1.0 - smoothstep(0.18, 1.0, abs(uv.x - 0.5) * 2.0) * 0.06;
         float verticalShade = 1.0 - abs(uv.y - 0.5) * 0.05;
         float introExposure = mix(0.94, 1.0, smoothstep(0.0, 0.92, uIntro));
 
-        vec3 lineColor = mix(vec3(0.76, 0.78, 0.805), vec3(0.982, 0.986, 0.99), luminance);
-        vec3 color = lineColor * sideShade * verticalShade * introExposure * uExposure;
+        vec3 baseColor = vec3(0.972, 0.976, 0.98);
+        vec3 microLineColor = vec3(0.82, 0.835, 0.85);
+        vec3 macroLineColor = vec3(0.74, 0.755, 0.775);
+        vec3 markerColor = vec3(0.69, 0.705, 0.725);
+        vec3 color = mix(baseColor, microLineColor, microGrid * 0.88);
+        color = mix(color, macroLineColor, macroGrid * 0.52);
+        color = mix(color, markerColor, marker);
+        color *= sideShade * verticalShade * introExposure * uExposure;
         color = mix(color, vec3(dot(color, vec3(0.3333333))), uWhiteMix * 0.06);
         color *= mix(1.0, 0.97, uFlatten * 0.1);
 
