@@ -28,6 +28,11 @@ interface AlcheCanvasCaptureOverride {
   heroShotId: AlcheHeroShotId | null;
 }
 
+interface AlchePointerOverride {
+  x: number;
+  y: number;
+}
+
 export function AlcheTopPageCanvas({
   activeSection,
   sectionProgress,
@@ -41,6 +46,7 @@ export function AlcheTopPageCanvas({
 }: AlcheTopPageCanvasProps) {
   const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
   const [captureOverride, setCaptureOverride] = useState<AlcheCanvasCaptureOverride | null>(null);
+  const [pointerOverride, setPointerOverride] = useState<AlchePointerOverride | null>(null);
   const resolvedActiveSection = captureOverride?.section ?? activeSection;
   const resolvedSectionProgress = captureOverride?.progress ?? sectionProgress;
   const resolvedIntroProgress = captureOverride?.intro ?? introProgress;
@@ -56,14 +62,26 @@ export function AlcheTopPageCanvas({
 
     const host = window as typeof window & {
       __setAlcheSceneOverride?: (nextOverride: AlcheCanvasCaptureOverride | null) => void;
+      __setAlchePointerOverride?: (nextOverride: AlchePointerOverride | null) => void;
+      __clearAlchePointerOverride?: () => void;
     };
 
     host.__setAlcheSceneOverride = (nextOverride) => {
       setCaptureOverride(nextOverride);
     };
 
+    host.__setAlchePointerOverride = (nextOverride) => {
+      setPointerOverride(nextOverride);
+    };
+
+    host.__clearAlchePointerOverride = () => {
+      setPointerOverride(null);
+    };
+
     return () => {
       delete host.__setAlcheSceneOverride;
+      delete host.__setAlchePointerOverride;
+      delete host.__clearAlchePointerOverride;
     };
   }, []);
 
@@ -86,6 +104,7 @@ export function AlcheTopPageCanvas({
         kvWallTexturePath={kvWallTexturePath}
         workCount={workCount}
         captureMode={captureMode}
+        pointerOverride={pointerOverride}
       />
     </Canvas>
   );

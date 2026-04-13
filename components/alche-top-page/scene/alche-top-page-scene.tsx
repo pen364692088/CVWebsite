@@ -20,9 +20,18 @@ interface AlcheTopPageSceneProps {
   kvWallTexturePath: string;
   workCount: number;
   captureMode: boolean;
+  pointerOverride: { x: number; y: number } | null;
 }
 
-export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvWallTexturePath, workCount, captureMode }: AlcheTopPageSceneProps) {
+export function AlcheTopPageScene({
+  sceneState,
+  reducedMotion,
+  kvOnly,
+  kvWallTexturePath,
+  workCount,
+  captureMode,
+  pointerOverride,
+}: AlcheTopPageSceneProps) {
   const { camera } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
   const targetRef = useRef(new THREE.Vector3(...sceneState.camera.target));
@@ -65,7 +74,13 @@ export function AlcheTopPageScene({ sceneState, reducedMotion, kvOnly, kvWallTex
       />
       <pointLight position={[0, -1.2, 2.4]} intensity={kvOnly ? 0.8 : 1.6} color={kvOnly ? "#5f62ff" : "#a7c9ff"} distance={10} />
 
-      <KvSceneSystem sceneState={sceneState} reducedMotion={reducedMotion} backgroundOnly={kvOnly} wallTexturePath={kvWallTexturePath} />
+      <KvSceneSystem
+        sceneState={sceneState}
+        reducedMotion={reducedMotion}
+        backgroundOnly={kvOnly}
+        wallTexturePath={kvWallTexturePath}
+        pointerOverride={pointerOverride}
+      />
       {kvOnly ? null : (
         <>
           <WorksSceneSystem {...worksSceneProps} />

@@ -38,6 +38,11 @@ const fixedStateShots = [
   { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
 ];
 
+const pointerInteractionShots = [
+  { name: "kv-pointer-left", pointer: { x: -0.65, y: -0.35 } },
+  { name: "kv-pointer-right", pointer: { x: 0.65, y: 0.35 } },
+];
+
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
 
@@ -253,6 +258,93 @@ async function captureFixedStates(browser) {
   }
 }
 
+async function capturePointerInteraction(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1080 },
+    locale: "en-US",
+    reducedMotion: "no-preference",
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
+    await assertTopPageShell(page, "kv-pointer-interaction");
+    await page.waitForFunction(
+      () =>
+        typeof window.__setAlcheDebugOverride === "function" &&
+        typeof window.__setAlchePointerOverride === "function" &&
+        typeof window.__clearAlchePointerOverride === "function" &&
+        typeof window.__getAlcheHeroModelRotation === "function",
+      undefined,
+      { timeout: 5000 },
+    );
+    await page.evaluate(() => {
+      window.__setAlcheDebugOverride?.({
+        section: "kv",
+        progress: 1,
+        intro: 1,
+        heroShotId: null,
+      });
+      window.__clearAlchePointerOverride?.();
+    });
+    await page.waitForFunction(
+      () => {
+        const root = document.querySelector("[data-active-section]");
+        const loadingOverlay = document.querySelector("[data-loading-overlay]");
+        return (
+          root?.getAttribute("data-render-active-section") === "kv" &&
+          root?.getAttribute("data-render-intro-ready") === "true" &&
+          loadingOverlay?.getAttribute("data-render-hidden") === "true"
+        );
+      },
+      undefined,
+      { timeout: 5000 },
+    );
+    await page.waitForTimeout(300);
+
+    const rotations = [];
+    for (const shot of pointerInteractionShots) {
+      await page.evaluate((pointer) => {
+        window.__setAlchePointerOverride?.(pointer);
+      }, shot.pointer);
+      await page.waitForFunction(
+        ({ pointerX, pointerY }) => {
+          const rotation = window.__getAlcheHeroModelRotation?.();
+          if (!rotation) return false;
+          const baseRotationX = -0.22;
+          const baseRotationY = 0.58;
+          const expectedX = baseRotationX + pointerY * 0.08;
+          const expectedY = baseRotationY + pointerX * 0.18;
+          return Math.abs(rotation.x - expectedX) < 0.02 && Math.abs(rotation.y - expectedY) < 0.03;
+        },
+        { pointerX: shot.pointer.x, pointerY: shot.pointer.y },
+        { timeout: 5000 },
+      );
+      await page.waitForTimeout(120);
+      const rotation = await page.evaluate(() => window.__getAlcheHeroModelRotation?.() ?? null);
+      rotations.push({ name: shot.name, rotation });
+      await page.screenshot({
+        path: path.join(outputDir, `${shot.name}.png`),
+        fullPage: false,
+      });
+    }
+
+    await page.evaluate(() => {
+      window.__clearAlchePointerOverride?.();
+    });
+
+    const leftRotation = rotations[0]?.rotation;
+    const rightRotation = rotations[1]?.rotation;
+    assert(leftRotation && rightRotation, "Missing hero model rotation samples.");
+    assert(leftRotation.y < rightRotation.y, "Expected hero model yaw to respond in opposite directions.");
+    assert(leftRotation.x < rightRotation.x, "Expected hero model pitch to respond in opposite directions.");
+    assert(Math.abs(leftRotation.y - rightRotation.y) > 0.16, "Expected readable yaw delta for hero model.");
+    assert(Math.abs(leftRotation.x - rightRotation.x) > 0.04, "Expected readable pitch delta for hero model.");
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const server = await createStaticServer(3000);
 
@@ -287,6 +379,7 @@ async function run() {
       }
 
       await captureFixedStates(browser);
+      await capturePointerInteraction(browser);
     } finally {
       await browser.close();
     }

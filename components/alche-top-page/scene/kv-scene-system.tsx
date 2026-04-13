@@ -32,6 +32,7 @@ interface KvSceneSystemProps {
   reducedMotion: boolean;
   backgroundOnly?: boolean;
   wallTexturePath: string;
+  pointerOverride?: { x: number; y: number } | null;
 }
 
 function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
@@ -212,10 +213,15 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
   return <primitive ref={textRef} object={text} visible={false} />;
 }
 
-function CenterHeroModel({ sceneState, reducedMotion }: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion">) {
+function CenterHeroModel({
+  sceneState,
+  reducedMotion,
+  wallTexturePath,
+  pointerOverride,
+}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
-  const baseTexture = useLoader(THREE.TextureLoader, assetPath(ALCHE_TOP_CENTER_MODEL.texturePath));
+  const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const targetPosition = useMemo(
     () => new THREE.Vector3(0, ALCHE_TOP_CENTER_MODEL.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix + ALCHE_TOP_CENTER_MODEL.depthOffset),
@@ -239,11 +245,14 @@ function CenterHeroModel({ sceneState, reducedMotion }: Pick<KvSceneSystemProps,
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.renderOrder = 4;
-      mesh.material = new THREE.MeshBasicMaterial({
-        color: "#f3f5f7",
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: "#fff8f8",
+        emissive: "#8f1228",
+        emissiveIntensity: 0.28,
+        roughness: 0.68,
+        metalness: 0.04,
         map,
         side: THREE.DoubleSide,
-        toneMapped: false,
       });
     });
 
@@ -261,7 +270,23 @@ function CenterHeroModel({ sceneState, reducedMotion }: Pick<KvSceneSystemProps,
   }, [baseTexture, gltf.scene]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const host = window as typeof window & {
+      __getAlcheHeroModelRotation?: () => { x: number; y: number; z: number } | null;
+    };
+
+    host.__getAlcheHeroModelRotation = () => {
+      if (!groupRef.current) return null;
+      return {
+        x: groupRef.current.rotation.x,
+        y: groupRef.current.rotation.y,
+        z: groupRef.current.rotation.z,
+      };
+    };
+
     return () => {
+      delete host.__getAlcheHeroModelRotation;
       texturedScene.map.dispose();
       texturedScene.scene.traverse((child) => {
         if (!("isMesh" in child) || child.isMesh !== true) return;
@@ -280,8 +305,10 @@ function CenterHeroModel({ sceneState, reducedMotion }: Pick<KvSceneSystemProps,
     if (!groupRef.current) return;
 
     const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
-    const pointerYaw = reducedMotion ? 0 : state.pointer.x * ALCHE_TOP_CENTER_MODEL.pointerYawStrength;
-    const pointerPitch = reducedMotion ? 0 : state.pointer.y * ALCHE_TOP_CENTER_MODEL.pointerPitchStrength;
+    const pointerX = pointerOverride?.x ?? state.pointer.x;
+    const pointerY = pointerOverride?.y ?? state.pointer.y;
+    const pointerYaw = reducedMotion ? 0 : pointerX * ALCHE_TOP_CENTER_MODEL.pointerYawStrength;
+    const pointerPitch = reducedMotion ? 0 : pointerY * ALCHE_TOP_CENTER_MODEL.pointerPitchStrength;
     groupRef.current.visible = visibility > 0.001;
     if (!groupRef.current.visible) return;
 
