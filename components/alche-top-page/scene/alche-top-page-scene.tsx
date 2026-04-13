@@ -11,7 +11,7 @@ import { OutroSceneSystem } from "@/components/alche-top-page/scene/outro-scene-
 import { ServiceSceneSystem } from "@/components/alche-top-page/scene/service-scene-system";
 import { StelllaSceneSystem } from "@/components/alche-top-page/scene/stellla-scene-system";
 import { WorksSceneSystem } from "@/components/alche-top-page/scene/works-scene-system";
-import type { AlcheTopSceneState } from "@/lib/alche-top-page";
+import type { AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top-page";
 
 interface AlcheTopPageSceneProps {
   sceneState: AlcheTopSceneState;
@@ -21,6 +21,7 @@ interface AlcheTopPageSceneProps {
   workCount: number;
   captureMode: boolean;
   pointerOverride: { x: number; y: number } | null;
+  pointerDebugRef: { current: AlchePointerDebugState };
 }
 
 export function AlcheTopPageScene({
@@ -31,6 +32,7 @@ export function AlcheTopPageScene({
   workCount,
   captureMode,
   pointerOverride,
+  pointerDebugRef,
 }: AlcheTopPageSceneProps) {
   const { camera } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
@@ -80,6 +82,7 @@ export function AlcheTopPageScene({
         backgroundOnly={kvOnly}
         wallTexturePath={kvWallTexturePath}
         pointerOverride={pointerOverride}
+        pointerDebugRef={pointerDebugRef}
       />
       {kvOnly ? null : (
         <>

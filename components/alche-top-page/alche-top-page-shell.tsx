@@ -2,12 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
 
 import { alcheTopPageCopy } from "@/data/alche-top-page";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
+  type AlchePointerDebugState,
   ALCHE_TOP_RENDERABLE_SECTIONS,
   ALCHE_TOP_RUNTIME_MODE,
   ALCHE_TOP_SECTION_IDS,
@@ -95,6 +96,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const router = useRouter();
   const kvOnly = ALCHE_TOP_RUNTIME_MODE === "kv-only";
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const [canvasEventSource, setCanvasEventSource] = useState<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<AlcheScrollableSectionId, HTMLElement | null>>({
     kv: null,
     works_intro: null,
@@ -111,6 +113,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   });
   const [canRenderLive, setCanRenderLive] = useState(true);
   const [captureMode, setCaptureMode] = useState(false);
+  const [pointerDebugEnabled, setPointerDebugEnabled] = useState(false);
+  const [pointerDebugState, setPointerDebugState] = useState<AlchePointerDebugState | null>(null);
   const [debugOverrideVersion, setDebugOverrideVersion] = useState(0);
   const { reducedMotion, activeSection, trackedSection, sectionProgress, introProgress, heroShotId, scrollToSection } =
     useTopPageScroll({
@@ -126,6 +130,10 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
   const kvWallTexturePath = assetPath("/alche-top-page/kv/hero-wall-grid-white.png");
+  const setRootRef = useCallback((node: HTMLDivElement | null) => {
+    stageRef.current = node;
+    setCanvasEventSource(node);
+  }, []);
 
   useEffect(() => {
     setCanRenderLive(supportsWebGL());
@@ -133,8 +141,31 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setCaptureMode(new URLSearchParams(window.location.search).get("alcheCapture") === "1");
+    const params = new URLSearchParams(window.location.search);
+    setCaptureMode(params.get("alcheCapture") === "1");
+    setPointerDebugEnabled(params.get("alchePointerDebug") === "1");
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !pointerDebugEnabled) {
+      setPointerDebugState(null);
+      return;
+    }
+
+    const host = window as typeof window & {
+      __getAlchePointerDebugState?: () => AlchePointerDebugState | null;
+    };
+
+    const interval = window.setInterval(() => {
+      setPointerDebugState(host.__getAlchePointerDebugState?.() ?? null);
+    }, 120);
+
+    setPointerDebugState(host.__getAlchePointerDebugState?.() ?? null);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [pointerDebugEnabled]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -202,7 +233,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
 
   return (
     <div
-      ref={stageRef}
+      ref={setRootRef}
       className={styles.root}
       style={stageStyle}
       data-active-section={currentActiveSection}
@@ -212,6 +243,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-render-tracked-section={currentTrackedSection}
       data-render-intro-ready={introSettled ? "true" : "false"}
       data-render-debug-version={debugOverrideVersion}
+      data-pointer-debug={pointerDebugEnabled ? "true" : "false"}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -226,6 +258,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               kvWallTexturePath={kvWallTexturePath}
               workCount={copy.works.items.length}
               serviceCount={copy.service.items.length}
+              canvasEventSource={canvasEventSource}
+              pointerDebugEnabled={pointerDebugEnabled}
             />
           ) : (
             <div className={styles.fallback}>WebGL unavailable. The DOM shell remains available.</div>
@@ -270,6 +304,46 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             </div>
           </header>
         </div>
+
+        {pointerDebugEnabled ? (
+          <div
+            data-pointer-debug-panel
+            style={{
+              position: "absolute",
+              left: "1rem",
+              bottom: "1rem",
+              zIndex: 30,
+              maxWidth: "min(26rem, calc(100vw - 2rem))",
+              padding: "0.8rem 0.9rem",
+              borderRadius: "0.75rem",
+              background: "rgba(8, 8, 12, 0.82)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: "#fff",
+              fontFamily: "\"IBM Plex Mono\", \"Courier New\", monospace",
+              fontSize: "0.68rem",
+              lineHeight: 1.55,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              pointerEvents: "none",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {[
+              `reduced: ${pointerDebugState?.reducedMotion ? "true" : "false"} / prefers: ${
+                pointerDebugState?.prefersReducedMotion ? "true" : "false"
+              }`,
+              `dom: ${pointerDebugState?.domPointerInside ? "inside" : "outside"} x=${
+                pointerDebugState?.domPointerClientX?.toFixed(1) ?? "null"
+              } y=${pointerDebugState?.domPointerClientY?.toFixed(1) ?? "null"}`,
+              `r3f: x=${pointerDebugState?.r3fPointerX?.toFixed(3) ?? "0.000"} y=${
+                pointerDebugState?.r3fPointerY?.toFixed(3) ?? "0.000"
+              }`,
+              `model: x=${pointerDebugState?.modelRotationX?.toFixed(3) ?? "null"} y=${
+                pointerDebugState?.modelRotationY?.toFixed(3) ?? "null"
+              } z=${pointerDebugState?.modelRotationZ?.toFixed(3) ?? "null"}`,
+            ].join("\n")}
+          </div>
+        ) : null}
       </div>
 
       <main className={styles.sectionTrack}>

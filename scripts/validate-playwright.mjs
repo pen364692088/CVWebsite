@@ -39,8 +39,8 @@ const fixedStateShots = [
 ];
 
 const pointerInteractionShots = [
-  { name: "kv-pointer-left", pointer: { x: -0.65, y: -0.35 } },
-  { name: "kv-pointer-right", pointer: { x: 0.65, y: 0.35 } },
+  { name: "kv-pointer-left-real", move: { x: 280, y: 240 } },
+  { name: "kv-pointer-right-real", move: { x: 1160, y: 780 } },
 ];
 
 function resolveRequestPath(requestPath) {
@@ -267,13 +267,12 @@ async function capturePointerInteraction(browser) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
     await assertTopPageShell(page, "kv-pointer-interaction");
     await page.waitForFunction(
       () =>
         typeof window.__setAlcheDebugOverride === "function" &&
-        typeof window.__setAlchePointerOverride === "function" &&
-        typeof window.__clearAlchePointerOverride === "function" &&
+        typeof window.__getAlchePointerDebugState === "function" &&
         typeof window.__getAlcheHeroModelRotation === "function",
       undefined,
       { timeout: 5000 },
@@ -285,7 +284,6 @@ async function capturePointerInteraction(browser) {
         intro: 1,
         heroShotId: null,
       });
-      window.__clearAlchePointerOverride?.();
     });
     await page.waitForFunction(
       () => {
@@ -300,44 +298,56 @@ async function capturePointerInteraction(browser) {
       undefined,
       { timeout: 5000 },
     );
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
 
     const rotations = [];
     for (const shot of pointerInteractionShots) {
-      await page.evaluate((pointer) => {
-        window.__setAlchePointerOverride?.(pointer);
-      }, shot.pointer);
+      await page.mouse.move(shot.move.x, shot.move.y);
       await page.waitForFunction(
-        ({ pointerX, pointerY }) => {
+        ({ clientX, clientY, expectLeft }) => {
+          const debug = window.__getAlchePointerDebugState?.();
           const rotation = window.__getAlcheHeroModelRotation?.();
-          if (!rotation) return false;
-          const baseRotationX = -0.22;
-          const baseRotationY = 0.58;
-          const expectedX = baseRotationX + pointerY * 0.08;
-          const expectedY = baseRotationY + pointerX * 0.18;
-          return Math.abs(rotation.x - expectedX) < 0.02 && Math.abs(rotation.y - expectedY) < 0.03;
+          if (!debug || !rotation) return false;
+          const domMatches =
+            debug.domPointerInside &&
+            debug.domPointerClientX !== null &&
+            debug.domPointerClientY !== null &&
+            Math.abs(debug.domPointerClientX - clientX) < 6 &&
+            Math.abs(debug.domPointerClientY - clientY) < 6;
+          const r3fMatches = expectLeft
+            ? debug.r3fPointerX < -0.45 && debug.r3fPointerY > 0.45
+            : debug.r3fPointerX > 0.45 && debug.r3fPointerY < -0.35;
+          const rotationMatches = expectLeft ? rotation.y < 0.56 && rotation.x > -0.18 : rotation.y > 0.6 && rotation.x < -0.24;
+          return domMatches && r3fMatches && rotationMatches;
         },
-        { pointerX: shot.pointer.x, pointerY: shot.pointer.y },
+        {
+          clientX: shot.move.x,
+          clientY: shot.move.y,
+          expectLeft: shot.name.includes("left"),
+        },
         { timeout: 5000 },
       );
       await page.waitForTimeout(120);
+      const debug = await page.evaluate(() => window.__getAlchePointerDebugState?.() ?? null);
       const rotation = await page.evaluate(() => window.__getAlcheHeroModelRotation?.() ?? null);
-      rotations.push({ name: shot.name, rotation });
+      rotations.push({ name: shot.name, debug, rotation });
       await page.screenshot({
         path: path.join(outputDir, `${shot.name}.png`),
         fullPage: false,
       });
     }
 
-    await page.evaluate(() => {
-      window.__clearAlchePointerOverride?.();
-    });
-
     const leftRotation = rotations[0]?.rotation;
     const rightRotation = rotations[1]?.rotation;
+    const leftDebug = rotations[0]?.debug;
+    const rightDebug = rotations[1]?.debug;
+    assert(leftDebug && rightDebug, "Missing pointer debug samples.");
     assert(leftRotation && rightRotation, "Missing hero model rotation samples.");
+    assert(leftDebug.domPointerInside && rightDebug.domPointerInside, "Expected DOM pointer to enter the canvas event source.");
+    assert(leftDebug.r3fPointerX < rightDebug.r3fPointerX, "Expected real mouse movement to change R3F pointer x.");
+    assert(leftDebug.r3fPointerY > rightDebug.r3fPointerY, "Expected real mouse movement to change R3F pointer y.");
     assert(leftRotation.y < rightRotation.y, "Expected hero model yaw to respond in opposite directions.");
-    assert(leftRotation.x < rightRotation.x, "Expected hero model pitch to respond in opposite directions.");
+    assert(leftRotation.x > rightRotation.x, "Expected hero model pitch to respond in opposite directions.");
     assert(Math.abs(leftRotation.y - rightRotation.y) > 0.16, "Expected readable yaw delta for hero model.");
     assert(Math.abs(leftRotation.x - rightRotation.x) > 0.04, "Expected readable pitch delta for hero model.");
   } finally {

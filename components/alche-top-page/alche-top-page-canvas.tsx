@@ -1,13 +1,13 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 import { AlcheTopPageScene } from "@/components/alche-top-page/scene/alche-top-page-scene";
 import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
-import { deriveTopSceneState, type AlcheTopSectionId } from "@/lib/alche-top-page";
+import { deriveTopSceneState, type AlchePointerDebugState, type AlcheTopSectionId } from "@/lib/alche-top-page";
 
 interface AlcheTopPageCanvasProps {
   activeSection: AlcheTopSectionId;
@@ -19,6 +19,8 @@ interface AlcheTopPageCanvasProps {
   kvWallTexturePath: string;
   workCount: number;
   serviceCount: number;
+  canvasEventSource: HTMLElement | null;
+  pointerDebugEnabled: boolean;
 }
 
 interface AlcheCanvasCaptureOverride {
@@ -43,6 +45,8 @@ export function AlcheTopPageCanvas({
   kvWallTexturePath,
   workCount,
   serviceCount,
+  canvasEventSource,
+  pointerDebugEnabled,
 }: AlcheTopPageCanvasProps) {
   const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
   const [captureOverride, setCaptureOverride] = useState<AlcheCanvasCaptureOverride | null>(null);
@@ -56,6 +60,64 @@ export function AlcheTopPageCanvas({
     [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, serviceCount, workCount],
   );
   const sceneReducedMotion = reducedMotion || captureMode;
+  const pointerDebugRef = useRef<AlchePointerDebugState>({
+    enabled: pointerDebugEnabled,
+    prefersReducedMotion: reducedMotion,
+    reducedMotion: sceneReducedMotion,
+    domPointerClientX: null,
+    domPointerClientY: null,
+    domPointerInside: false,
+    r3fPointerX: 0,
+    r3fPointerY: 0,
+    modelRotationX: null,
+    modelRotationY: null,
+    modelRotationZ: null,
+  });
+
+  pointerDebugRef.current.enabled = pointerDebugEnabled;
+  pointerDebugRef.current.reducedMotion = sceneReducedMotion;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
+      pointerDebugRef.current.prefersReducedMotion = media.matches;
+    };
+    sync();
+    media.addEventListener("change", sync);
+    return () => {
+      media.removeEventListener("change", sync);
+    };
+  }, [pointerDebugRef]);
+
+  useEffect(() => {
+    if (!pointerDebugEnabled || !canvasEventSource) {
+      pointerDebugRef.current.domPointerInside = false;
+      pointerDebugRef.current.domPointerClientX = null;
+      pointerDebugRef.current.domPointerClientY = null;
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      pointerDebugRef.current.domPointerClientX = event.clientX;
+      pointerDebugRef.current.domPointerClientY = event.clientY;
+      pointerDebugRef.current.domPointerInside = true;
+    };
+
+    const handlePointerLeave = () => {
+      pointerDebugRef.current.domPointerInside = false;
+    };
+
+    canvasEventSource.addEventListener("pointermove", handlePointerMove);
+    canvasEventSource.addEventListener("pointerenter", handlePointerMove);
+    canvasEventSource.addEventListener("pointerleave", handlePointerLeave);
+
+    return () => {
+      canvasEventSource.removeEventListener("pointermove", handlePointerMove);
+      canvasEventSource.removeEventListener("pointerenter", handlePointerMove);
+      canvasEventSource.removeEventListener("pointerleave", handlePointerLeave);
+    };
+  }, [canvasEventSource, pointerDebugEnabled, pointerDebugRef]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -64,6 +126,7 @@ export function AlcheTopPageCanvas({
       __setAlcheSceneOverride?: (nextOverride: AlcheCanvasCaptureOverride | null) => void;
       __setAlchePointerOverride?: (nextOverride: AlchePointerOverride | null) => void;
       __clearAlchePointerOverride?: () => void;
+      __getAlchePointerDebugState?: () => AlchePointerDebugState;
     };
 
     host.__setAlcheSceneOverride = (nextOverride) => {
@@ -78,18 +141,23 @@ export function AlcheTopPageCanvas({
       setPointerOverride(null);
     };
 
+    host.__getAlchePointerDebugState = () => ({ ...pointerDebugRef.current });
+
     return () => {
       delete host.__setAlcheSceneOverride;
       delete host.__setAlchePointerOverride;
       delete host.__clearAlchePointerOverride;
+      delete host.__getAlchePointerDebugState;
     };
-  }, []);
+  }, [pointerDebugRef]);
 
   return (
     <Canvas
       dpr={[1, 1.6]}
       camera={{ position: ALCHE_HERO_LOCK.camera.position, fov: ALCHE_HERO_LOCK.camera.fov }}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+      eventSource={canvasEventSource ?? undefined}
+      eventPrefix="client"
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.04;
@@ -105,6 +173,7 @@ export function AlcheTopPageCanvas({
         workCount={workCount}
         captureMode={captureMode}
         pointerOverride={pointerOverride}
+        pointerDebugRef={pointerDebugRef}
       />
     </Canvas>
   );

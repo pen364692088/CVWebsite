@@ -14,6 +14,7 @@ import {
   ALCHE_TOP_MEDIA_WALL,
   ALCHE_TOP_WALL_TILE_DENSITY,
   clamp01,
+  type AlchePointerDebugState,
   type AlcheTopSceneState,
 } from "@/lib/alche-top-page";
 import {
@@ -33,6 +34,7 @@ interface KvSceneSystemProps {
   backgroundOnly?: boolean;
   wallTexturePath: string;
   pointerOverride?: { x: number; y: number } | null;
+  pointerDebugRef?: { current: AlchePointerDebugState };
 }
 
 function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
@@ -218,7 +220,8 @@ function CenterHeroModel({
   reducedMotion,
   wallTexturePath,
   pointerOverride,
-}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride">) {
+  pointerDebugRef,
+}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride" | "pointerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
   const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
@@ -309,8 +312,19 @@ function CenterHeroModel({
     const pointerY = pointerOverride?.y ?? state.pointer.y;
     const pointerYaw = reducedMotion ? 0 : pointerX * ALCHE_TOP_CENTER_MODEL.pointerYawStrength;
     const pointerPitch = reducedMotion ? 0 : pointerY * ALCHE_TOP_CENTER_MODEL.pointerPitchStrength;
+    if (pointerDebugRef) {
+      pointerDebugRef.current.r3fPointerX = state.pointer.x;
+      pointerDebugRef.current.r3fPointerY = state.pointer.y;
+    }
     groupRef.current.visible = visibility > 0.001;
-    if (!groupRef.current.visible) return;
+    if (!groupRef.current.visible) {
+      if (pointerDebugRef) {
+        pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
+        pointerDebugRef.current.modelRotationY = groupRef.current.rotation.y;
+        pointerDebugRef.current.modelRotationZ = groupRef.current.rotation.z;
+      }
+      return;
+    }
 
     groupRef.current.position.x = THREE.MathUtils.damp(
       groupRef.current.position.x,
@@ -348,6 +362,11 @@ function CenterHeroModel({
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
+    if (pointerDebugRef) {
+      pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
+      pointerDebugRef.current.modelRotationY = groupRef.current.rotation.y;
+      pointerDebugRef.current.modelRotationZ = groupRef.current.rotation.z;
+    }
   });
 
   return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;

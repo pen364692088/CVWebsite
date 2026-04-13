@@ -85,6 +85,20 @@ export interface AlcheKvSceneState {
   hudVisibility: number;
 }
 
+export interface AlchePointerDebugState {
+  enabled: boolean;
+  prefersReducedMotion: boolean;
+  reducedMotion: boolean;
+  domPointerClientX: number | null;
+  domPointerClientY: number | null;
+  domPointerInside: boolean;
+  r3fPointerX: number;
+  r3fPointerY: number;
+  modelRotationX: number | null;
+  modelRotationY: number | null;
+  modelRotationZ: number | null;
+}
+
 export interface AlcheWorksIntroSceneState {
   visible: number;
   handoffMix: number;
