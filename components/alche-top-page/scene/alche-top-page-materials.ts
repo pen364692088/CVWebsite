@@ -15,13 +15,12 @@ function spectralPalette(t: number) {
   return c.clone().lerp(d, (t - 0.66) / 0.34);
 }
 
-export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
+export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     transparent: true,
     depthWrite: false,
     uniforms: {
-      uWallMap: { value: wallTexture },
       uTime: { value: 0 },
       uIntro: { value: 0 },
       uWhiteMix: { value: 0 },
@@ -34,6 +33,7 @@ export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
       uniform float uFlatten;
 
       varying vec2 vMediaUv;
+      varying float vProjectedX;
 
       void main() {
         float angle = atan(position.x, position.z);
@@ -47,13 +47,15 @@ export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(angleUv, heightUv);
-        gl_Position = projectionMatrix * viewMatrix * world;
+        vec4 clip = projectionMatrix * viewMatrix * world;
+        vProjectedX = clip.x / max(clip.w, 0.0001) * 0.5 + 0.5;
+        gl_Position = clip;
       }
     `,
     fragmentShader: `
       varying vec2 vMediaUv;
+      varying float vProjectedX;
 
-      uniform sampler2D uWallMap;
       uniform float uTime;
       uniform float uIntro;
       uniform float uWhiteMix;
@@ -69,14 +71,12 @@ export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
 
       void main() {
         vec2 uv = vMediaUv;
-        vec3 texSample = texture2D(uWallMap, uv).rgb;
-        float luminance = dot(texSample, vec3(0.2126, 0.7152, 0.0722));
         vec2 microGridUv = vec2(
-          uv.x * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
+          vProjectedX * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
           uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
         vec2 macroGridUv = vec2(
-          uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
+          vProjectedX * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
           uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);
@@ -85,19 +85,15 @@ export function createCurvedGridMaterial(wallTexture: THREE.Texture) {
         float macroH = linePulse(macroGridUv.y, 1.2);
         float microGrid = clamp(microV + microH, 0.0, 1.0);
         float macroGrid = clamp(macroV + macroH, 0.0, 1.0);
-        float marker = (1.0 - smoothstep(0.74, 0.96, luminance)) * 0.22;
-        float sideShade = 1.0 - smoothstep(0.18, 1.0, abs(uv.x - 0.5) * 2.0) * 0.06;
         float verticalShade = 1.0 - abs(uv.y - 0.5) * 0.05;
         float introExposure = mix(0.94, 1.0, smoothstep(0.0, 0.92, uIntro));
 
         vec3 baseColor = vec3(0.972, 0.976, 0.98);
         vec3 microLineColor = vec3(0.82, 0.835, 0.85);
         vec3 macroLineColor = vec3(0.74, 0.755, 0.775);
-        vec3 markerColor = vec3(0.69, 0.705, 0.725);
         vec3 color = mix(baseColor, microLineColor, microGrid * 0.88);
         color = mix(color, macroLineColor, macroGrid * 0.52);
-        color = mix(color, markerColor, marker);
-        color *= sideShade * verticalShade * introExposure * uExposure;
+        color *= verticalShade * introExposure * uExposure;
         color = mix(color, vec3(dot(color, vec3(0.3333333))), uWhiteMix * 0.06);
         color *= mix(1.0, 0.97, uFlatten * 0.1);
 
