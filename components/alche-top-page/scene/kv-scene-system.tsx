@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
-import { ALCHE_TOP_MEDIA_WALL, clamp01, type AlcheTopSceneState } from "@/lib/alche-top-page";
+import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY, clamp01, type AlcheTopSceneState } from "@/lib/alche-top-page";
 import {
   createCurvedGridMaterial,
   createEmissiveWordMaterial,
@@ -45,7 +45,10 @@ function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
     wallTexture.minFilter = THREE.LinearFilter;
     wallTexture.magFilter = THREE.LinearFilter;
     wallTexture.generateMipmaps = false;
-    wallTexture.repeat.set(ALCHE_TOP_MEDIA_WALL.cellColumns, ALCHE_TOP_MEDIA_WALL.cellRows);
+    wallTexture.repeat.set(
+      ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY,
+      ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY,
+    );
     wallTexture.needsUpdate = true;
   }, [wallTexture]);
 

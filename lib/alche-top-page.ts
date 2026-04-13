@@ -206,6 +206,8 @@ export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
   cellRows: 14,
 };
 
+export const ALCHE_TOP_WALL_TILE_DENSITY = 12 as const;
+
 export const ALCHE_TOP_POST = {
   bloomStrength: 0.22,
   bloomRadius: 0.52,
