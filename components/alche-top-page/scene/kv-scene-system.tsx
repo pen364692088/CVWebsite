@@ -4,9 +4,11 @@ import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Text, configureTextBuilder } from "troika-three-text";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
+  ALCHE_TOP_CENTER_MODEL,
   ALCHE_TOP_MOONFLOW,
   ALCHE_TOP_KV_WALL_ARC_STRENGTH,
   ALCHE_TOP_MEDIA_WALL,
@@ -24,6 +26,32 @@ import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components
 import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
+
+function ensureGeneratedUv(geometry: THREE.BufferGeometry) {
+  if (geometry.getAttribute("uv")) return geometry;
+
+  const cloned = geometry.clone().toNonIndexed();
+  const position = cloned.getAttribute("position");
+  if (!position) return cloned;
+
+  cloned.computeBoundingBox();
+  const bounds = cloned.boundingBox;
+  if (!bounds) return cloned;
+
+  const size = new THREE.Vector3();
+  bounds.getSize(size);
+  const uv = new Float32Array(position.count * 2);
+
+  for (let index = 0; index < position.count; index += 1) {
+    const x = position.getX(index);
+    const y = position.getY(index);
+    uv[index * 2] = size.x > 0 ? (x - bounds.min.x) / size.x : 0.5;
+    uv[index * 2 + 1] = size.y > 0 ? (y - bounds.min.y) / size.y : 0.5;
+  }
+
+  cloned.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  return cloned;
+}
 
 interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
@@ -164,6 +192,7 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
     text.letterSpacing = ALCHE_TOP_MOONFLOW.letterSpacing;
     text.color = 0x070707;
     text.fillOpacity = 0;
+    text.renderOrder = 1;
     text.position.set(0, ALCHE_TOP_MOONFLOW.y, targetPosition.z);
     const isLocalValidation =
       window.location.hostname === "127.0.0.1" &&
@@ -207,6 +236,89 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
   });
 
   return <primitive ref={textRef} object={text} visible={false} />;
+}
+
+function CenterHeroModel({ sceneState, wallTexturePath }: KvSceneSystemProps) {
+  const groupRef = useRef<THREE.Group>(null);
+  const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
+  const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
+  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
+  const targetPosition = useMemo(
+    () => new THREE.Vector3(0, ALCHE_TOP_CENTER_MODEL.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix + ALCHE_TOP_CENTER_MODEL.depthOffset),
+    [effectiveRadius],
+  );
+  const texturedScene = useMemo(() => {
+    const cloned = gltf.scene.clone(true);
+    const map = baseTexture.clone();
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.wrapS = THREE.RepeatWrapping;
+    map.wrapT = THREE.RepeatWrapping;
+    map.repeat.set(7, 7);
+    map.minFilter = THREE.LinearFilter;
+    map.magFilter = THREE.LinearFilter;
+    map.generateMipmaps = false;
+    map.needsUpdate = true;
+
+    cloned.traverse((child) => {
+      if (!("isMesh" in child) || child.isMesh !== true) return;
+      const mesh = child as THREE.Mesh;
+      mesh.geometry = ensureGeneratedUv(mesh.geometry);
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.renderOrder = 4;
+      mesh.material = new THREE.MeshBasicMaterial({
+        color: "#f3f5f7",
+        map,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      });
+    });
+
+    const bounds = new THREE.Box3().setFromObject(cloned);
+    const size = new THREE.Vector3();
+    bounds.getSize(size);
+    const modelHeight = Math.max(size.y, 0.0001);
+    const scale = ALCHE_TOP_CENTER_MODEL.targetHeight / modelHeight;
+    cloned.scale.setScalar(scale);
+    bounds.setFromObject(cloned);
+    const center = bounds.getCenter(new THREE.Vector3());
+    cloned.position.sub(center);
+
+    return { scene: cloned, map };
+  }, [baseTexture, gltf.scene]);
+
+  useEffect(() => {
+    return () => {
+      texturedScene.map.dispose();
+      texturedScene.scene.traverse((child) => {
+        if (!("isMesh" in child) || child.isMesh !== true) return;
+        const mesh = child as THREE.Mesh;
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach((material) => material.dispose());
+          return;
+        }
+        mesh.material.dispose();
+        mesh.geometry.dispose();
+      });
+    };
+  }, [texturedScene]);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+
+    const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
+    groupRef.current.visible = visibility > 0.001;
+    if (!groupRef.current.visible) return;
+
+    groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, targetPosition.x, 3.8, delta);
+    groupRef.current.position.y = THREE.MathUtils.damp(groupRef.current.position.y, targetPosition.y, 3.8, delta);
+    groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, targetPosition.z, 3.8, delta);
+    groupRef.current.rotation.x = THREE.MathUtils.damp(groupRef.current.rotation.x, -0.22, 3.8, delta);
+    groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, 0.58, 3.8, delta);
+    groupRef.current.rotation.z = THREE.MathUtils.damp(groupRef.current.rotation.z, 0.18, 3.8, delta);
+  });
+
+  return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;
 }
 
 function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
@@ -359,6 +471,7 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
     <>
       <CurvedMediaWall {...props} />
       {backgroundOnly ? <MoonflowTitle {...props} /> : null}
+      {backgroundOnly ? <CenterHeroModel {...props} /> : null}
       {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
       {backgroundOnly ? null : <HeroPrism {...props} />}
     </>

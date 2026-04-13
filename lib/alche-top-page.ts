@@ -217,6 +217,13 @@ export const ALCHE_TOP_MOONFLOW = {
   baseFontSize: 1,
 } as const;
 
+export const ALCHE_TOP_CENTER_MODEL = {
+  path: "/alche-top-page/kv/tetrahedron-cutout-simple.glb",
+  y: 0.08,
+  depthOffset: 0.38,
+  targetHeight: 1.84,
+} as const;
+
 export const ALCHE_TOP_POST = {
   bloomStrength: 0.22,
   bloomRadius: 0.52,
