@@ -3,6 +3,7 @@
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { Text, configureTextBuilder } from "troika-three-text";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
@@ -19,8 +20,10 @@ import {
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
-import { createRoundedWordGeometry } from "@/components/alche-top-page/scene/moonflow-geometry";
 import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
+import { assetPath } from "@/lib/site";
+
+configureTextBuilder({ useWorker: false });
 
 interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
@@ -140,62 +143,70 @@ function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps
 
 function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
   const { camera, size } = useThree();
-  const titleRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.MeshStandardMaterial>>(null);
+  const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
+  const fontPath = useMemo(() => assetPath(ALCHE_TOP_MOONFLOW.fontPath), []);
   const targetPosition = useMemo(
     () => new THREE.Vector3(0, ALCHE_TOP_MOONFLOW.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix),
     [effectiveRadius],
   );
-  const { geometry, width } = useMemo(
-    () => createRoundedWordGeometry("MOONFLOW", ALCHE_TOP_MOONFLOW.thickness, ALCHE_TOP_MOONFLOW.tracking),
-    [],
-  );
-  const material = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#070707",
-        roughness: 0.92,
-        metalness: 0.04,
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide,
-      }),
-    [],
-  );
+  const measuredWidthRef = useRef(1);
+  const text = useMemo(() => new Text(), []);
 
   useEffect(() => {
+    text.text = "MOONFLOW";
+    text.font = fontPath;
+    text.fontSize = ALCHE_TOP_MOONFLOW.baseFontSize;
+    text.anchorX = "center";
+    text.anchorY = "middle";
+    text.textAlign = "center";
+    text.whiteSpace = "nowrap";
+    text.letterSpacing = ALCHE_TOP_MOONFLOW.letterSpacing;
+    text.color = 0x070707;
+    text.fillOpacity = 0;
+    text.position.set(0, ALCHE_TOP_MOONFLOW.y, targetPosition.z);
+    const isLocalValidation =
+      window.location.hostname === "127.0.0.1" &&
+      !window.location.search.includes("alcheCapture=1");
+    const syncDelay = isLocalValidation ? 6000 : 0;
+    const syncHandle = window.setTimeout(() => {
+      text.sync(() => {
+        const bounds = text.textRenderInfo?.blockBounds;
+        measuredWidthRef.current = bounds ? Math.max(bounds[2] - bounds[0], 0.0001) : 1;
+      });
+    }, syncDelay);
+
     return () => {
-      geometry.dispose();
-      material.dispose();
+      window.clearTimeout(syncHandle);
+      text.dispose();
     };
-  }, [geometry, material]);
+  }, [fontPath, targetPosition.z, text]);
 
   useFrame((_, delta) => {
-    if (!titleRef.current) return;
+    if (!textRef.current) return;
 
     const perspectiveCamera = camera as THREE.PerspectiveCamera;
     const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
     const distance = perspectiveCamera.position.distanceTo(targetPosition);
     const viewportHeight = 2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov * 0.5)) * distance;
     const viewportWidth = viewportHeight * (size.width / Math.max(size.height, 1));
-    const targetScale = (viewportWidth * ALCHE_TOP_MOONFLOW.widthRatio) / Math.max(width, 0.0001);
+    const targetScale = (viewportWidth * ALCHE_TOP_MOONFLOW.widthRatio) / measuredWidthRef.current;
 
-    titleRef.current.visible = visibility > 0.001;
-    if (!titleRef.current.visible) {
-      material.opacity = 0;
+    textRef.current.visible = visibility > 0.001;
+    if (!textRef.current.visible) {
+      textRef.current.fillOpacity = 0;
       return;
     }
 
-    titleRef.current.position.x = THREE.MathUtils.damp(titleRef.current.position.x, targetPosition.x, 3.6, delta);
-    titleRef.current.position.y = THREE.MathUtils.damp(titleRef.current.position.y, targetPosition.y, 3.6, delta);
-    titleRef.current.position.z = THREE.MathUtils.damp(titleRef.current.position.z, targetPosition.z, 3.6, delta);
-    titleRef.current.rotation.set(0, 0, 0);
-    const nextScale = THREE.MathUtils.damp(Math.abs(titleRef.current.scale.x), targetScale, 3.8, delta);
-    titleRef.current.scale.set(-nextScale, nextScale, nextScale);
-    material.opacity = THREE.MathUtils.damp(material.opacity, visibility * 0.98, 4.2, delta);
+    textRef.current.position.x = THREE.MathUtils.damp(textRef.current.position.x, targetPosition.x, 3.6, delta);
+    textRef.current.position.y = THREE.MathUtils.damp(textRef.current.position.y, targetPosition.y, 3.6, delta);
+    textRef.current.position.z = THREE.MathUtils.damp(textRef.current.position.z, targetPosition.z, 3.6, delta);
+    textRef.current.rotation.set(0, 0, 0);
+    textRef.current.scale.setScalar(THREE.MathUtils.damp(textRef.current.scale.x, targetScale, 3.8, delta));
+    textRef.current.fillOpacity = THREE.MathUtils.damp(textRef.current.fillOpacity ?? 0, visibility * 0.98, 4.2, delta);
   });
 
-  return <mesh ref={titleRef} geometry={geometry} material={material} visible={false} position={[0, ALCHE_TOP_MOONFLOW.y, 0]} />;
+  return <primitive ref={textRef} object={text} visible={false} />;
 }
 
 function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {

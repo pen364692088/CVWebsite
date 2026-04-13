@@ -23,7 +23,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sass": "^1.99.0",
-    "three": "^0.183.2"
+    "three": "^0.183.2",
+    "troika-three-text": "^0.52.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12",

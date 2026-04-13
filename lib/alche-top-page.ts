@@ -211,9 +211,10 @@ export const ALCHE_TOP_KV_WALL_ARC_STRENGTH = 1.95 as const;
 export const ALCHE_TOP_MOONFLOW = {
   y: 0.18,
   depthMix: 0.5,
-  thickness: 0.016,
   widthRatio: 0.64,
-  tracking: 0.14,
+  fontPath: "/fonts/space-grotesk-500.woff",
+  letterSpacing: -0.035,
+  baseFontSize: 1,
 } as const;
 
 export const ALCHE_TOP_POST = {
