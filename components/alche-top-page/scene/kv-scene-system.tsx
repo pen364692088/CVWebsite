@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Text, configureTextBuilder } from "troika-three-text";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -26,7 +26,7 @@ import {
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
-import { WordSegments, buildWordLayout, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
+import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
 import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
@@ -40,7 +40,13 @@ interface KvSceneSystemProps {
   pointerDebugRef?: { current: AlchePointerDebugState };
 }
 
-function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
+interface CurvedMediaWallProps {
+  sceneState: AlcheTopSceneState;
+  wallTexturePath: string;
+  children?: ReactNode;
+}
+
+function CurvedMediaWall({ sceneState, wallTexturePath, children }: CurvedMediaWallProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
@@ -97,6 +103,7 @@ function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
   return (
     <mesh ref={roomRef} geometry={geometry}>
       <primitive object={material} attach="material" />
+      {children}
     </mesh>
   );
 }
@@ -159,9 +166,11 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
     [effectiveRadius],
   );
   const measuredWidthRef = useRef(1);
+  const textReadyRef = useRef(false);
   const text = useMemo(() => new Text(), []);
 
   useEffect(() => {
+    textReadyRef.current = false;
     text.text = "MOONFLOW";
     text.font = fontPath;
     text.fontSize = ALCHE_TOP_MOONFLOW.baseFontSize;
@@ -182,6 +191,7 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
       text.sync(() => {
         const bounds = text.textRenderInfo?.blockBounds;
         measuredWidthRef.current = bounds ? Math.max(bounds[2] - bounds[0], 0.0001) : 1;
+        textReadyRef.current = true;
       });
     }, syncDelay);
 
@@ -200,9 +210,10 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
     const viewportHeight = 2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov * 0.5)) * distance;
     const viewportWidth = viewportHeight * (size.width / Math.max(size.height, 1));
     const targetScale = (viewportWidth * ALCHE_TOP_MOONFLOW.widthRatio) / measuredWidthRef.current;
-
-    textRef.current.visible = visibility > 0.001;
-    if (!textRef.current.visible) {
+    const ready = textReadyRef.current;
+    textRef.current.visible = ready;
+    textRef.current.frustumCulled = false;
+    if (!ready) {
       textRef.current.fillOpacity = 0;
       return;
     }
@@ -219,77 +230,92 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
 }
 
 function WallWordSweep({ sceneState }: KvSceneSystemProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const pivotRef = useRef<THREE.Group>(null);
+  const textRef = useRef<Text>(null);
+  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
+  const radius = effectiveRadius - ALCHE_TOP_WALL_WORD.wallInset;
+  const fontPath = useMemo(() => assetPath(ALCHE_TOP_WALL_WORD.fontPath), []);
+  const textReadyRef = useRef(false);
+  const text = useMemo(() => new Text(), []);
   const material = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: "#09090b",
+        color: 0x09090b,
         transparent: true,
         opacity: 0,
         depthWrite: false,
+        side: THREE.DoubleSide,
         toneMapped: false,
       }),
     [],
   );
-  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
-  const layout = useMemo(() => buildWordLayout(ALCHE_TOP_WALL_WORD.text, ALCHE_TOP_WALL_WORD.spacing), []);
-  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
-  const radius = effectiveRadius - ALCHE_TOP_WALL_WORD.wallInset;
 
   useEffect(() => {
+    const curvedText = text as Text & { curveRadius?: number };
+    textReadyRef.current = false;
+    text.text = ALCHE_TOP_WALL_WORD.text;
+    text.font = fontPath;
+    text.fontSize = ALCHE_TOP_WALL_WORD.fontSize;
+    text.anchorX = "center";
+    text.anchorY = "middle";
+    text.textAlign = "center";
+    text.whiteSpace = "nowrap";
+    text.color = 0xffffff;
+    text.fillOpacity = 1;
+    curvedText.curveRadius = radius;
+    text.material = material;
+    text.frustumCulled = false;
+    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.depthOffset);
+    text.sync(() => {
+      textReadyRef.current = true;
+    });
+    text.renderOrder = 2;
+
     return () => {
+      textReadyRef.current = false;
+      text.dispose();
       material.dispose();
-      geometry.dispose();
     };
-  }, [geometry, material]);
+  }, [fontPath, material, radius, text]);
 
   useFrame((_, delta) => {
-    if (!groupRef.current) return;
+    if (!pivotRef.current || !textRef.current) return;
 
-    let motionMix = 0;
-    let opacityTarget = 0;
-
-    if (sceneState.activeSection === "works_intro") {
-      motionMix = sceneState.worksIntro.sweepMix;
-      opacityTarget = smoothstep(
-        remapRange(sceneState.worksIntro.sweepMix, ALCHE_TOP_WALL_WORD.introOpacityStart, ALCHE_TOP_WALL_WORD.introOpacityEnd),
-      );
-    } else if (sceneState.activeSection === "works") {
-      motionMix = sceneState.works.cardMix;
-      opacityTarget = 1 - smoothstep(remapRange(sceneState.works.cardMix, ALCHE_TOP_WALL_WORD.worksFadeStart, ALCHE_TOP_WALL_WORD.worksFadeEnd));
+    const ready = textReadyRef.current;
+    pivotRef.current.visible = ready;
+    textRef.current.visible = ready;
+    if (!ready) {
+      material.opacity = 0;
+      return;
     }
 
-    groupRef.current.visible = opacityTarget > 0.001;
-    material.opacity = THREE.MathUtils.damp(material.opacity, opacityTarget, 5, delta);
+    const introMix = sceneState.worksIntro.sweepMix;
+    const worksMix = sceneState.sectionProgress;
+    const introOpacity =
+      sceneState.activeSection === "works_intro"
+        ? smoothstep(remapRange(introMix, ALCHE_TOP_WALL_WORD.introOpacityStart, ALCHE_TOP_WALL_WORD.introOpacityEnd))
+        : sceneState.activeSection === "works"
+          ? 1
+          : 0;
+    const worksFade =
+      sceneState.activeSection === "works"
+        ? 1 - smoothstep(remapRange(worksMix, ALCHE_TOP_WALL_WORD.worksFadeStart, ALCHE_TOP_WALL_WORD.worksFadeEnd))
+        : 1;
+    const opacityTarget = introOpacity * worksFade;
+    const targetRotationY =
+      sceneState.activeSection === "works_intro"
+        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterRotationY, ALCHE_TOP_WALL_WORD.centerRotationY, introMix)
+        : sceneState.activeSection === "works"
+          ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerRotationY, ALCHE_TOP_WALL_WORD.exitRotationY, worksMix)
+          : ALCHE_TOP_WALL_WORD.enterRotationY;
+
+    pivotRef.current.rotation.y = THREE.MathUtils.damp(pivotRef.current.rotation.y, targetRotationY, 4.4, delta);
+    material.opacity = THREE.MathUtils.damp(material.opacity, opacityTarget * ALCHE_TOP_WALL_WORD.fillOpacity, 5, delta);
   });
 
-  const baseAngle =
-    sceneState.activeSection === "works_intro"
-      ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterAngleStart, ALCHE_TOP_WALL_WORD.centerAngle, sceneState.worksIntro.sweepMix)
-      : sceneState.activeSection === "works"
-        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerAngle, ALCHE_TOP_WALL_WORD.exitAngleEnd, sceneState.works.cardMix)
-        : ALCHE_TOP_WALL_WORD.enterAngleStart;
-
   return (
-    <group ref={groupRef} visible={false}>
-      {layout.map((segment, index) => {
-        const angle = baseAngle + (segment.centerX * ALCHE_TOP_WALL_WORD.scale) / radius;
-        return (
-          <mesh
-            key={`works-word-${index}`}
-            geometry={geometry}
-            material={material}
-            position={[
-              Math.sin(angle) * radius,
-              segment.y * ALCHE_TOP_WALL_WORD.scale + ALCHE_TOP_WALL_WORD.y,
-              -Math.cos(angle) * radius + ALCHE_TOP_WALL_WORD.depthOffset,
-            ]}
-            rotation={[0, angle, segment.rot ?? 0]}
-            scale={[segment.w * ALCHE_TOP_WALL_WORD.scale, segment.h * ALCHE_TOP_WALL_WORD.scale, 1]}
-            renderOrder={2}
-          />
-        );
-      })}
+    <group ref={pivotRef} visible={false}>
+      <primitive ref={textRef} object={text} visible={false} />
     </group>
   );
 }
@@ -602,9 +628,10 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
 export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSystemProps) {
   return (
     <>
-      <CurvedMediaWall {...props} />
+      <CurvedMediaWall sceneState={props.sceneState} wallTexturePath={props.wallTexturePath}>
+        {backgroundOnly ? <WallWordSweep {...props} /> : null}
+      </CurvedMediaWall>
       {backgroundOnly ? <MoonflowTitle {...props} /> : null}
-      {backgroundOnly ? <WallWordSweep {...props} /> : null}
       {backgroundOnly ? <CenterHeroModel {...props} /> : null}
       {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
       {backgroundOnly ? null : <HeroPrism {...props} />}
