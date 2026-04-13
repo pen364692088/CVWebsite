@@ -5,7 +5,13 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
-import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY, clamp01, type AlcheTopSceneState } from "@/lib/alche-top-page";
+import {
+  ALCHE_TOP_KV_WALL_ARC_STRENGTH,
+  ALCHE_TOP_MEDIA_WALL,
+  ALCHE_TOP_WALL_TILE_DENSITY,
+  clamp01,
+  type AlcheTopSceneState,
+} from "@/lib/alche-top-page";
 import {
   createCurvedGridMaterial,
   createEmissiveWordMaterial,
@@ -25,17 +31,18 @@ function CurvedMediaWall({ sceneState, wallTexturePath }: KvSceneSystemProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
+  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const geometry = useMemo(
     () =>
       new THREE.CylinderGeometry(
-        ALCHE_TOP_MEDIA_WALL.radius,
-        ALCHE_TOP_MEDIA_WALL.radius,
+        effectiveRadius,
+        effectiveRadius,
         ALCHE_TOP_MEDIA_WALL.height,
         ALCHE_TOP_MEDIA_WALL.radialSegments,
         ALCHE_TOP_MEDIA_WALL.heightSegments,
         true,
       ),
-    [],
+    [effectiveRadius],
   );
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
+import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
@@ -16,6 +16,8 @@ function spectralPalette(t: number) {
 }
 
 export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
+  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
+
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
     transparent: true,
@@ -41,9 +43,9 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
         float heightUv = position.y / ${Number(ALCHE_TOP_MEDIA_WALL.height / 2).toFixed(4)} * 0.5 + 0.5;
 
         vec3 transformed = position;
-        float planarX = angle * ${ALCHE_TOP_MEDIA_WALL.radius.toFixed(4)};
+        float planarX = angle * ${effectiveRadius.toFixed(4)};
         transformed.x = mix(position.x, planarX, uFlatten);
-        transformed.z = mix(position.z, -${ALCHE_TOP_MEDIA_WALL.radius.toFixed(4)}, uFlatten);
+        transformed.z = mix(position.z, -${effectiveRadius.toFixed(4)}, uFlatten);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(angleUv, heightUv);
@@ -75,24 +77,24 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
           vProjectedX * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
           uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
-        vec2 macroGridUv = vec2(
-          vProjectedX * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
-          uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
+        vec2 frameGridUv = vec2(
+          vProjectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 4).toFixed(1)},
+          uv.y * ${((ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY) / 4).toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);
         float microH = linePulse(microGridUv.y, 1.05);
-        float macroV = linePulse(macroGridUv.x, 1.2);
-        float macroH = linePulse(macroGridUv.y, 1.2);
+        float frameV = linePulse(frameGridUv.x, 1.75);
+        float frameH = linePulse(frameGridUv.y, 1.75);
         float microGrid = clamp(microV + microH, 0.0, 1.0);
-        float macroGrid = clamp(macroV + macroH, 0.0, 1.0);
+        float frameGrid = clamp(frameV + frameH, 0.0, 1.0);
         float verticalShade = 1.0 - abs(uv.y - 0.5) * 0.05;
         float introExposure = mix(0.94, 1.0, smoothstep(0.0, 0.92, uIntro));
 
         vec3 baseColor = vec3(0.972, 0.976, 0.98);
         vec3 microLineColor = vec3(0.82, 0.835, 0.85);
-        vec3 macroLineColor = vec3(0.74, 0.755, 0.775);
+        vec3 frameLineColor = vec3(0.08, 0.085, 0.095);
         vec3 color = mix(baseColor, microLineColor, microGrid * 0.88);
-        color = mix(color, macroLineColor, macroGrid * 0.52);
+        color = mix(color, frameLineColor, frameGrid * 0.9);
         color *= verticalShade * introExposure * uExposure;
         color = mix(color, vec3(dot(color, vec3(0.3333333))), uWhiteMix * 0.06);
         color *= mix(1.0, 0.97, uFlatten * 0.1);
