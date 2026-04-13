@@ -78,8 +78,8 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
           uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
         vec2 frameGridUv = vec2(
-          vProjectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 4).toFixed(1)},
-          uv.y * ${((ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY) / 4).toFixed(1)}
+          vProjectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)},
+          uv.y * ${((ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);
         float microH = linePulse(microGridUv.y, 1.05);
