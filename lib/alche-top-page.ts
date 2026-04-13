@@ -18,7 +18,11 @@ export const ALCHE_TOP_SECTION_IDS = [
 
 export type AlcheTopSectionId = (typeof ALCHE_TOP_SECTION_IDS)[number];
 
-export const ALCHE_TOP_RUNTIME_MODE = "kv-only" as const;
+export type AlcheTopRuntimeMode = "kv-only" | "kv-works" | "full-chain";
+
+export const ALCHE_TOP_RUNTIME_MODE = "kv-works" as AlcheTopRuntimeMode;
+export const ALCHE_TOP_MINIMAL_SCENE =
+  ALCHE_TOP_RUNTIME_MODE === "kv-only" || ALCHE_TOP_RUNTIME_MODE === "kv-works";
 
 export const ALCHE_SCROLLABLE_SECTION_IDS = ALCHE_TOP_SECTION_IDS.filter(
   (sectionId): sectionId is Exclude<AlcheTopSectionId, "loading"> => sectionId !== "loading",
@@ -27,7 +31,11 @@ export const ALCHE_SCROLLABLE_SECTION_IDS = ALCHE_TOP_SECTION_IDS.filter(
 export type AlcheScrollableSectionId = (typeof ALCHE_SCROLLABLE_SECTION_IDS)[number];
 
 export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] =
-  ALCHE_TOP_RUNTIME_MODE === "kv-only" ? ["kv"] : ALCHE_SCROLLABLE_SECTION_IDS;
+  ALCHE_TOP_RUNTIME_MODE === "kv-only"
+    ? ["kv"]
+    : ALCHE_TOP_RUNTIME_MODE === "kv-works"
+      ? ["kv", "works_intro", "works"]
+      : ALCHE_SCROLLABLE_SECTION_IDS;
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
 
@@ -231,6 +239,22 @@ export const ALCHE_TOP_MOONFLOW = {
   baseFontSize: 1,
 } as const;
 
+export const ALCHE_TOP_WALL_WORD = {
+  text: "WORKS",
+  y: 0.18,
+  scale: 0.86,
+  wallInset: 0.18,
+  depthOffset: 0.04,
+  spacing: 0.24,
+  enterAngleStart: -1.26,
+  centerAngle: -0.18,
+  exitAngleEnd: 1.02,
+  introOpacityStart: 0.1,
+  introOpacityEnd: 0.75,
+  worksFadeStart: 0.4,
+  worksFadeEnd: 1,
+} as const;
+
 export const ALCHE_TOP_CENTER_MODEL = {
   path: "/alche-top-page/kv/tetrahedron-cutout-standard-uv-grid.glb",
   y: 0.08,
@@ -397,8 +421,19 @@ export function getTopGroupForSection(sectionId: AlcheTopSectionId): AlcheTopGro
 }
 
 export function normalizeTopRuntimeSection(sectionId: AlcheTopSectionId): AlcheTopSectionId {
-  if (ALCHE_TOP_RUNTIME_MODE !== "kv-only") return sectionId;
-  return sectionId === "loading" ? "loading" : "kv";
+  if (ALCHE_TOP_RUNTIME_MODE === "kv-only") {
+    return sectionId === "loading" ? "loading" : "kv";
+  }
+
+  if (ALCHE_TOP_RUNTIME_MODE === "kv-works") {
+    if (sectionId === "loading" || sectionId === "kv" || sectionId === "works_intro" || sectionId === "works") {
+      return sectionId;
+    }
+
+    return "works";
+  }
+
+  return sectionId;
 }
 
 export function deriveKvState(introProgress: number) {
@@ -413,7 +448,7 @@ export function deriveWorksIntroState(progress: number) {
   return {
     handoffMix: smoothstep(remapRange(progress, 0.0, 0.82)),
     sweepMix: smoothstep(remapRange(progress, 0.06, 0.74)),
-    alcheFade: smoothstep(remapRange(progress, 0.08, 0.42)),
+    alcheFade: smoothstep(remapRange(progress, 0.0, 0.35)),
   };
 }
 

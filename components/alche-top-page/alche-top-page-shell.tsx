@@ -9,6 +9,7 @@ import { alcheTopPageCopy } from "@/data/alche-top-page";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
   type AlchePointerDebugState,
+  ALCHE_TOP_MINIMAL_SCENE,
   ALCHE_TOP_RENDERABLE_SECTIONS,
   ALCHE_TOP_RUNTIME_MODE,
   ALCHE_TOP_SECTION_IDS,
@@ -94,7 +95,8 @@ type AlcheShellDebugOverride = NonNullable<ReturnType<typeof readShellDebugOverr
 export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const copy = alcheTopPageCopy[locale];
   const router = useRouter();
-  const kvOnly = ALCHE_TOP_RUNTIME_MODE === "kv-only";
+  const singleSectionMode = ALCHE_TOP_RUNTIME_MODE === "kv-only";
+  const minimalScene = ALCHE_TOP_MINIMAL_SCENE;
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [canvasEventSource, setCanvasEventSource] = useState<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<AlcheScrollableSectionId, HTMLElement | null>>({
@@ -254,7 +256,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               introProgress={currentIntroProgress}
               heroShotId={currentHeroShotId}
               reducedMotion={reducedMotion}
-              kvOnly={kvOnly}
+              minimalScene={minimalScene}
               kvWallTexturePath={kvWallTexturePath}
               workCount={copy.works.items.length}
               serviceCount={copy.service.items.length}
@@ -357,7 +359,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             id={section.id}
             ref={(node) => setSectionRef(section.id, node)}
             className={`${styles.section} ${styles[`section${section.id[0].toUpperCase()}${section.id.slice(1)}`] ?? ""}`}
-            style={{ minHeight: kvOnly ? "100svh" : section.minHeight }}
+            style={{ minHeight: singleSectionMode ? "100svh" : section.minHeight }}
             data-top_section={section.id}
             data-snap-ratio={section.snapRatio}
             aria-label={section.label}

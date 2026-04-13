@@ -31,11 +31,14 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
-const expectedSections = ["kv"];
+const expectedSections = ["kv", "works_intro", "works"];
 
 const fixedStateShots = [
   { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
   { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
+  { name: "works-intro-enter", search: "?alcheSection=works_intro&alcheProgress=0.42&alcheIntro=1&alcheCapture=1" },
+  { name: "works-mid", search: "?alcheSection=works&alcheProgress=0.36&alcheIntro=1&alcheCapture=1" },
+  { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
 ];
 
 const pointerInteractionShots = [
@@ -142,7 +145,7 @@ async function assertTopPageShell(page, scenarioName) {
     assert((await page.locator(`[data-top_section="${sectionId}"]`).count()) === 1, `Missing ${sectionId} section for ${scenarioName}`);
   }
 
-  assert((await page.locator('[data-top_section="works"]').count()) === 0, `Unexpected non-kv sections for ${scenarioName}`);
+  assert((await page.locator('[data-top_section="mission_in"]').count()) === 0, `Unexpected mission sections for ${scenarioName}`);
   assert((await page.locator("[data-top-scroll-indicator]").count()) === 0, `Unexpected top scroll indicator for ${scenarioName}`);
   assert((await page.locator('[data-top-panel="works"]').count()) === 0, `Unexpected works panel for ${scenarioName}`);
 }

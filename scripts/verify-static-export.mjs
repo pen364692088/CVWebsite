@@ -30,9 +30,13 @@ assert(rootHtml.includes("Choosing your entry path."), "Root locale gateway text
 for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   const html = read(`out/${locale}/index.html`);
   assert(html.includes('id="kv"'), `Missing kv section in ${locale}`);
+  assert(html.includes('id="works_intro"'), `Missing works_intro section in ${locale}`);
+  assert(html.includes('id="works"'), `Missing works section in ${locale}`);
   assert(html.includes("ALCHE"), `Missing ALCHE wordmark in ${locale}`);
   assert(html.includes("data-top_section=\"kv\""), `Missing kv data-top_section marker in ${locale}`);
-  assert(!html.includes('id="works_intro"'), `Unexpected works_intro section in ${locale}`);
+  assert(html.includes("data-top_section=\"works_intro\""), `Missing works_intro data-top_section marker in ${locale}`);
+  assert(html.includes("data-top_section=\"works\""), `Missing works data-top_section marker in ${locale}`);
+  assert(!html.includes('id="mission_in"'), `Unexpected mission_in section in ${locale}`);
   assert(!html.includes("data-top-scroll-indicator"), `Unexpected top scroll indicator in ${locale}`);
 }
 

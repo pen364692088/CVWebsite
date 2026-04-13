@@ -16,7 +16,7 @@ import type { AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top
 interface AlcheTopPageSceneProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
-  kvOnly: boolean;
+  minimalScene: boolean;
   kvWallTexturePath: string;
   workCount: number;
   captureMode: boolean;
@@ -27,7 +27,7 @@ interface AlcheTopPageSceneProps {
 export function AlcheTopPageScene({
   sceneState,
   reducedMotion,
-  kvOnly,
+  minimalScene,
   kvWallTexturePath,
   workCount,
   captureMode,
@@ -64,27 +64,32 @@ export function AlcheTopPageScene({
     <>
       <color attach="background" args={["#000000"]} />
       <fog attach="fog" args={[fogColor, 5.8, 20.6]} />
-      <ambientLight intensity={kvOnly ? 0.1 : ambientIntensity} color="#d9e4f6" />
+      <ambientLight intensity={minimalScene ? 0.1 : ambientIntensity} color="#d9e4f6" />
       <spotLight
         position={[0, 5.4, 3]}
         angle={0.54}
         penumbra={0.92}
-        intensity={kvOnly ? 18 : 32}
+        intensity={minimalScene ? 18 : 32}
         decay={1.7}
         distance={18}
-        color={kvOnly ? "#7e67ff" : "#f2f5ff"}
+        color={minimalScene ? "#7e67ff" : "#f2f5ff"}
       />
-      <pointLight position={[0, -1.2, 2.4]} intensity={kvOnly ? 0.8 : 1.6} color={kvOnly ? "#5f62ff" : "#a7c9ff"} distance={10} />
+      <pointLight
+        position={[0, -1.2, 2.4]}
+        intensity={minimalScene ? 0.8 : 1.6}
+        color={minimalScene ? "#5f62ff" : "#a7c9ff"}
+        distance={10}
+      />
 
       <KvSceneSystem
         sceneState={sceneState}
         reducedMotion={reducedMotion}
-        backgroundOnly={kvOnly}
+        backgroundOnly={minimalScene}
         wallTexturePath={kvWallTexturePath}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
       />
-      {kvOnly ? null : (
+      {minimalScene ? null : (
         <>
           <WorksSceneSystem {...worksSceneProps} />
           <ConceptFieldSceneSystem sceneState={sceneState} />
