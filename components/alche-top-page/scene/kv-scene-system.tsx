@@ -243,6 +243,7 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
         color: 0x09090b,
         transparent: true,
         opacity: 0,
+        depthTest: true,
         depthWrite: false,
         side: THREE.DoubleSide,
         toneMapped: false,
@@ -251,7 +252,7 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
   );
 
   useEffect(() => {
-    const curvedText = text as Text & { curveRadius?: number };
+    const curvedText = text as Text & { curveRadius?: number; depthOffset?: number };
     textReadyRef.current = false;
     text.text = ALCHE_TOP_WALL_WORD.text;
     text.font = fontPath;
@@ -263,9 +264,10 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
     text.color = 0xffffff;
     text.fillOpacity = 1;
     curvedText.curveRadius = radius;
+    curvedText.depthOffset = ALCHE_TOP_WALL_WORD.polygonDepthOffset;
     text.material = material;
     text.frustumCulled = false;
-    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.depthOffset);
+    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.surfaceOffset);
     text.sync(() => {
       textReadyRef.current = true;
     });
