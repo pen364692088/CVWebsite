@@ -11,7 +11,7 @@ import { OutroSceneSystem } from "@/components/alche-top-page/scene/outro-scene-
 import { ServiceSceneSystem } from "@/components/alche-top-page/scene/service-scene-system";
 import { StelllaSceneSystem } from "@/components/alche-top-page/scene/stellla-scene-system";
 import { WorksSceneSystem } from "@/components/alche-top-page/scene/works-scene-system";
-import type { AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top-page";
+import type { AlcheLayerDebugState, AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top-page";
 
 interface AlcheTopPageSceneProps {
   sceneState: AlcheTopSceneState;
@@ -22,6 +22,7 @@ interface AlcheTopPageSceneProps {
   captureMode: boolean;
   pointerOverride: { x: number; y: number } | null;
   pointerDebugRef: { current: AlchePointerDebugState };
+  layerDebugRef: { current: AlcheLayerDebugState };
 }
 
 export function AlcheTopPageScene({
@@ -33,6 +34,7 @@ export function AlcheTopPageScene({
   captureMode,
   pointerOverride,
   pointerDebugRef,
+  layerDebugRef,
 }: AlcheTopPageSceneProps) {
   const { camera } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
@@ -54,6 +56,12 @@ export function AlcheTopPageScene({
     perspectiveCamera.fov = THREE.MathUtils.damp(perspectiveCamera.fov, cameraState.fov, 4, delta);
     perspectiveCamera.updateProjectionMatrix();
     perspectiveCamera.lookAt(targetRef.current);
+    layerDebugRef.current.cameraPosition = [
+      perspectiveCamera.position.x,
+      perspectiveCamera.position.y,
+      perspectiveCamera.position.z,
+    ];
+    layerDebugRef.current.cameraTarget = [targetRef.current.x, targetRef.current.y, targetRef.current.z];
   });
 
   const ambientIntensity =
@@ -88,6 +96,7 @@ export function AlcheTopPageScene({
         wallTexturePath={kvWallTexturePath}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
+        layerDebugRef={layerDebugRef}
       />
       {minimalScene ? null : (
         <>

@@ -17,6 +17,7 @@ import {
   clamp01,
   remapRange,
   smoothstep,
+  type AlcheLayerDebugState,
   type AlchePointerDebugState,
   type AlcheTopSceneState,
 } from "@/lib/alche-top-page";
@@ -38,6 +39,7 @@ interface KvSceneSystemProps {
   wallTexturePath: string;
   pointerOverride?: { x: number; y: number } | null;
   pointerDebugRef?: { current: AlchePointerDebugState };
+  layerDebugRef?: { current: AlcheLayerDebugState };
 }
 
 interface CurvedMediaWallProps {
@@ -156,7 +158,7 @@ function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps
   );
 }
 
-function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
+function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   const { camera, size } = useThree();
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
@@ -224,12 +226,16 @@ function MoonflowTitle({ sceneState }: KvSceneSystemProps) {
     textRef.current.rotation.set(0, 0, 0);
     textRef.current.scale.setScalar(THREE.MathUtils.damp(textRef.current.scale.x, targetScale, 3.8, delta));
     textRef.current.fillOpacity = THREE.MathUtils.damp(textRef.current.fillOpacity ?? 0, visibility * 0.98, 4.2, delta);
+    if (layerDebugRef) {
+      const worldPosition = textRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.moonflowWorldZ = worldPosition.z;
+    }
   });
 
   return <primitive ref={textRef} object={text} visible={false} />;
 }
 
-function WallWordSweep({ sceneState }: KvSceneSystemProps) {
+function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   const pivotRef = useRef<THREE.Group>(null);
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
@@ -267,7 +273,7 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
     curvedText.depthOffset = ALCHE_TOP_WALL_WORD.polygonDepthOffset;
     text.material = material;
     text.frustumCulled = false;
-    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.surfaceOffset);
+    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.worldZ + ALCHE_TOP_WALL_WORD.surfaceOffset);
     text.sync(() => {
       textReadyRef.current = true;
     });
@@ -313,6 +319,13 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
 
     pivotRef.current.rotation.y = THREE.MathUtils.damp(pivotRef.current.rotation.y, targetRotationY, 4.4, delta);
     material.opacity = THREE.MathUtils.damp(material.opacity, opacityTarget * ALCHE_TOP_WALL_WORD.fillOpacity, 5, delta);
+    if (layerDebugRef) {
+      const worldPosition = textRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.worksWorldZ = worldPosition.z;
+      layerDebugRef.current.worksDepthTest = material.depthTest;
+      layerDebugRef.current.worksDepthWrite = material.depthWrite;
+      layerDebugRef.current.worksTransparent = material.transparent;
+    }
   });
 
   return (
@@ -324,11 +337,12 @@ function WallWordSweep({ sceneState }: KvSceneSystemProps) {
 
 function CenterHeroModel({
   sceneState,
-  reducedMotion,
+  reducedMotion: _reducedMotion,
   wallTexturePath,
-  pointerOverride,
+  pointerOverride: _pointerOverride,
   pointerDebugRef,
-}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride" | "pointerDebugRef">) {
+  layerDebugRef,
+}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
   const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
@@ -418,10 +432,8 @@ function CenterHeroModel({
       sceneState.activeSection === "works_intro" || sceneState.activeSection === "works"
         ? sceneState.kv.visible
         : sceneState.kv.wordVisibility * sceneState.kv.visible;
-    const pointerX = pointerOverride?.x ?? state.pointer.x;
-    const pointerY = pointerOverride?.y ?? state.pointer.y;
-    const pointerYaw = reducedMotion ? 0 : pointerX * ALCHE_TOP_CENTER_MODEL.pointerYawStrength;
-    const pointerPitch = reducedMotion ? 0 : pointerY * ALCHE_TOP_CENTER_MODEL.pointerPitchStrength;
+    const pointerYaw = 0;
+    const pointerPitch = 0;
     if (pointerDebugRef) {
       pointerDebugRef.current.r3fPointerX = state.pointer.x;
       pointerDebugRef.current.r3fPointerY = state.pointer.y;
@@ -476,6 +488,10 @@ function CenterHeroModel({
       pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
       pointerDebugRef.current.modelRotationY = groupRef.current.rotation.y;
       pointerDebugRef.current.modelRotationZ = groupRef.current.rotation.z;
+    }
+    if (layerDebugRef) {
+      const worldPosition = groupRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.modelWorldZ = worldPosition.z;
     }
   });
 

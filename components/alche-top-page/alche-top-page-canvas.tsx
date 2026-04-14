@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { AlcheTopPageScene } from "@/components/alche-top-page/scene/alche-top-page-scene";
 import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
-import { deriveTopSceneState, type AlchePointerDebugState, type AlcheTopSectionId } from "@/lib/alche-top-page";
+import { deriveTopSceneState, type AlcheLayerDebugState, type AlchePointerDebugState, type AlcheTopSectionId } from "@/lib/alche-top-page";
 
 interface AlcheTopPageCanvasProps {
   activeSection: AlcheTopSectionId;
@@ -73,6 +73,16 @@ export function AlcheTopPageCanvas({
     modelRotationY: null,
     modelRotationZ: null,
   });
+  const layerDebugRef = useRef<AlcheLayerDebugState>({
+    cameraPosition: [0, 0, 0],
+    cameraTarget: [0, 0, 0],
+    modelWorldZ: null,
+    moonflowWorldZ: null,
+    worksWorldZ: null,
+    worksDepthTest: null,
+    worksDepthWrite: null,
+    worksTransparent: null,
+  });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;
   pointerDebugRef.current.reducedMotion = sceneReducedMotion;
@@ -127,6 +137,7 @@ export function AlcheTopPageCanvas({
       __setAlchePointerOverride?: (nextOverride: AlchePointerOverride | null) => void;
       __clearAlchePointerOverride?: () => void;
       __getAlchePointerDebugState?: () => AlchePointerDebugState;
+      __getAlcheLayerDebugState?: () => AlcheLayerDebugState;
     };
 
     host.__setAlcheSceneOverride = (nextOverride) => {
@@ -142,14 +153,16 @@ export function AlcheTopPageCanvas({
     };
 
     host.__getAlchePointerDebugState = () => ({ ...pointerDebugRef.current });
+    host.__getAlcheLayerDebugState = () => ({ ...layerDebugRef.current });
 
     return () => {
       delete host.__setAlcheSceneOverride;
       delete host.__setAlchePointerOverride;
       delete host.__clearAlchePointerOverride;
       delete host.__getAlchePointerDebugState;
+      delete host.__getAlcheLayerDebugState;
     };
-  }, [pointerDebugRef]);
+  }, [layerDebugRef, pointerDebugRef]);
 
   return (
     <Canvas
@@ -174,6 +187,7 @@ export function AlcheTopPageCanvas({
         captureMode={captureMode}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
+        layerDebugRef={layerDebugRef}
       />
     </Canvas>
   );

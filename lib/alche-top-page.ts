@@ -107,6 +107,17 @@ export interface AlchePointerDebugState {
   modelRotationZ: number | null;
 }
 
+export interface AlcheLayerDebugState {
+  cameraPosition: readonly [number, number, number];
+  cameraTarget: readonly [number, number, number];
+  modelWorldZ: number | null;
+  moonflowWorldZ: number | null;
+  worksWorldZ: number | null;
+  worksDepthTest: boolean | null;
+  worksDepthWrite: boolean | null;
+  worksTransparent: boolean | null;
+}
+
 export interface AlcheWorksIntroSceneState {
   visible: number;
   handoffMix: number;
@@ -246,6 +257,7 @@ export const ALCHE_TOP_WALL_WORD = {
   fontSize: 2.68,
   fillOpacity: 0.22,
   wallInset: 0.0,
+  worldZ: -2.24,
   surfaceOffset: 0.012,
   polygonDepthOffset: -0.02,
   enterRotationY: 0.72,
@@ -714,6 +726,9 @@ export function deriveTopSceneState(
 
   let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
+  if (ALCHE_TOP_RUNTIME_MODE === "kv-works" && (runtimeSection === "works_intro" || runtimeSection === "works")) {
+    camera = ALCHE_TOP_CAMERA_STATES.kv;
+  } else {
   switch (runtimeSection) {
     case "loading":
       camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.loading, ALCHE_TOP_CAMERA_STATES.kv, smoothstep(remapRange(introProgress, 0.08, 0.48)));
@@ -738,6 +753,7 @@ export function deriveTopSceneState(
       break;
     default:
       break;
+  }
   }
 
   const kv = deriveKvSceneState(

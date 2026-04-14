@@ -46,6 +46,11 @@ const pointerInteractionShots = [
   { name: "kv-pointer-right-real", move: { x: 1160, y: 780 } },
 ];
 
+const kvLockedCamera = {
+  position: [0.02, 0.08, 5.38],
+  target: [0.04, 0.02, -1.02],
+};
+
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
 
@@ -150,6 +155,10 @@ async function assertTopPageShell(page, scenarioName) {
   assert((await page.locator('[data-top-panel="works"]').count()) === 0, `Unexpected works panel for ${scenarioName}`);
 }
 
+function approxEqual(a, b, tolerance = 0.03) {
+  return Math.abs(a - b) <= tolerance;
+}
+
 async function runScenario(browser, scenario) {
   const context = await browser.newContext(
     scenario.device
@@ -250,6 +259,44 @@ async function captureFixedStates(browser) {
         }
       }
       await page.waitForTimeout(240);
+      if (shot.name === "works-intro-enter" || shot.name === "works-mid") {
+        await page.waitForFunction(
+          (lockedCamera) => {
+            const layerState = window.__getAlcheLayerDebugState?.();
+            if (!layerState) return false;
+            const cameraMatches =
+              layerState.cameraPosition.every((value, index) => Math.abs(value - lockedCamera.position[index]) <= 0.03) &&
+              layerState.cameraTarget.every((value, index) => Math.abs(value - lockedCamera.target[index]) <= 0.03);
+            const modelAheadOfWorks =
+              layerState.modelWorldZ !== null &&
+              layerState.worksWorldZ !== null &&
+              layerState.modelWorldZ > layerState.worksWorldZ;
+            const modelAheadOfMoonflow =
+              layerState.modelWorldZ !== null &&
+              layerState.moonflowWorldZ !== null &&
+              layerState.modelWorldZ > layerState.moonflowWorldZ;
+            const worksMaterialValid =
+              layerState.worksDepthTest === true &&
+              layerState.worksDepthWrite === false &&
+              layerState.worksTransparent === true;
+            return cameraMatches && modelAheadOfWorks && modelAheadOfMoonflow && worksMaterialValid;
+          },
+          kvLockedCamera,
+          { timeout: 5000 },
+        );
+        const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+        assert(layerState, `Missing layer debug state for ${shot.name}`);
+        assert(
+          layerState.cameraPosition.every((value, index) => approxEqual(value, kvLockedCamera.position[index])),
+          `Expected locked kv camera position for ${shot.name}`,
+        );
+        assert(
+          layerState.cameraTarget.every((value, index) => approxEqual(value, kvLockedCamera.target[index])),
+          `Expected locked kv camera target for ${shot.name}`,
+        );
+        assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
+        assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
+      }
       await page.screenshot({
         path: path.join(outputDir, `${shot.name}.png`),
         fullPage: false,
@@ -320,7 +367,7 @@ async function capturePointerInteraction(browser) {
           const r3fMatches = expectLeft
             ? debug.r3fPointerX < -0.45 && debug.r3fPointerY > 0.45
             : debug.r3fPointerX > 0.45 && debug.r3fPointerY < -0.35;
-          const rotationMatches = expectLeft ? rotation.y < 0.56 && rotation.x > -0.18 : rotation.y > 0.6 && rotation.x < -0.24;
+          const rotationMatches = Math.abs(rotation.y - 0.58) < 0.03 && Math.abs(rotation.x + 0.22) < 0.03;
           return domMatches && r3fMatches && rotationMatches;
         },
         {
@@ -349,10 +396,8 @@ async function capturePointerInteraction(browser) {
     assert(leftDebug.domPointerInside && rightDebug.domPointerInside, "Expected DOM pointer to enter the canvas event source.");
     assert(leftDebug.r3fPointerX < rightDebug.r3fPointerX, "Expected real mouse movement to change R3F pointer x.");
     assert(leftDebug.r3fPointerY > rightDebug.r3fPointerY, "Expected real mouse movement to change R3F pointer y.");
-    assert(leftRotation.y < rightRotation.y, "Expected hero model yaw to respond in opposite directions.");
-    assert(leftRotation.x > rightRotation.x, "Expected hero model pitch to respond in opposite directions.");
-    assert(Math.abs(leftRotation.y - rightRotation.y) > 0.16, "Expected readable yaw delta for hero model.");
-    assert(Math.abs(leftRotation.x - rightRotation.x) > 0.04, "Expected readable pitch delta for hero model.");
+    assert(Math.abs(leftRotation.y - rightRotation.y) < 0.01, "Expected frozen hero model yaw during control-variable pass.");
+    assert(Math.abs(leftRotation.x - rightRotation.x) < 0.01, "Expected frozen hero model pitch during control-variable pass.");
   } finally {
     await context.close();
   }
