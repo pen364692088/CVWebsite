@@ -72,6 +72,7 @@ export interface AlcheTopCameraState {
 }
 
 export interface AlcheTopMediaWallConfig {
+  worldZ: number;
   radius: number;
   height: number;
   radialSegments: number;
@@ -110,6 +111,7 @@ export interface AlchePointerDebugState {
 export interface AlcheLayerDebugState {
   cameraPosition: readonly [number, number, number];
   cameraTarget: readonly [number, number, number];
+  wallWorldZ: number | null;
   modelWorldZ: number | null;
   moonflowWorldZ: number | null;
   worksWorldZ: number | null;
@@ -231,6 +233,7 @@ export const ALCHE_TOP_SCROLL_TUNING = {
 } as const;
 
 export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
+  worldZ: -5,
   radius: 9.6,
   height: 11.4,
   radialSegments: 68,
@@ -257,8 +260,8 @@ export const ALCHE_TOP_WALL_WORD = {
   fontSize: 2.68,
   fillOpacity: 0.22,
   wallInset: 0.0,
-  worldZ: -2.24,
-  surfaceOffset: 0.012,
+  worldZ: -4.9,
+  surfaceOffset: 0.0,
   polygonDepthOffset: -0.02,
   enterRotationY: 0.72,
   centerRotationY: 0.0,

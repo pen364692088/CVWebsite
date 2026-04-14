@@ -50,6 +50,8 @@ const kvLockedCamera = {
   position: [0.02, 0.08, 5.38],
   target: [0.04, 0.02, -1.02],
 };
+const expectedWallWorldZ = -5;
+const expectedWorksWorldZ = -4.9;
 
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
@@ -261,7 +263,7 @@ async function captureFixedStates(browser) {
       await page.waitForTimeout(240);
       if (shot.name === "works-intro-enter" || shot.name === "works-mid") {
         await page.waitForFunction(
-          (lockedCamera) => {
+          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ }) => {
             const layerState = window.__getAlcheLayerDebugState?.();
             if (!layerState) return false;
             const cameraMatches =
@@ -279,9 +281,11 @@ async function captureFixedStates(browser) {
               layerState.worksDepthTest === true &&
               layerState.worksDepthWrite === false &&
               layerState.worksTransparent === true;
-            return cameraMatches && modelAheadOfWorks && modelAheadOfMoonflow && worksMaterialValid;
+            const wallMatches = layerState.wallWorldZ !== null && Math.abs(layerState.wallWorldZ - expectedWallWorldZ) <= 0.03;
+            const worksMatches = layerState.worksWorldZ !== null && Math.abs(layerState.worksWorldZ - expectedWorksWorldZ) <= 0.05;
+            return cameraMatches && wallMatches && worksMatches && modelAheadOfWorks && modelAheadOfMoonflow && worksMaterialValid;
           },
-          kvLockedCamera,
+          { lockedCamera: kvLockedCamera, expectedWallWorldZ, expectedWorksWorldZ },
           { timeout: 5000 },
         );
         const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
@@ -294,6 +298,8 @@ async function captureFixedStates(browser) {
           layerState.cameraTarget.every((value, index) => approxEqual(value, kvLockedCamera.target[index])),
           `Expected locked kv camera target for ${shot.name}`,
         );
+        assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
+        assert(approxEqual(layerState.worksWorldZ, expectedWorksWorldZ, 0.05), `Expected WORKS world z for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
       }

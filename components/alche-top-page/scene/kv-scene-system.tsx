@@ -45,10 +45,10 @@ interface KvSceneSystemProps {
 interface CurvedMediaWallProps {
   sceneState: AlcheTopSceneState;
   wallTexturePath: string;
-  children?: ReactNode;
+  layerDebugRef?: { current: AlcheLayerDebugState };
 }
 
-function CurvedMediaWall({ sceneState, wallTexturePath, children }: CurvedMediaWallProps) {
+function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
@@ -100,12 +100,15 @@ function CurvedMediaWall({ sceneState, wallTexturePath, children }: CurvedMediaW
     material.uniforms.uWhiteMix.value = THREE.MathUtils.damp(material.uniforms.uWhiteMix.value, sceneState.kv.wallWhiteMix, 3.4, delta);
     material.uniforms.uFlatten.value = THREE.MathUtils.damp(material.uniforms.uFlatten.value, sceneState.kv.wallFlatten, 3.2, delta);
     material.uniforms.uSceneFade.value = THREE.MathUtils.damp(material.uniforms.uSceneFade.value, wallVisible, 3.2, delta);
+    if (layerDebugRef) {
+      const worldPosition = roomRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.wallWorldZ = worldPosition.z;
+    }
   });
 
   return (
-    <mesh ref={roomRef} geometry={geometry}>
+    <mesh ref={roomRef} geometry={geometry} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]}>
       <primitive object={material} attach="material" />
-      {children}
     </mesh>
   );
 }
@@ -240,6 +243,7 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const radius = effectiveRadius - ALCHE_TOP_WALL_WORD.wallInset;
+  const localDepth = ALCHE_TOP_WALL_WORD.worldZ - ALCHE_TOP_MEDIA_WALL.worldZ + ALCHE_TOP_WALL_WORD.surfaceOffset;
   const fontPath = useMemo(() => assetPath(ALCHE_TOP_WALL_WORD.fontPath), []);
   const textReadyRef = useRef(false);
   const text = useMemo(() => new Text(), []);
@@ -273,18 +277,17 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
     curvedText.depthOffset = ALCHE_TOP_WALL_WORD.polygonDepthOffset;
     text.material = material;
     text.frustumCulled = false;
-    text.position.set(0, ALCHE_TOP_WALL_WORD.y, ALCHE_TOP_WALL_WORD.worldZ + ALCHE_TOP_WALL_WORD.surfaceOffset);
+    text.position.set(0, ALCHE_TOP_WALL_WORD.y, localDepth);
     text.sync(() => {
       textReadyRef.current = true;
     });
-    text.renderOrder = 2;
 
     return () => {
       textReadyRef.current = false;
       text.dispose();
       material.dispose();
     };
-  }, [fontPath, material, radius, text]);
+  }, [fontPath, localDepth, material, radius, text]);
 
   useFrame((_, delta) => {
     if (!pivotRef.current || !textRef.current) return;
@@ -329,7 +332,7 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   });
 
   return (
-    <group ref={pivotRef} visible={false}>
+    <group ref={pivotRef} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]} visible={false}>
       <primitive ref={textRef} object={text} visible={false} />
     </group>
   );
@@ -646,9 +649,12 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
 export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSystemProps) {
   return (
     <>
-      <CurvedMediaWall sceneState={props.sceneState} wallTexturePath={props.wallTexturePath}>
-        {backgroundOnly ? <WallWordSweep {...props} /> : null}
-      </CurvedMediaWall>
+      <CurvedMediaWall
+        sceneState={props.sceneState}
+        wallTexturePath={props.wallTexturePath}
+        layerDebugRef={props.layerDebugRef}
+      />
+      {backgroundOnly ? <WallWordSweep {...props} /> : null}
       {backgroundOnly ? <MoonflowTitle {...props} /> : null}
       {backgroundOnly ? <CenterHeroModel {...props} /> : null}
       {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}

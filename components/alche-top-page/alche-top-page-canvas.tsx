@@ -76,6 +76,7 @@ export function AlcheTopPageCanvas({
   const layerDebugRef = useRef<AlcheLayerDebugState>({
     cameraPosition: [0, 0, 0],
     cameraTarget: [0, 0, 0],
+    wallWorldZ: null,
     modelWorldZ: null,
     moonflowWorldZ: null,
     worksWorldZ: null,
