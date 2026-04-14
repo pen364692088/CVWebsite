@@ -20,6 +20,7 @@ interface AlcheTopPageSceneProps {
   kvWallTexturePath: string;
   workCount: number;
   captureMode: boolean;
+  worksWordHandoff: number;
   pointerOverride: { x: number; y: number } | null;
   pointerDebugRef: { current: AlchePointerDebugState };
   layerDebugRef: { current: AlcheLayerDebugState };
@@ -32,6 +33,7 @@ export function AlcheTopPageScene({
   kvWallTexturePath,
   workCount,
   captureMode,
+  worksWordHandoff,
   pointerOverride,
   pointerDebugRef,
   layerDebugRef,
@@ -94,6 +96,7 @@ export function AlcheTopPageScene({
         reducedMotion={reducedMotion}
         backgroundOnly={minimalScene}
         wallTexturePath={kvWallTexturePath}
+        worksWordHandoff={worksWordHandoff}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
         layerDebugRef={layerDebugRef}

@@ -498,6 +498,101 @@ async function capturePointerInteraction(browser) {
   }
 }
 
+async function captureRealWheelHandoff(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1080 },
+    locale: "en-US",
+    reducedMotion: "no-preference",
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    await assertTopPageShell(page, "works-wheel-handoff");
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-active-section]")?.getAttribute("data-intro-ready") === "true" &&
+        typeof window.__getAlcheLayerDebugState === "function",
+      undefined,
+      { timeout: 8000 },
+    );
+    await page.mouse.move(720, 540);
+
+    const samples = [];
+    const capturedShots = new Set();
+
+    for (let step = 0; step < 28; step += 1) {
+      await page.mouse.wheel(0, 420);
+      await page.waitForTimeout(520);
+      const snapshot = await page.evaluate((stepLabel) => {
+        const root = document.querySelector("[data-active-section]");
+        const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+        return {
+          step: stepLabel,
+          scrollY: Math.round(window.scrollY),
+          active: root?.getAttribute("data-active-section"),
+          tracked: root?.getAttribute("data-tracked-section"),
+          introReady: root?.getAttribute("data-intro-ready"),
+          handoff: layerState?.worksHandoff ?? null,
+          worksOpacity: layerState?.worksOpacity ?? null,
+          moonflowOpacity: layerState?.moonflowOpacity ?? null,
+          worksWorldX: layerState?.worksWorldX ?? null,
+          worksRotationY: layerState?.worksRotationY ?? null,
+          modelWorldZ: layerState?.modelWorldZ ?? null,
+          worksWorldZ: layerState?.worksWorldZ ?? null,
+        };
+      }, step);
+      samples.push(snapshot);
+
+      if (snapshot.handoff !== null && snapshot.handoff >= 0.24 && !capturedShots.has("works-wheel-intro")) {
+        await page.screenshot({
+          path: path.join(outputDir, "works-wheel-intro.png"),
+          fullPage: false,
+        });
+        capturedShots.add("works-wheel-intro");
+      }
+
+      if (snapshot.handoff !== null && snapshot.handoff >= 0.55 && !capturedShots.has("works-wheel-hold")) {
+        await page.screenshot({
+          path: path.join(outputDir, "works-wheel-hold.png"),
+          fullPage: false,
+        });
+        capturedShots.add("works-wheel-hold");
+      }
+
+      if (
+        snapshot.active === "works" &&
+        snapshot.handoff !== null &&
+        snapshot.handoff >= 0.6 &&
+        snapshot.worksOpacity !== null &&
+        snapshot.worksOpacity >= 0.12
+      ) {
+        break;
+      }
+    }
+
+    const handoffSamples = samples.filter((sample) => sample.handoff !== null);
+    const introSample = handoffSamples.find((sample) => sample.handoff >= 0.24 && sample.handoff <= 0.45);
+    const worksSample = handoffSamples.find((sample) => sample.handoff >= 0.55 && (sample.worksOpacity ?? 0) >= 0.12);
+    assert(introSample, "Expected real wheel scrolling to begin the WORKS handoff.");
+    assert(worksSample, "Expected real wheel scrolling to reach the WORKS hold region.");
+    assert(introSample.step < worksSample.step, "Expected WORKS intro motion to occur before hold during real wheel scrolling.");
+    for (let index = 1; index < handoffSamples.length; index += 1) {
+      const previous = handoffSamples[index - 1].handoff ?? 0;
+      const next = handoffSamples[index].handoff ?? 0;
+      assert(next + 0.02 >= previous, "Expected real wheel handoff to stay monotonic while scrolling down.");
+    }
+    assert(introSample.worksRotationY !== null && Math.abs(introSample.worksRotationY) <= 0.001, "Expected WORKS rotation to stay frozen during real wheel intro.");
+    assert(worksSample.worksRotationY !== null && Math.abs(worksSample.worksRotationY) <= 0.001, "Expected WORKS rotation to stay frozen during real wheel hold.");
+    assert(introSample.modelWorldZ !== null && introSample.worksWorldZ !== null && introSample.modelWorldZ > introSample.worksWorldZ, "Expected model ahead of WORKS during real wheel intro.");
+    assert(worksSample.modelWorldZ !== null && worksSample.worksWorldZ !== null && worksSample.modelWorldZ > worksSample.worksWorldZ, "Expected model ahead of WORKS during real wheel hold.");
+    assert(introSample.moonflowOpacity !== null && worksSample.moonflowOpacity !== null && introSample.moonflowOpacity > worksSample.moonflowOpacity, "Expected MOONFLOW to fade down through the real wheel handoff.");
+    assert((introSample.worksOpacity ?? 0) < (worksSample.worksOpacity ?? 0), "Expected WORKS opacity to rise between intro and hold during real wheel scrolling.");
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const server = await createStaticServer(3000);
 
@@ -532,6 +627,7 @@ async function run() {
       }
 
       await captureFixedStates(browser);
+      await captureRealWheelHandoff(browser);
       await capturePointerInteraction(browser);
     } finally {
       await browser.close();

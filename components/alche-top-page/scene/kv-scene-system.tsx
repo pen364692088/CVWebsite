@@ -15,7 +15,6 @@ import {
   ALCHE_TOP_WALL_WORD,
   ALCHE_TOP_WALL_TILE_DENSITY,
   clamp01,
-  deriveWorksWordHandoff,
   remapRange,
   smoothstep,
   type AlcheLayerDebugState,
@@ -38,6 +37,7 @@ interface KvSceneSystemProps {
   reducedMotion: boolean;
   backgroundOnly?: boolean;
   wallTexturePath: string;
+  worksWordHandoff: number;
   pointerOverride?: { x: number; y: number } | null;
   pointerDebugRef?: { current: AlchePointerDebugState };
   layerDebugRef?: { current: AlcheLayerDebugState };
@@ -162,7 +162,7 @@ function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps
   );
 }
 
-function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
+function MoonflowTitle({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneSystemProps) {
   const { camera, size } = useThree();
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
@@ -211,7 +211,7 @@ function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
     if (!textRef.current) return;
 
     const perspectiveCamera = camera as THREE.PerspectiveCamera;
-    const handoff = deriveWorksWordHandoff(sceneState.activeSection, sceneState.sectionProgress);
+    const handoff = sceneState.activeSection === "loading" ? 0 : worksWordHandoff;
     const baseVisibility = sceneState.kv.visible * (sceneState.activeSection === "loading" || sceneState.activeSection === "kv" ? sceneState.kv.wordVisibility : 1);
     const handoffFade = 1 - smoothstep(remapRange(handoff, 0.18, 0.36));
     const visibility = baseVisibility * handoffFade;
@@ -244,7 +244,7 @@ function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   return <primitive ref={textRef} object={text} visible={false} />;
 }
 
-function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
+function WallWordSweep({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneSystemProps) {
   const groupRef = useRef<THREE.Group>(null);
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
@@ -306,7 +306,7 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
       return;
     }
 
-    const handoff = deriveWorksWordHandoff(sceneState.activeSection, sceneState.sectionProgress);
+    const handoff = worksWordHandoff;
     const enterMix = smoothstep(remapRange(handoff, ALCHE_TOP_WALL_WORD.enterStart, ALCHE_TOP_WALL_WORD.enterEnd));
     const fadeMix = smoothstep(remapRange(handoff, ALCHE_TOP_WALL_WORD.holdEnd, ALCHE_TOP_WALL_WORD.fadeEnd));
     const targetX =

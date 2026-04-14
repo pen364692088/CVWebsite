@@ -15,6 +15,7 @@ import {
   ALCHE_TOP_TIMINGS,
   clamp01,
   deriveGroupProgress,
+  deriveWorksWordHandoff,
   getTopGroupForSection,
   normalizeTopRuntimeSection,
   type AlcheScrollableSectionId,
@@ -57,6 +58,31 @@ function getSectionProgress(node: HTMLElement | null) {
   return clamp01(-rect.top / travel);
 }
 
+function getAbsoluteTop(node: HTMLElement | null) {
+  if (!node) return 0;
+  const rect = node.getBoundingClientRect();
+  return rect.top + window.scrollY;
+}
+
+function getWorksWordHandoff(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
+  const worksIntro = sectionRefs.works_intro;
+  const works = sectionRefs.works;
+  if (!worksIntro || !works) return 0;
+
+  const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
+  const introStart = getAbsoluteTop(worksIntro) - viewportLine;
+  const worksStart = getAbsoluteTop(works) - viewportLine;
+  const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, worksStart + 1);
+  const scrollY = window.scrollY;
+
+  if (scrollY <= introStart) return 0;
+  if (scrollY <= worksStart) {
+    return clamp01(((scrollY - introStart) / Math.max(worksStart - introStart, 1)) * 0.45);
+  }
+
+  return clamp01(0.45 + ((scrollY - worksStart) / Math.max(maxScroll - worksStart, 1)) * 0.55);
+}
+
 function findSectionAtViewport(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
 
@@ -89,6 +115,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
   const [sectionProgress, setSectionProgress] = useState(debugState?.progress ?? 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
   const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
+  const [worksWordHandoff, setWorksWordHandoff] = useState(debugState ? deriveWorksWordHandoff(debugState.section, debugState.progress) : 0);
   const renderDebugState = typeof window === "undefined" ? null : readDebugState();
   const resolvedTrackedSection =
     renderDebugState?.section === "loading"
@@ -98,6 +125,8 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
   const resolvedSectionProgress = renderDebugState?.progress ?? sectionProgress;
   const resolvedIntroProgress = renderDebugState?.intro ?? introProgress;
   const resolvedHeroShotId = renderDebugState?.heroShotId ?? heroShotId;
+  const resolvedWorksWordHandoff =
+    renderDebugState ? deriveWorksWordHandoff(renderDebugState.section, renderDebugState.progress) : worksWordHandoff;
 
   useEffect(() => {
     trackedSectionRef.current = trackedSection;
@@ -124,6 +153,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       setSectionProgress(nextDebugState.progress);
       setIntroProgress(nextDebugState.intro);
       setHeroShotId(nextDebugState.heroShotId);
+      setWorksWordHandoff(deriveWorksWordHandoff(nextDebugState.section, nextDebugState.progress));
       return;
     }
 
@@ -151,7 +181,10 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         touchMultiplier: ALCHE_TOP_SCROLL_TUNING.touchMultiplier,
       });
       lenisRef.current = lenis;
-      lenis.on("scroll", ScrollTrigger.update);
+      lenis.on("scroll", () => {
+        ScrollTrigger.update();
+        setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
+      });
 
       const raf = (time: number) => {
         lenis?.raf(time);
@@ -201,6 +234,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         scrub: true,
         onUpdate: (self) => {
           progressRef.current[sectionId] = self.progress;
+          setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
           if (sectionId === trackedSectionRef.current || self.isActive) {
             setSectionProgress(self.progress);
           }
@@ -213,6 +247,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         const nextSection = findSectionAtViewport(sectionRefs.current);
         const progress = getSectionProgress(sectionRefs.current[nextSection]);
         progressRef.current[nextSection] = progress;
+        setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
         syncDisplaySection(nextSection, progress);
       };
 
@@ -230,6 +265,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     }
 
     ScrollTrigger.refresh();
+    setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
 
     return () => {
       introTween.kill();
@@ -267,6 +303,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     groupProgress,
     introProgress: resolvedIntroProgress,
     heroShotId: resolvedHeroShotId,
+    worksWordHandoff: resolvedWorksWordHandoff,
     scrollToSection,
   };
 }

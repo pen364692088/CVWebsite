@@ -118,20 +118,22 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const [pointerDebugEnabled, setPointerDebugEnabled] = useState(false);
   const [pointerDebugState, setPointerDebugState] = useState<AlchePointerDebugState | null>(null);
   const [debugOverrideVersion, setDebugOverrideVersion] = useState(0);
-  const { reducedMotion, activeSection, trackedSection, sectionProgress, introProgress, heroShotId, scrollToSection } =
+  const { reducedMotion, activeSection, trackedSection, sectionProgress, introProgress, heroShotId, worksWordHandoff, scrollToSection } =
     useTopPageScroll({
       sectionRefs,
     });
   const debugOverride = typeof window === "undefined" ? null : readShellDebugOverride(new URLSearchParams(window.location.search));
-  const currentActiveSection = normalizeTopRuntimeSection(debugOverride?.section ?? activeSection);
-  const currentTrackedSection =
-    currentActiveSection === "loading"
-      ? "kv"
-      : ((debugOverride?.section as AlcheScrollableSectionId | undefined) ?? trackedSection ?? "kv");
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
   const kvWallTexturePath = assetPath("/alche-top-page/kv/hero-wall-grid-white.png");
+  const introSettled = currentIntroProgress > 0.995 || captureMode;
+  const baseTrackedSection =
+    debugOverride?.section === "loading" ? "kv" : ((debugOverride?.section as AlcheScrollableSectionId | undefined) ?? trackedSection ?? "kv");
+  const currentActiveSection = normalizeTopRuntimeSection(
+    debugOverride?.section ?? (introSettled ? baseTrackedSection : activeSection),
+  );
+  const currentTrackedSection = currentActiveSection === "loading" ? "kv" : baseTrackedSection;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -213,8 +215,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       delete host.__setAlcheDebugOverride;
     };
   }, []);
-  const introSettled = currentActiveSection !== "loading" && (currentIntroProgress > 0.995 || captureMode);
-
   function setSectionRef(sectionId: AlcheScrollableSectionId, node: HTMLElement | null) {
     sectionRefs.current[sectionId] = node;
   }
@@ -262,6 +262,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               serviceCount={copy.service.items.length}
               canvasEventSource={canvasEventSource}
               pointerDebugEnabled={pointerDebugEnabled}
+              worksWordHandoff={worksWordHandoff}
             />
           ) : (
             <div className={styles.fallback}>WebGL unavailable. The DOM shell remains available.</div>
