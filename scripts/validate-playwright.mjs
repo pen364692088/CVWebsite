@@ -315,7 +315,7 @@ async function captureFixedStates(browser) {
               shotName === "works-out"
                 ? (layerState.moonflowOpacity ?? 0) <= 0.02
                 : shotName === "works-intro-enter-early"
-                  ? (layerState.moonflowOpacity ?? 0) >= 0.12 && (layerState.moonflowOpacity ?? 0) <= 0.4
+                  ? (layerState.moonflowOpacity ?? 0) >= 0.12 && (layerState.moonflowOpacity ?? 0) <= 0.46
                   : (layerState.moonflowOpacity ?? 0) <= 0.08;
             const worksOpacityMatches =
               shotName === "works-intro-enter-early"

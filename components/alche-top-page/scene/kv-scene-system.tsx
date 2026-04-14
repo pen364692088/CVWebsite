@@ -277,7 +277,7 @@ function WallWordSweep({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneS
     text.anchorY = "middle";
     text.textAlign = "center";
     text.whiteSpace = "nowrap";
-    text.color = 0xffffff;
+    text.color = 0x09090b;
     text.fillOpacity = 1;
     curvedText.curveRadius = radius;
     curvedText.depthOffset = ALCHE_TOP_WALL_WORD.polygonDepthOffset;
