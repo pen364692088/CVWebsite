@@ -15,6 +15,7 @@ import {
   ALCHE_TOP_WALL_WORD,
   ALCHE_TOP_WALL_TILE_DENSITY,
   clamp01,
+  deriveWorksWordHandoff,
   remapRange,
   smoothstep,
   type AlcheLayerDebugState,
@@ -210,7 +211,10 @@ function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
     if (!textRef.current) return;
 
     const perspectiveCamera = camera as THREE.PerspectiveCamera;
-    const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
+    const handoff = deriveWorksWordHandoff(sceneState.activeSection, sceneState.sectionProgress);
+    const baseVisibility = sceneState.kv.visible * (sceneState.activeSection === "loading" || sceneState.activeSection === "kv" ? sceneState.kv.wordVisibility : 1);
+    const handoffFade = 1 - smoothstep(remapRange(handoff, 0.18, 0.36));
+    const visibility = baseVisibility * handoffFade;
     const distance = perspectiveCamera.position.distanceTo(targetPosition);
     const viewportHeight = 2 * Math.tan(THREE.MathUtils.degToRad(perspectiveCamera.fov * 0.5)) * distance;
     const viewportWidth = viewportHeight * (size.width / Math.max(size.height, 1));
@@ -231,7 +235,9 @@ function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
     textRef.current.fillOpacity = THREE.MathUtils.damp(textRef.current.fillOpacity ?? 0, visibility * 0.98, 4.2, delta);
     if (layerDebugRef) {
       const worldPosition = textRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.worksHandoff = handoff;
       layerDebugRef.current.moonflowWorldZ = worldPosition.z;
+      layerDebugRef.current.moonflowOpacity = textRef.current.fillOpacity ?? 0;
     }
   });
 
@@ -300,25 +306,23 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
       return;
     }
 
-    const introMix = sceneState.worksIntro.sweepMix;
-    const worksMix = sceneState.sectionProgress;
-    const introOpacity =
-      sceneState.activeSection === "works_intro"
-        ? smoothstep(remapRange(introMix, ALCHE_TOP_WALL_WORD.introOpacityStart, ALCHE_TOP_WALL_WORD.introOpacityEnd))
-        : sceneState.activeSection === "works"
-          ? 1
-          : 0;
-    const worksFade =
-      sceneState.activeSection === "works"
-        ? 1 - smoothstep(remapRange(worksMix, ALCHE_TOP_WALL_WORD.worksFadeStart, ALCHE_TOP_WALL_WORD.worksFadeEnd))
-        : 1;
-    const opacityTarget = introOpacity * worksFade;
+    const handoff = deriveWorksWordHandoff(sceneState.activeSection, sceneState.sectionProgress);
+    const enterMix = smoothstep(remapRange(handoff, ALCHE_TOP_WALL_WORD.enterStart, ALCHE_TOP_WALL_WORD.enterEnd));
+    const fadeMix = smoothstep(remapRange(handoff, ALCHE_TOP_WALL_WORD.holdEnd, ALCHE_TOP_WALL_WORD.fadeEnd));
     const targetX =
-      sceneState.activeSection === "works_intro"
-        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterX, ALCHE_TOP_WALL_WORD.centerX, introMix)
-        : sceneState.activeSection === "works"
-          ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerX, ALCHE_TOP_WALL_WORD.exitX, worksMix)
-          : ALCHE_TOP_WALL_WORD.enterX;
+      handoff <= ALCHE_TOP_WALL_WORD.enterEnd
+        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterX, ALCHE_TOP_WALL_WORD.centerX, enterMix)
+        : handoff <= ALCHE_TOP_WALL_WORD.holdEnd
+          ? ALCHE_TOP_WALL_WORD.centerX
+          : THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerX, ALCHE_TOP_WALL_WORD.exitX, fadeMix);
+    const opacityTarget =
+      handoff < ALCHE_TOP_WALL_WORD.enterStart
+        ? 0
+        : handoff <= ALCHE_TOP_WALL_WORD.enterEnd
+          ? enterMix
+          : handoff <= ALCHE_TOP_WALL_WORD.holdEnd
+            ? 1
+            : 1 - fadeMix;
 
     textRef.current.position.x = THREE.MathUtils.damp(textRef.current.position.x, targetX, 4.4, delta);
     textRef.current.rotation.set(0, 0, 0);
@@ -328,6 +332,8 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
       layerDebugRef.current.worksWorldX = worldPosition.x;
       layerDebugRef.current.worksWorldZ = worldPosition.z;
       layerDebugRef.current.worksRotationY = textRef.current.rotation.y;
+      layerDebugRef.current.worksHandoff = handoff;
+      layerDebugRef.current.worksOpacity = material.opacity;
       layerDebugRef.current.worksDepthTest = material.depthTest;
       layerDebugRef.current.worksDepthWrite = material.depthWrite;
       layerDebugRef.current.worksTransparent = material.transparent;

@@ -117,6 +117,9 @@ export interface AlcheLayerDebugState {
   moonflowWorldZ: number | null;
   worksWorldZ: number | null;
   worksRotationY: number | null;
+  worksHandoff: number | null;
+  moonflowOpacity: number | null;
+  worksOpacity: number | null;
   worksDepthTest: boolean | null;
   worksDepthWrite: boolean | null;
   worksTransparent: boolean | null;
@@ -268,10 +271,10 @@ export const ALCHE_TOP_WALL_WORD = {
   enterX: -2.3,
   centerX: 0.0,
   exitX: 2.1,
-  introOpacityStart: 0.1,
-  introOpacityEnd: 0.75,
-  worksFadeStart: 0.4,
-  worksFadeEnd: 1,
+  enterStart: 0.18,
+  enterEnd: 0.48,
+  holdEnd: 0.72,
+  fadeEnd: 1,
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
@@ -672,6 +675,22 @@ export function deriveGroupProgress(sectionId: AlcheTopSectionId, sectionProgres
 
   const index = Math.max(group.subsections.indexOf(sectionId as AlcheScrollableSectionId), 0);
   return clamp01((index + clamp01(sectionProgress)) / group.subsections.length);
+}
+
+export function deriveWorksWordHandoff(activeSection: AlcheTopSectionId, sectionProgress: number) {
+  const progress = clamp01(sectionProgress);
+
+  switch (activeSection) {
+    case "loading":
+    case "kv":
+      return 0;
+    case "works_intro":
+      return progress * 0.45;
+    case "works":
+      return 0.45 + progress * 0.55;
+    default:
+      return 1;
+  }
 }
 
 export function deriveTopSceneState(

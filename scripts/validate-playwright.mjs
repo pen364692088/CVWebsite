@@ -36,8 +36,9 @@ const expectedSections = ["kv", "works_intro", "works"];
 const fixedStateShots = [
   { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
   { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
-  { name: "works-intro-enter", search: "?alcheSection=works_intro&alcheProgress=0.42&alcheIntro=1&alcheCapture=1" },
-  { name: "works-mid", search: "?alcheSection=works&alcheProgress=0.36&alcheIntro=1&alcheCapture=1" },
+  { name: "works-intro-enter-early", search: "?alcheSection=works_intro&alcheProgress=0.62&alcheIntro=1&alcheCapture=1" },
+  { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
+  { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
   { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
 ];
 
@@ -53,9 +54,16 @@ const kvLockedCamera = {
 const expectedWallWorldZ = -5;
 const expectedWorksWorldZ = -4.9;
 const expectedWorksWorldX = {
-  "works-intro-enter": { min: -1.9, max: -0.7 },
-  "works-mid": { min: 0.45, max: 1.25 },
+  "works-intro-enter-early": { min: -2.0, max: -1.4 },
+  "works-intro-settle": { min: -0.35, max: 0.35 },
+  "works-hold": { min: -0.2, max: 0.45 },
   "works-out": { min: 1.5, max: 2.25 },
+};
+const expectedHandoff = {
+  "works-intro-enter-early": { min: 0.24, max: 0.32 },
+  "works-intro-settle": { min: 0.38, max: 0.45 },
+  "works-hold": { min: 0.5, max: 0.65 },
+  "works-out": { min: 0.92, max: 1.0 },
 };
 
 function resolveRequestPath(requestPath) {
@@ -267,9 +275,14 @@ async function captureFixedStates(browser) {
         }
       }
       await page.waitForTimeout(240);
-      if (shot.name === "works-intro-enter" || shot.name === "works-mid" || shot.name === "works-out") {
+      if (
+        shot.name === "works-intro-enter-early" ||
+        shot.name === "works-intro-settle" ||
+        shot.name === "works-hold" ||
+        shot.name === "works-out"
+      ) {
         await page.waitForFunction(
-          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ, expectedWorksWorldXRange }) => {
+          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ, expectedWorksWorldXRange, expectedHandoffRange, shotName }) => {
             const layerState = window.__getAlcheLayerDebugState?.();
             if (!layerState) return false;
             const cameraMatches =
@@ -294,12 +307,31 @@ async function captureFixedStates(browser) {
               layerState.worksWorldX >= expectedWorksWorldXRange.min &&
               layerState.worksWorldX <= expectedWorksWorldXRange.max;
             const worksRotationMatches = layerState.worksRotationY !== null && Math.abs(layerState.worksRotationY) <= 0.001;
+            const handoffMatches =
+              layerState.worksHandoff !== null &&
+              layerState.worksHandoff >= expectedHandoffRange.min &&
+              layerState.worksHandoff <= expectedHandoffRange.max;
+            const moonflowMatches =
+              shotName === "works-out"
+                ? (layerState.moonflowOpacity ?? 0) <= 0.02
+                : shotName === "works-intro-enter-early"
+                  ? (layerState.moonflowOpacity ?? 0) >= 0.12 && (layerState.moonflowOpacity ?? 0) <= 0.4
+                  : (layerState.moonflowOpacity ?? 0) <= 0.08;
+            const worksOpacityMatches =
+              shotName === "works-intro-enter-early"
+                ? (layerState.worksOpacity ?? 0) >= 0.03 && (layerState.worksOpacity ?? 0) <= 0.1
+                : shotName === "works-out"
+                  ? (layerState.worksOpacity ?? 0) <= 0.08
+                  : (layerState.worksOpacity ?? 0) >= 0.12;
             return (
               cameraMatches &&
               wallMatches &&
               worksMatches &&
               worksXMatches &&
               worksRotationMatches &&
+              handoffMatches &&
+              moonflowMatches &&
+              worksOpacityMatches &&
               modelAheadOfWorks &&
               modelAheadOfMoonflow &&
               worksMaterialValid
@@ -310,6 +342,8 @@ async function captureFixedStates(browser) {
             expectedWallWorldZ,
             expectedWorksWorldZ,
             expectedWorksWorldXRange: expectedWorksWorldX[shot.name],
+            expectedHandoffRange: expectedHandoff[shot.name],
+            shotName: shot.name,
           },
           { timeout: 5000 },
         );
@@ -331,6 +365,11 @@ async function captureFixedStates(browser) {
             layerState.worksWorldX <= expectedWorksWorldX[shot.name].max,
           `Expected WORKS world x range for ${shot.name}`,
         );
+        assert(
+          layerState.worksHandoff >= expectedHandoff[shot.name].min &&
+            layerState.worksHandoff <= expectedHandoff[shot.name].max,
+          `Expected WORKS handoff range for ${shot.name}`,
+        );
         assert(Math.abs(layerState.worksRotationY) <= 0.001, `Expected WORKS rotation.y frozen for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
@@ -344,12 +383,23 @@ async function captureFixedStates(browser) {
       await context.close();
     }
   }
-  const introState = layerStates.get("works-intro-enter");
-  const midState = layerStates.get("works-mid");
+  const earlyState = layerStates.get("works-intro-enter-early");
+  const settleState = layerStates.get("works-intro-settle");
+  const holdState = layerStates.get("works-hold");
   const outState = layerStates.get("works-out");
-  if (introState && midState && outState) {
-    assert(introState.worksWorldX < midState.worksWorldX, "Expected WORKS to move right from intro to mid.");
-    assert(midState.worksWorldX < outState.worksWorldX, "Expected WORKS to keep moving right into out.");
+  if (earlyState && settleState && holdState && outState) {
+    assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
+    assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
+    assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
+    assert(earlyState.worksWorldX < settleState.worksWorldX, "Expected WORKS to move right during enter.");
+    assert(Math.abs(settleState.worksWorldX - holdState.worksWorldX) < 0.6, "Expected WORKS to hold near center before fade.");
+    assert(holdState.worksWorldX < outState.worksWorldX, "Expected WORKS to move right again during out.");
+    assert((earlyState.moonflowOpacity ?? 0) > (settleState.moonflowOpacity ?? 0), "Expected MOONFLOW to fade out only once.");
+    assert((settleState.moonflowOpacity ?? 0) >= (holdState.moonflowOpacity ?? 0), "Expected MOONFLOW to stay off after fade.");
+    assert((holdState.moonflowOpacity ?? 0) >= (outState.moonflowOpacity ?? 0), "Expected MOONFLOW to remain off into out.");
+    assert((earlyState.worksOpacity ?? 0) < (settleState.worksOpacity ?? 0), "Expected WORKS to fade in during enter.");
+    assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.08, "Expected WORKS to hold opacity in center.");
+    assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
   }
 }
 
