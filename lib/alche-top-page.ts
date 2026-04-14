@@ -5,6 +5,7 @@ export const ALCHE_TOP_SECTION_IDS = [
   "kv",
   "works_intro",
   "works",
+  "works_cards",
   "works_outro",
   "mission_in",
   "mission",
@@ -34,7 +35,7 @@ export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] 
   ALCHE_TOP_RUNTIME_MODE === "kv-only"
     ? ["kv"]
     : ALCHE_TOP_RUNTIME_MODE === "kv-works"
-      ? ["kv", "works_intro", "works"]
+      ? ["kv", "works_intro", "works", "works_cards"]
       : ALCHE_SCROLLABLE_SECTION_IDS;
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
@@ -123,6 +124,9 @@ export interface AlcheLayerDebugState {
   worksDepthTest: boolean | null;
   worksDepthWrite: boolean | null;
   worksTransparent: boolean | null;
+  cardsOpacity: number | null;
+  cardsLeadWorldZ: number | null;
+  cardsSupportWorldZ: number | null;
 }
 
 export interface AlcheWorksIntroSceneState {
@@ -277,6 +281,22 @@ export const ALCHE_TOP_WALL_WORD = {
   fadeEnd: 1,
 } as const;
 
+export const ALCHE_TOP_WORKS_CARDS = {
+  width: 2.6,
+  height: 1.55,
+  bendRadius: 6,
+  segments: 80,
+  groupY: 0.22,
+  groupZ: -4.15,
+  trackRadius: 2.48,
+  enterStart: 0.08,
+  enterEnd: 0.38,
+  leadAngle: -0.38,
+  leadScale: 0.92,
+  supportAngle: 0.18,
+  supportScale: 1.1,
+} as const;
+
 export const ALCHE_TOP_CENTER_MODEL = {
   path: "/alche-top-page/kv/tetrahedron-cutout-standard-uv-grid.glb",
   y: 0.08,
@@ -307,6 +327,7 @@ export const ALCHE_TOP_SECTIONS: readonly AlcheTopSectionDefinition[] = [
   { id: "kv", label: "kv", groupId: "top", snapRatio: 1, minHeight: sectionHeight(1) },
   { id: "works_intro", label: "works_intro", groupId: "top", snapRatio: 1, minHeight: sectionHeight(1) },
   { id: "works", label: "works", groupId: "works", snapRatio: 1, minHeight: sectionHeight(1.35) },
+  { id: "works_cards", label: "works_cards", groupId: "works", snapRatio: 1, minHeight: sectionHeight(1.18) },
   { id: "works_outro", label: "works_outro", groupId: "works", snapRatio: 1.5, minHeight: sectionHeight(1.5) },
   { id: "mission_in", label: "mission_in", groupId: "about", snapRatio: 1, minHeight: sectionHeight(1) },
   { id: "mission", label: "mission", groupId: "about", snapRatio: 1, minHeight: sectionHeight(1.05) },
@@ -324,7 +345,7 @@ export const ALCHE_TOP_SECTION_MAP = Object.fromEntries(
 
 export const ALCHE_TOP_GROUPS: readonly AlcheTopGroupDefinition[] = [
   { id: "top", label: "TOP", scrollTarget: "kv", subsections: ["kv", "works_intro"] },
-  { id: "works", label: "WORKS", scrollTarget: "works", subsections: ["works", "works_outro"] },
+  { id: "works", label: "WORKS", scrollTarget: "works", subsections: ["works", "works_cards", "works_outro"] },
   { id: "about", label: "ABOUT", scrollTarget: "mission", subsections: ["mission_in", "mission"] },
   { id: "vision", label: "VISION", scrollTarget: "vision", subsections: ["vision", "vision_out"] },
   { id: "service", label: "SERVICE", scrollTarget: "service", subsections: ["service", "stellla"] },
@@ -358,6 +379,11 @@ export const ALCHE_TOP_CAMERA_STATES: Record<AlcheTopSectionId, AlcheTopCameraSt
     position: [0.46, 0.08, 6.18],
     target: [0.58, 0.02, -1.38],
     fov: 33.6,
+  },
+  works_cards: {
+    position: [0.02, 0.08, 5.38],
+    target: [0.04, 0.02, -1.02],
+    fov: 30.2,
   },
   works_outro: {
     position: [0.22, 0.1, 6.32],
@@ -448,11 +474,17 @@ export function normalizeTopRuntimeSection(sectionId: AlcheTopSectionId): AlcheT
   }
 
   if (ALCHE_TOP_RUNTIME_MODE === "kv-works") {
-    if (sectionId === "loading" || sectionId === "kv" || sectionId === "works_intro" || sectionId === "works") {
+    if (
+      sectionId === "loading" ||
+      sectionId === "kv" ||
+      sectionId === "works_intro" ||
+      sectionId === "works" ||
+      sectionId === "works_cards"
+    ) {
       return sectionId;
     }
 
-    return "works";
+    return "works_cards";
   }
 
   return sectionId;
@@ -688,6 +720,8 @@ export function deriveWorksWordHandoff(activeSection: AlcheTopSectionId, section
       return progress * 0.45;
     case "works":
       return 0.45 + progress * 0.55;
+    case "works_cards":
+      return 1;
     default:
       return 1;
   }
@@ -750,7 +784,10 @@ export function deriveTopSceneState(
 
   let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
-  if (ALCHE_TOP_RUNTIME_MODE === "kv-works" && (runtimeSection === "works_intro" || runtimeSection === "works")) {
+  if (
+    ALCHE_TOP_RUNTIME_MODE === "kv-works" &&
+    (runtimeSection === "works_intro" || runtimeSection === "works" || runtimeSection === "works_cards")
+  ) {
     camera = ALCHE_TOP_CAMERA_STATES.kv;
   } else {
   switch (runtimeSection) {

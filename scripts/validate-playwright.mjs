@@ -31,7 +31,7 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
-const expectedSections = ["kv", "works_intro", "works"];
+const expectedSections = ["kv", "works_intro", "works", "works_cards"];
 
 const fixedStateShots = [
   { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
@@ -40,6 +40,8 @@ const fixedStateShots = [
   { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
   { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
   { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-enter", search: "?alcheSection=works_cards&alcheProgress=0.18&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.72&alcheIntro=1&alcheCapture=1" },
 ];
 
 const pointerInteractionShots = [
@@ -64,6 +66,10 @@ const expectedHandoff = {
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
+};
+const expectedCardsOpacity = {
+  "cards-enter": { min: 0.12, max: 0.55 },
+  "cards-settled": { min: 0.82, max: 1.01 },
 };
 
 function resolveRequestPath(requestPath) {
@@ -319,10 +325,10 @@ async function captureFixedStates(browser) {
                   : (layerState.moonflowOpacity ?? 0) <= 0.08;
             const worksOpacityMatches =
               shotName === "works-intro-enter-early"
-                ? (layerState.worksOpacity ?? 0) >= 0.03 && (layerState.worksOpacity ?? 0) <= 0.1
+                ? (layerState.worksOpacity ?? 0) >= 0.12 && (layerState.worksOpacity ?? 0) <= 0.3
                 : shotName === "works-out"
                   ? (layerState.worksOpacity ?? 0) <= 0.08
-                  : (layerState.worksOpacity ?? 0) >= 0.12;
+                  : (layerState.worksOpacity ?? 0) >= 0.7;
             return (
               cameraMatches &&
               wallMatches &&
@@ -373,6 +379,59 @@ async function captureFixedStates(browser) {
         assert(Math.abs(layerState.worksRotationY) <= 0.001, `Expected WORKS rotation.y frozen for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
+      } else if (shot.name === "cards-enter" || shot.name === "cards-settled") {
+        await page.waitForFunction(
+          ({ lockedCamera, expectedWallWorldZ, expectedCardsOpacityRange, shotName }) => {
+            const layerState = window.__getAlcheLayerDebugState?.();
+            if (!layerState) return false;
+            const cameraMatches =
+              layerState.cameraPosition.every((value, index) => Math.abs(value - lockedCamera.position[index]) <= 0.03) &&
+              layerState.cameraTarget.every((value, index) => Math.abs(value - lockedCamera.target[index]) <= 0.03);
+            const wallMatches = layerState.wallWorldZ !== null && Math.abs(layerState.wallWorldZ - expectedWallWorldZ) <= 0.03;
+            const cardsVisible =
+              layerState.cardsOpacity !== null &&
+              layerState.cardsOpacity >= expectedCardsOpacityRange.min &&
+              layerState.cardsOpacity <= expectedCardsOpacityRange.max;
+            const cardsAheadOfModel =
+              layerState.modelWorldZ !== null &&
+              layerState.cardsLeadWorldZ !== null &&
+              layerState.cardsSupportWorldZ !== null &&
+              layerState.cardsLeadWorldZ > layerState.modelWorldZ &&
+              layerState.cardsSupportWorldZ > layerState.modelWorldZ;
+            const moonflowOff = (layerState.moonflowOpacity ?? 0) <= 0.02;
+            const worksOff = (layerState.worksOpacity ?? 0) <= 0.05;
+            const handoffLocked = layerState.worksHandoff !== null && layerState.worksHandoff >= 0.99;
+            return cameraMatches && wallMatches && cardsVisible && cardsAheadOfModel && moonflowOff && worksOff && handoffLocked;
+          },
+          {
+            lockedCamera: kvLockedCamera,
+            expectedWallWorldZ,
+            expectedCardsOpacityRange: expectedCardsOpacity[shot.name],
+            shotName: shot.name,
+          },
+          { timeout: 5000 },
+        );
+        const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+        layerStates.set(shot.name, layerState);
+        assert(layerState, `Missing layer debug state for ${shot.name}`);
+        assert(
+          layerState.cameraPosition.every((value, index) => approxEqual(value, kvLockedCamera.position[index])),
+          `Expected locked kv camera position for ${shot.name}`,
+        );
+        assert(
+          layerState.cameraTarget.every((value, index) => approxEqual(value, kvLockedCamera.target[index])),
+          `Expected locked kv camera target for ${shot.name}`,
+        );
+        assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
+        assert(
+          layerState.cardsOpacity >= expectedCardsOpacity[shot.name].min &&
+            layerState.cardsOpacity <= expectedCardsOpacity[shot.name].max,
+          `Expected cards opacity range for ${shot.name}`,
+        );
+        assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ, `Expected lead card ahead of model for ${shot.name}`);
+        assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ, `Expected support card ahead of model for ${shot.name}`);
+        assert((layerState.moonflowOpacity ?? 0) <= 0.02, `Expected MOONFLOW off for ${shot.name}`);
+        assert((layerState.worksOpacity ?? 0) <= 0.05, `Expected WORKS off for ${shot.name}`);
       }
       await page.screenshot({
         path: path.join(outputDir, `${shot.name}.png`),
@@ -398,7 +457,7 @@ async function captureFixedStates(browser) {
     assert((settleState.moonflowOpacity ?? 0) >= (holdState.moonflowOpacity ?? 0), "Expected MOONFLOW to stay off after fade.");
     assert((holdState.moonflowOpacity ?? 0) >= (outState.moonflowOpacity ?? 0), "Expected MOONFLOW to remain off into out.");
     assert((earlyState.worksOpacity ?? 0) < (settleState.worksOpacity ?? 0), "Expected WORKS to fade in during enter.");
-    assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.08, "Expected WORKS to hold opacity in center.");
+    assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.16, "Expected WORKS to hold opacity in center.");
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
   }
 }

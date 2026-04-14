@@ -18,6 +18,7 @@ interface AlcheTopPageSceneProps {
   reducedMotion: boolean;
   minimalScene: boolean;
   kvWallTexturePath: string;
+  worksCardItems: readonly { title: string; imageSrc: string }[];
   workCount: number;
   captureMode: boolean;
   worksWordHandoff: number;
@@ -31,6 +32,7 @@ export function AlcheTopPageScene({
   reducedMotion,
   minimalScene,
   kvWallTexturePath,
+  worksCardItems,
   workCount,
   captureMode,
   worksWordHandoff,
@@ -96,6 +98,7 @@ export function AlcheTopPageScene({
         reducedMotion={reducedMotion}
         backgroundOnly={minimalScene}
         wallTexturePath={kvWallTexturePath}
+        worksCardItems={worksCardItems}
         worksWordHandoff={worksWordHandoff}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}

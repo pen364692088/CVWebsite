@@ -24,6 +24,7 @@ interface AlcheTopPageCanvasProps {
   reducedMotion: boolean;
   minimalScene: boolean;
   kvWallTexturePath: string;
+  worksCardItems: readonly { title: string; imageSrc: string }[];
   workCount: number;
   serviceCount: number;
   canvasEventSource: HTMLElement | null;
@@ -51,6 +52,7 @@ export function AlcheTopPageCanvas({
   reducedMotion,
   minimalScene,
   kvWallTexturePath,
+  worksCardItems,
   workCount,
   serviceCount,
   canvasEventSource,
@@ -96,6 +98,9 @@ export function AlcheTopPageCanvas({
     worksDepthTest: null,
     worksDepthWrite: null,
     worksTransparent: null,
+    cardsOpacity: null,
+    cardsLeadWorldZ: null,
+    cardsSupportWorldZ: null,
   });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;
@@ -197,6 +202,7 @@ export function AlcheTopPageCanvas({
         reducedMotion={sceneReducedMotion}
         minimalScene={minimalScene}
         kvWallTexturePath={kvWallTexturePath}
+        worksCardItems={worksCardItems}
         workCount={workCount}
         captureMode={captureMode}
         worksWordHandoff={captureOverride ? deriveWorksWordHandoff(captureOverride.section, captureOverride.progress) : worksWordHandoff}

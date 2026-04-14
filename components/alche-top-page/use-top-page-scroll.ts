@@ -67,20 +67,24 @@ function getAbsoluteTop(node: HTMLElement | null) {
 function getWorksWordHandoff(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const worksIntro = sectionRefs.works_intro;
   const works = sectionRefs.works;
-  if (!worksIntro || !works) return 0;
+  const worksCards = sectionRefs.works_cards;
+  if (!worksIntro || !works || !worksCards) return 0;
 
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
   const introStart = getAbsoluteTop(worksIntro) - viewportLine;
   const worksStart = getAbsoluteTop(works) - viewportLine;
-  const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, worksStart + 1);
+  const cardsStart = getAbsoluteTop(worksCards) - viewportLine;
   const scrollY = window.scrollY;
 
   if (scrollY <= introStart) return 0;
   if (scrollY <= worksStart) {
     return clamp01(((scrollY - introStart) / Math.max(worksStart - introStart, 1)) * 0.45);
   }
+  if (scrollY <= cardsStart) {
+    return clamp01(0.45 + ((scrollY - worksStart) / Math.max(cardsStart - worksStart, 1)) * 0.55);
+  }
 
-  return clamp01(0.45 + ((scrollY - worksStart) / Math.max(maxScroll - worksStart, 1)) * 0.55);
+  return 1;
 }
 
 function findSectionAtViewport(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {

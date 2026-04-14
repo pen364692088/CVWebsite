@@ -103,6 +103,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     kv: null,
     works_intro: null,
     works: null,
+    works_cards: null,
     works_outro: null,
     mission_in: null,
     mission: null,
@@ -258,6 +259,10 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               reducedMotion={reducedMotion}
               minimalScene={minimalScene}
               kvWallTexturePath={kvWallTexturePath}
+              worksCardItems={copy.works.items.slice(0, 2).map((item) => ({
+                title: item.title,
+                imageSrc: item.imageSrc,
+              }))}
               workCount={copy.works.items.length}
               serviceCount={copy.service.items.length}
               canvasEventSource={canvasEventSource}

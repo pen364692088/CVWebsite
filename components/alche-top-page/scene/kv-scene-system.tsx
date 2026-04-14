@@ -12,6 +12,7 @@ import {
   ALCHE_TOP_MOONFLOW,
   ALCHE_TOP_KV_WALL_ARC_STRENGTH,
   ALCHE_TOP_MEDIA_WALL,
+  ALCHE_TOP_WORKS_CARDS,
   ALCHE_TOP_WALL_WORD,
   ALCHE_TOP_WALL_TILE_DENSITY,
   clamp01,
@@ -27,6 +28,7 @@ import {
   createPrismEdgeColor,
   createPrismMaterial,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
+import { createBentCardGeometry, placeOnArc } from "@/components/alche-top-page/scene/bent-card-helpers";
 import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
 import { assetPath } from "@/lib/site";
 
@@ -37,6 +39,7 @@ interface KvSceneSystemProps {
   reducedMotion: boolean;
   backgroundOnly?: boolean;
   wallTexturePath: string;
+  worksCardItems: readonly { title: string; imageSrc: string }[];
   worksWordHandoff: number;
   pointerOverride?: { x: number; y: number } | null;
   pointerDebugRef?: { current: AlchePointerDebugState };
@@ -343,6 +346,102 @@ function WallWordSweep({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneS
   return (
     <group ref={groupRef} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]} visible={false}>
       <primitive ref={textRef} object={text} visible={false} />
+    </group>
+  );
+}
+
+function WorksCardPair({
+  sceneState,
+  worksCardItems,
+  layerDebugRef,
+}: Pick<KvSceneSystemProps, "sceneState" | "worksCardItems" | "layerDebugRef">) {
+  const groupRef = useRef<THREE.Group>(null);
+  const leftRef = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>>(null);
+  const rightRef = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>>(null);
+  const texturePaths = useMemo(() => worksCardItems.map((item) => assetPath(item.imageSrc)), [worksCardItems]);
+  const textures = useLoader(THREE.TextureLoader, texturePaths);
+  const geometry = useMemo(
+    () =>
+      createBentCardGeometry({
+        width: ALCHE_TOP_WORKS_CARDS.width,
+        height: ALCHE_TOP_WORKS_CARDS.height,
+        radius: ALCHE_TOP_WORKS_CARDS.bendRadius,
+        segments: ALCHE_TOP_WORKS_CARDS.segments,
+      }),
+    [],
+  );
+  const materials = useMemo(
+    () =>
+      textures.map(
+        (texture) =>
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.35,
+            metalness: 0,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+          }),
+      ),
+    [textures],
+  );
+
+  useEffect(() => {
+    textures.forEach((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = true;
+      texture.needsUpdate = true;
+    });
+
+    return () => {
+      geometry.dispose();
+      materials.forEach((material) => material.dispose());
+    };
+  }, [geometry, materials, textures]);
+
+  useEffect(() => {
+    if (!leftRef.current || !rightRef.current) return;
+
+    placeOnArc(leftRef.current, ALCHE_TOP_WORKS_CARDS.leadAngle, ALCHE_TOP_WORKS_CARDS.trackRadius);
+    leftRef.current.scale.setScalar(ALCHE_TOP_WORKS_CARDS.leadScale);
+    placeOnArc(rightRef.current, ALCHE_TOP_WORKS_CARDS.supportAngle, ALCHE_TOP_WORKS_CARDS.trackRadius);
+    rightRef.current.scale.setScalar(ALCHE_TOP_WORKS_CARDS.supportScale);
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current || !leftRef.current || !rightRef.current) return;
+
+    const isCardsStage = sceneState.activeSection === "works_cards";
+    const enterMix = isCardsStage
+      ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.enterStart, ALCHE_TOP_WORKS_CARDS.enterEnd))
+      : 0;
+
+    groupRef.current.visible = enterMix > 0.001;
+    materials.forEach((material) => {
+      material.opacity = THREE.MathUtils.damp(material.opacity, enterMix, 5.2, delta);
+    });
+    leftRef.current.scale.setScalar(
+      THREE.MathUtils.damp(leftRef.current.scale.x, ALCHE_TOP_WORKS_CARDS.leadScale * (0.96 + enterMix * 0.04), 4.2, delta),
+    );
+    rightRef.current.scale.setScalar(
+      THREE.MathUtils.damp(rightRef.current.scale.x, ALCHE_TOP_WORKS_CARDS.supportScale * (0.96 + enterMix * 0.04), 4.2, delta),
+    );
+
+    if (layerDebugRef) {
+      layerDebugRef.current.cardsOpacity = Math.max(...materials.map((material) => material.opacity));
+      layerDebugRef.current.cardsSupportWorldZ = leftRef.current.getWorldPosition(new THREE.Vector3()).z;
+      layerDebugRef.current.cardsLeadWorldZ = rightRef.current.getWorldPosition(new THREE.Vector3()).z;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, ALCHE_TOP_WORKS_CARDS.groupY, ALCHE_TOP_WORKS_CARDS.groupZ]} visible={false}>
+      <mesh ref={leftRef} geometry={geometry} material={materials[0]} />
+      <mesh ref={rightRef} geometry={geometry} material={materials[1]} />
     </group>
   );
 }
@@ -664,6 +763,7 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
         layerDebugRef={props.layerDebugRef}
       />
       {backgroundOnly ? <WallWordSweep {...props} /> : null}
+      {backgroundOnly ? <WorksCardPair sceneState={props.sceneState} worksCardItems={props.worksCardItems} layerDebugRef={props.layerDebugRef} /> : null}
       {backgroundOnly ? <MoonflowTitle {...props} /> : null}
       {backgroundOnly ? <CenterHeroModel {...props} /> : null}
       {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
