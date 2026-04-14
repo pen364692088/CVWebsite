@@ -263,7 +263,7 @@ export const ALCHE_TOP_WALL_WORD = {
   y: -0.04,
   fontPath: "/fonts/space-grotesk-500.woff",
   fontSize: 2.68,
-  fillOpacity: 0.22,
+  fillOpacity: 0.9,
   wallInset: 0.0,
   worldZ: -4.9,
   surfaceOffset: 0.0,
