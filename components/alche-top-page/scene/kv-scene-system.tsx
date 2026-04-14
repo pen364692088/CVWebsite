@@ -239,7 +239,7 @@ function MoonflowTitle({ sceneState, layerDebugRef }: KvSceneSystemProps) {
 }
 
 function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
-  const pivotRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const textRef = useRef<Text>(null);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const radius = effectiveRadius - ALCHE_TOP_WALL_WORD.wallInset;
@@ -290,10 +290,10 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   }, [fontPath, localDepth, material, radius, text]);
 
   useFrame((_, delta) => {
-    if (!pivotRef.current || !textRef.current) return;
+    if (!groupRef.current || !textRef.current) return;
 
     const ready = textReadyRef.current;
-    pivotRef.current.visible = ready;
+    groupRef.current.visible = ready;
     textRef.current.visible = ready;
     if (!ready) {
       material.opacity = 0;
@@ -313,18 +313,21 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
         ? 1 - smoothstep(remapRange(worksMix, ALCHE_TOP_WALL_WORD.worksFadeStart, ALCHE_TOP_WALL_WORD.worksFadeEnd))
         : 1;
     const opacityTarget = introOpacity * worksFade;
-    const targetRotationY =
+    const targetX =
       sceneState.activeSection === "works_intro"
-        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterRotationY, ALCHE_TOP_WALL_WORD.centerRotationY, introMix)
+        ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.enterX, ALCHE_TOP_WALL_WORD.centerX, introMix)
         : sceneState.activeSection === "works"
-          ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerRotationY, ALCHE_TOP_WALL_WORD.exitRotationY, worksMix)
-          : ALCHE_TOP_WALL_WORD.enterRotationY;
+          ? THREE.MathUtils.lerp(ALCHE_TOP_WALL_WORD.centerX, ALCHE_TOP_WALL_WORD.exitX, worksMix)
+          : ALCHE_TOP_WALL_WORD.enterX;
 
-    pivotRef.current.rotation.y = THREE.MathUtils.damp(pivotRef.current.rotation.y, targetRotationY, 4.4, delta);
+    textRef.current.position.x = THREE.MathUtils.damp(textRef.current.position.x, targetX, 4.4, delta);
+    textRef.current.rotation.set(0, 0, 0);
     material.opacity = THREE.MathUtils.damp(material.opacity, opacityTarget * ALCHE_TOP_WALL_WORD.fillOpacity, 5, delta);
     if (layerDebugRef) {
       const worldPosition = textRef.current.getWorldPosition(new THREE.Vector3());
+      layerDebugRef.current.worksWorldX = worldPosition.x;
       layerDebugRef.current.worksWorldZ = worldPosition.z;
+      layerDebugRef.current.worksRotationY = textRef.current.rotation.y;
       layerDebugRef.current.worksDepthTest = material.depthTest;
       layerDebugRef.current.worksDepthWrite = material.depthWrite;
       layerDebugRef.current.worksTransparent = material.transparent;
@@ -332,7 +335,7 @@ function WallWordSweep({ sceneState, layerDebugRef }: KvSceneSystemProps) {
   });
 
   return (
-    <group ref={pivotRef} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]} visible={false}>
+    <group ref={groupRef} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]} visible={false}>
       <primitive ref={textRef} object={text} visible={false} />
     </group>
   );

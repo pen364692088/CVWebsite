@@ -52,6 +52,11 @@ const kvLockedCamera = {
 };
 const expectedWallWorldZ = -5;
 const expectedWorksWorldZ = -4.9;
+const expectedWorksWorldX = {
+  "works-intro-enter": { min: -1.9, max: -0.7 },
+  "works-mid": { min: 0.45, max: 1.25 },
+  "works-out": { min: 1.5, max: 2.25 },
+};
 
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
@@ -192,6 +197,7 @@ async function runScenario(browser, scenario) {
 }
 
 async function captureFixedStates(browser) {
+  const layerStates = new Map();
   for (const shot of fixedStateShots) {
     console.log(`Capturing ${shot.name}...`);
     const context = await browser.newContext({
@@ -261,9 +267,9 @@ async function captureFixedStates(browser) {
         }
       }
       await page.waitForTimeout(240);
-      if (shot.name === "works-intro-enter" || shot.name === "works-mid") {
+      if (shot.name === "works-intro-enter" || shot.name === "works-mid" || shot.name === "works-out") {
         await page.waitForFunction(
-          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ }) => {
+          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ, expectedWorksWorldXRange }) => {
             const layerState = window.__getAlcheLayerDebugState?.();
             if (!layerState) return false;
             const cameraMatches =
@@ -283,12 +289,32 @@ async function captureFixedStates(browser) {
               layerState.worksTransparent === true;
             const wallMatches = layerState.wallWorldZ !== null && Math.abs(layerState.wallWorldZ - expectedWallWorldZ) <= 0.03;
             const worksMatches = layerState.worksWorldZ !== null && Math.abs(layerState.worksWorldZ - expectedWorksWorldZ) <= 0.05;
-            return cameraMatches && wallMatches && worksMatches && modelAheadOfWorks && modelAheadOfMoonflow && worksMaterialValid;
+            const worksXMatches =
+              layerState.worksWorldX !== null &&
+              layerState.worksWorldX >= expectedWorksWorldXRange.min &&
+              layerState.worksWorldX <= expectedWorksWorldXRange.max;
+            const worksRotationMatches = layerState.worksRotationY !== null && Math.abs(layerState.worksRotationY) <= 0.001;
+            return (
+              cameraMatches &&
+              wallMatches &&
+              worksMatches &&
+              worksXMatches &&
+              worksRotationMatches &&
+              modelAheadOfWorks &&
+              modelAheadOfMoonflow &&
+              worksMaterialValid
+            );
           },
-          { lockedCamera: kvLockedCamera, expectedWallWorldZ, expectedWorksWorldZ },
+          {
+            lockedCamera: kvLockedCamera,
+            expectedWallWorldZ,
+            expectedWorksWorldZ,
+            expectedWorksWorldXRange: expectedWorksWorldX[shot.name],
+          },
           { timeout: 5000 },
         );
         const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+        layerStates.set(shot.name, layerState);
         assert(layerState, `Missing layer debug state for ${shot.name}`);
         assert(
           layerState.cameraPosition.every((value, index) => approxEqual(value, kvLockedCamera.position[index])),
@@ -300,6 +326,12 @@ async function captureFixedStates(browser) {
         );
         assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
         assert(approxEqual(layerState.worksWorldZ, expectedWorksWorldZ, 0.05), `Expected WORKS world z for ${shot.name}`);
+        assert(
+          layerState.worksWorldX >= expectedWorksWorldX[shot.name].min &&
+            layerState.worksWorldX <= expectedWorksWorldX[shot.name].max,
+          `Expected WORKS world x range for ${shot.name}`,
+        );
+        assert(Math.abs(layerState.worksRotationY) <= 0.001, `Expected WORKS rotation.y frozen for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
         assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
       }
@@ -311,6 +343,13 @@ async function captureFixedStates(browser) {
     } finally {
       await context.close();
     }
+  }
+  const introState = layerStates.get("works-intro-enter");
+  const midState = layerStates.get("works-mid");
+  const outState = layerStates.get("works-out");
+  if (introState && midState && outState) {
+    assert(introState.worksWorldX < midState.worksWorldX, "Expected WORKS to move right from intro to mid.");
+    assert(midState.worksWorldX < outState.worksWorldX, "Expected WORKS to keep moving right into out.");
   }
 }
 

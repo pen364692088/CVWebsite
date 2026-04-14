@@ -112,9 +112,11 @@ export interface AlcheLayerDebugState {
   cameraPosition: readonly [number, number, number];
   cameraTarget: readonly [number, number, number];
   wallWorldZ: number | null;
+  worksWorldX: number | null;
   modelWorldZ: number | null;
   moonflowWorldZ: number | null;
   worksWorldZ: number | null;
+  worksRotationY: number | null;
   worksDepthTest: boolean | null;
   worksDepthWrite: boolean | null;
   worksTransparent: boolean | null;
@@ -263,9 +265,9 @@ export const ALCHE_TOP_WALL_WORD = {
   worldZ: -4.9,
   surfaceOffset: 0.0,
   polygonDepthOffset: -0.02,
-  enterRotationY: 0.72,
-  centerRotationY: 0.0,
-  exitRotationY: -0.82,
+  enterX: -2.3,
+  centerX: 0.0,
+  exitX: 2.1,
   introOpacityStart: 0.1,
   introOpacityEnd: 0.75,
   worksFadeStart: 0.4,
