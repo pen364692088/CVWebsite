@@ -546,7 +546,7 @@ export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroS
   const intro = deriveKvState(introProgress);
   const heroShot = heroShotId ? ALCHE_HERO_SHOTS[heroShotId] : null;
   return {
-    visible: 1 - handoffMix * 0.58,
+    visible: 1,
     wallVisibility: intro.wallEstablish,
     wallGlow: heroShot?.chamberMassing.roomGlow ?? 0.96,
     wallExposure: heroShot?.chamberMassing.roomExposure ?? 0.94,
