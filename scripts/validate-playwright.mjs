@@ -42,13 +42,14 @@ const fixedStateShots = [
   { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
   { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
   { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-boundary", search: "?alcheSection=works_cards&alcheProgress=0&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-enter", search: "?alcheSection=works_cards&alcheProgress=0.18&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-swap-mid", search: "?alcheSection=works_cards&alcheProgress=0.65&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.72&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-a-entry", search: "?alcheSection=works_cards&alcheProgress=0.12&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-a-center", search: "?alcheSection=works_cards&alcheProgress=0.32&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-b-queue", search: "?alcheSection=works_cards&alcheProgress=0.46&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-handoff-mid", search: "?alcheSection=works_cards&alcheProgress=0.78&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.96&alcheIntro=1&alcheCapture=1" },
 ];
 
-const referenceBoardShots = ["works-out", "cards-boundary", "cards-enter", "cards-swap-mid", "cards-settled"];
+const referenceBoardShots = ["works-out", "cards-a-entry", "cards-a-center", "cards-b-queue", "cards-handoff-mid", "cards-settled"];
 const cardsOnlyShotNames = new Set(referenceBoardShots);
 const activeFixedStateShots = cardsOnlyMode
   ? fixedStateShots.filter((shot) => cardsOnlyShotNames.has(shot.name))
@@ -76,9 +77,10 @@ const expectedHandoff = {
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
-  "cards-boundary": { min: 0.99, max: 1.01 },
-  "cards-enter": { min: 0.99, max: 1.01 },
-  "cards-swap-mid": { min: 0.99, max: 1.01 },
+  "cards-a-entry": { min: 0.99, max: 1.01 },
+  "cards-a-center": { min: 0.99, max: 1.01 },
+  "cards-b-queue": { min: 0.99, max: 1.01 },
+  "cards-handoff-mid": { min: 0.99, max: 1.01 },
   "cards-settled": { min: 0.99, max: 1.01 },
 };
 const expectedShotStates = {
@@ -114,60 +116,67 @@ const expectedShotStates = {
     cardsOpacity: { max: 0.04 },
     moonflowOpacity: { max: 0.02 },
   },
-  "cards-boundary": {
-    mode: "card-state",
+  "cards-a-entry": {
+    mode: "single-card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
     cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 0,
+    card0Visible: true,
+    card1Visible: false,
     card0Opacity: { min: 0.98, max: 1.01 },
-    card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -0.6, max: -0.35 },
-    card1X: { min: 2.1, max: 2.45 },
-    screenGap: 150,
   },
-  "cards-enter": {
-    mode: "card-state",
+  "cards-a-center": {
+    mode: "single-card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
     cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 0,
+    card0Visible: true,
+    card1Visible: false,
     card0Opacity: { min: 0.98, max: 1.01 },
-    card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -0.6, max: -0.35 },
-    card1X: { min: 2.1, max: 2.45 },
-    screenGap: 150,
   },
-  "cards-swap-mid": {
-    mode: "card-state",
+  "cards-b-queue": {
+    mode: "dual-card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
     cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    card0Visible: true,
+    card1Visible: true,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -1.9, max: -1.55 },
-    card1X: { min: 0.8, max: 1.15 },
-    screenGap: 250,
+  },
+  "cards-handoff-mid": {
+    mode: "dual-card-state",
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    card0Visible: true,
+    card1Visible: true,
+    card0Opacity: { min: 0.98, max: 1.01 },
+    card1Opacity: { min: 0.98, max: 1.01 },
   },
   "cards-settled": {
-    mode: "card-state",
+    mode: "dual-card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
     cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 1,
+    card0Visible: true,
+    card1Visible: true,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -2.35, max: -2.05 },
-    card1X: { min: 0.22, max: 0.48 },
-    screenGap: 120,
   },
 };
 
@@ -312,6 +321,24 @@ function assertScreenGap(layerState, minimumGap, label) {
 
   assert(leftRight !== null && rightLeft !== null, `Missing ${label} screen bounds`);
   assert(gap >= minimumGap, `Expected ${label} screen gap >= ${minimumGap}, got ${gap}`);
+}
+
+function getCardScreenCenterX(layerState, cardIndex) {
+  const left = layerState[`card${cardIndex}ScreenLeft`];
+  const right = layerState[`card${cardIndex}ScreenRight`];
+  assert(left !== null && right !== null, `Missing card${cardIndex} screen x bounds`);
+  return (left + right) * 0.5;
+}
+
+function getCardScreenCenterY(layerState, cardIndex) {
+  const top = layerState[`card${cardIndex}ScreenTop`];
+  const bottom = layerState[`card${cardIndex}ScreenBottom`];
+  assert(top !== null && bottom !== null, `Missing card${cardIndex} screen y bounds`);
+  return (top + bottom) * 0.5;
+}
+
+function assertCardVisibility(layerState, cardIndex, expectedVisible, label) {
+  assert(layerState[`card${cardIndex}Visible`] === expectedVisible, `Expected ${label} card${cardIndex} visible=${expectedVisible}`);
 }
 
 function escapeHtml(value) {
@@ -565,14 +592,27 @@ async function captureFixedStates(browser, shots) {
         assertRange(layerState.moonflowOpacity ?? 0, expected.moonflowOpacity, `${shot.name} moonflow opacity`);
         assertRange(layerState.modelScale, { min: 0.5, max: 1.2 }, `${shot.name} model scale`);
 
-        if (expected.mode === "card-state") {
+        if (expected.mode === "single-card-state") {
           if (expected.cardsLeadIndex !== undefined) {
             assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
           }
+          assertCardVisibility(layerState, 0, expected.card0Visible, shot.name);
+          assertCardVisibility(layerState, 1, expected.card1Visible, shot.name);
+          assertRange(layerState.card0Opacity, expected.card0Opacity, `${shot.name} card0 opacity`);
+          assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
+          assert(layerState.card1Opacity === null, `Expected ${shot.name} card1 opacity to be null while hidden`);
+          assert(layerState.card1ScreenLeft === null && layerState.card1ScreenRight === null, `Expected ${shot.name} card1 screen bounds to be null while hidden`);
+          assert(layerState.cardsSupportWorldX === null && layerState.cardsSupportWorldZ === null, `Expected ${shot.name} support card debug to stay null while B is hidden`);
+          assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
+          assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
+        } else if (expected.mode === "dual-card-state") {
+          if (expected.cardsLeadIndex !== undefined) {
+            assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
+          }
+          assertCardVisibility(layerState, 0, expected.card0Visible, shot.name);
+          assertCardVisibility(layerState, 1, expected.card1Visible, shot.name);
           assertRange(layerState.card0Opacity, expected.card0Opacity, `${shot.name} card0 opacity`);
           assertRange(layerState.card1Opacity, expected.card1Opacity, `${shot.name} card1 opacity`);
-          assertRange(layerState.card0WorldX, expected.card0X, `${shot.name} card0 x`);
-          assertRange(layerState.card1WorldX, expected.card1X, `${shot.name} card1 x`);
           assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
           assert((layerState.card1ScreenLeft ?? 0) < (layerState.card1ScreenRight ?? 0), `Expected ${shot.name} card1 screen bounds`);
           assertScreenGap(layerState, expected.screenGap ?? 24, shot.name);
@@ -614,9 +654,10 @@ async function captureFixedStates(browser, shots) {
   const settleState = layerStates.get("works-intro-settle");
   const holdState = layerStates.get("works-hold");
   const outState = layerStates.get("works-out");
-  const cardsBoundaryState = layerStates.get("cards-boundary");
-  const cardsEnterState = layerStates.get("cards-enter");
-  const cardsSwapMidState = layerStates.get("cards-swap-mid");
+  const cardsAEntryState = layerStates.get("cards-a-entry");
+  const cardsACenterState = layerStates.get("cards-a-center");
+  const cardsBQueueState = layerStates.get("cards-b-queue");
+  const cardsHandoffMidState = layerStates.get("cards-handoff-mid");
   const cardsSettledState = layerStates.get("cards-settled");
 
   if (earlyState && settleState && holdState && outState) {
@@ -634,35 +675,48 @@ async function captureFixedStates(browser, shots) {
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
   }
 
-  if (outState && cardsBoundaryState && cardsEnterState && cardsSwapMidState && cardsSettledState) {
+  if (outState && cardsAEntryState && cardsACenterState && cardsBQueueState && cardsHandoffMidState && cardsSettledState) {
     if (holdState) {
       assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
     }
     assert((outState.cardsOpacity ?? 0) <= 0.04, "Expected cards to remain hidden until works fully exits.");
-    assert((cardsBoundaryState.cardsOpacity ?? 0) > 0.98, "Expected cards to be fully visible immediately at works_cards boundary.");
-    assert(cardsBoundaryState.cardsLeadIndex === 0, "Expected card 0 to lead at works_cards boundary.");
-    assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
+    assert((cardsAEntryState.cardsOpacity ?? 0) > 0.98, "Expected card A to appear immediately in works_cards.");
+    assert(cardsAEntryState.cardsLeadIndex === 0, "Expected card 0 to lead during A entry.");
+    assert(cardsACenterState.cardsLeadIndex === 0, "Expected card 0 to still lead at A center.");
+    assert(cardsBQueueState.cardsLeadIndex === 0, "Expected card 0 to still lead while B queues.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
-    assertScreenGap(cardsBoundaryState, 150, "cards-boundary");
-    assertScreenGap(cardsEnterState, 150, "cards-enter");
-    assertScreenGap(cardsSwapMidState, 250, "cards-swap-mid");
-    assertScreenGap(cardsSettledState, 120, "cards-settled");
-    assert((cardsBoundaryState.card0WorldX ?? 0) > (cardsSwapMidState.card0WorldX ?? 0), "Expected card0 to move left through the swap.");
-    assert((cardsSwapMidState.card0WorldX ?? 0) > (cardsSettledState.card0WorldX ?? 0), "Expected card0 to continue left into its settled support slot.");
-    assert((cardsBoundaryState.card1WorldX ?? 0) > (cardsSwapMidState.card1WorldX ?? 0), "Expected card1 to move inward from the right.");
-    assert((cardsSwapMidState.card1WorldX ?? 0) > (cardsSettledState.card1WorldX ?? 0), "Expected card1 to continue inward into the center slot.");
-    assert((cardsBoundaryState.card1WorldX ?? 0) > 2.1, "Expected card1 to begin well separated on the right at boundary.");
-    assert((cardsSwapMidState.card0WorldX ?? 0) < -1.55 && (cardsSwapMidState.card1WorldX ?? 0) > 0.8, "Expected both cards to be visibly separated mid-swap.");
+    assert(cardsAEntryState.card1Visible === false && cardsACenterState.card1Visible === false, "Expected card B to remain unloaded through A center.");
+    assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
+    assertScreenGap(cardsBQueueState, 40, "cards-b-queue");
+    assertScreenGap(cardsHandoffMidState, 40, "cards-handoff-mid");
+    assertScreenGap(cardsSettledState, 70, "cards-settled");
+    assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
+    assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left during handoff.");
+    assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
+    assert(getCardScreenCenterY(cardsAEntryState, 0) > getCardScreenCenterY(cardsACenterState, 0), "Expected card A to move upward from right-lower into center.");
+    assert(getCardScreenCenterY(cardsSettledState, 0) < getCardScreenCenterY(cardsACenterState, 0), "Expected card A to end above center in the left-upper slot.");
+    assert(getCardScreenCenterX(cardsBQueueState, 1) > getCardScreenCenterX(cardsHandoffMidState, 1), "Expected card B to move left from queue into center.");
+    assert(getCardScreenCenterX(cardsHandoffMidState, 1) > getCardScreenCenterX(cardsSettledState, 1), "Expected card B to continue left into the lead slot.");
+    assert(getCardScreenCenterY(cardsBQueueState, 1) > getCardScreenCenterY(cardsHandoffMidState, 1), "Expected card B to move upward from right-lower into center.");
+    assert(getCardScreenCenterY(cardsHandoffMidState, 1) > getCardScreenCenterY(cardsSettledState, 1), "Expected card B to keep moving upward into the center slot.");
+    assert(getCardScreenCenterX(cardsAEntryState, 0) > 980, "Expected A entry to begin in the right-hand side of the frame.");
+    assert(getCardScreenCenterY(cardsAEntryState, 0) > 620, "Expected A entry to begin in the lower half of the frame.");
+    assert(Math.abs(getCardScreenCenterX(cardsACenterState, 0) - 720) < 200, "Expected A center shot to land near screen center.");
+    assert(Math.abs(getCardScreenCenterY(cardsACenterState, 0) - 540) < 180, "Expected A center shot to land near vertical center.");
+    assert(getCardScreenCenterX(cardsSettledState, 0) < 320, "Expected settled A to remain in the left side of the frame.");
+    assert(getCardScreenCenterY(cardsSettledState, 0) < 420, "Expected settled A to remain in the upper half of the frame.");
+    assert((cardsSettledState.card0ScreenRight ?? 0) >= 120, "Expected settled A to remain meaningfully visible in frame.");
+    assert((cardsSettledState.card0ScreenLeft ?? 0) >= 0 && (cardsSettledState.card0ScreenRight ?? 0) <= 1440, "Expected settled A to remain fully in frame.");
     const stableModelReference = holdState ?? outState;
     assert(stableModelReference, "Missing stable model reference state.");
     if (holdState && earlyState) {
       assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");
       assert(approxEqual(earlyState.modelWorldZ, holdState.modelWorldZ, 0.05), "Expected center model z to stay fixed through works.");
     }
-    assert(approxEqual(stableModelReference.modelScale, cardsEnterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards enter.");
-    assert(approxEqual(cardsEnterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
-    assert(approxEqual(stableModelReference.modelWorldZ, cardsEnterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards enter.");
-    assert(approxEqual(cardsEnterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
+    assert(approxEqual(stableModelReference.modelScale, cardsACenterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards center.");
+    assert(approxEqual(cardsACenterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
+    assert(approxEqual(stableModelReference.modelWorldZ, cardsACenterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards center.");
+    assert(approxEqual(cardsACenterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
   }
 }
 

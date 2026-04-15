@@ -55,12 +55,23 @@ interface CurvedMediaWallProps {
 interface ScreenBounds {
   left: number;
   right: number;
+  top: number;
+  bottom: number;
+}
+
+interface WorksCardPose {
+  angle: number;
+  xOffset: number;
+  yOffset: number;
+  depthOffset: number;
+  scale: number;
 }
 
 function measureObjectScreenBounds(
   object: THREE.Object3D,
   camera: THREE.Camera,
   viewportWidth: number,
+  viewportHeight: number,
   box: THREE.Box3,
   points: THREE.Vector3[],
   projected: THREE.Vector3,
@@ -70,6 +81,8 @@ function measureObjectScreenBounds(
   if (box.isEmpty()) {
     target.left = Number.NaN;
     target.right = Number.NaN;
+    target.top = Number.NaN;
+    target.bottom = Number.NaN;
     return target;
   }
 
@@ -88,18 +101,35 @@ function measureObjectScreenBounds(
 
   let minScreenX = Number.POSITIVE_INFINITY;
   let maxScreenX = Number.NEGATIVE_INFINITY;
+  let minScreenY = Number.POSITIVE_INFINITY;
+  let maxScreenY = Number.NEGATIVE_INFINITY;
 
   corners.forEach(([x, y, z], index) => {
     points[index].set(x, y, z);
     projected.copy(points[index]).project(camera);
     const screenX = ((projected.x + 1) * 0.5) * viewportWidth;
+    const screenY = ((1 - projected.y) * 0.5) * viewportHeight;
     minScreenX = Math.min(minScreenX, screenX);
     maxScreenX = Math.max(maxScreenX, screenX);
+    minScreenY = Math.min(minScreenY, screenY);
+    maxScreenY = Math.max(maxScreenY, screenY);
   });
 
   target.left = THREE.MathUtils.clamp(minScreenX, 0, viewportWidth);
   target.right = THREE.MathUtils.clamp(maxScreenX, 0, viewportWidth);
+  target.top = THREE.MathUtils.clamp(minScreenY, 0, viewportHeight);
+  target.bottom = THREE.MathUtils.clamp(maxScreenY, 0, viewportHeight);
   return target;
+}
+
+function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number): WorksCardPose {
+  return {
+    angle: THREE.MathUtils.lerp(from.angle, to.angle, mix),
+    xOffset: THREE.MathUtils.lerp(from.xOffset, to.xOffset, mix),
+    yOffset: THREE.MathUtils.lerp(from.yOffset, to.yOffset, mix),
+    depthOffset: THREE.MathUtils.lerp(from.depthOffset, to.depthOffset, mix),
+    scale: THREE.MathUtils.lerp(from.scale, to.scale, mix),
+  };
 }
 
 function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
@@ -414,8 +444,8 @@ function WorksCardPair({
   const textures = useLoader(THREE.TextureLoader, texturePaths);
   const card0WorldRef = useRef(new THREE.Vector3());
   const card1WorldRef = useRef(new THREE.Vector3());
-  const card0ScreenBoundsRef = useRef<ScreenBounds>({ left: 0, right: 0 });
-  const card1ScreenBoundsRef = useRef<ScreenBounds>({ left: 0, right: 0 });
+  const card0ScreenBoundsRef = useRef<ScreenBounds>({ left: 0, right: 0, top: 0, bottom: 0 });
+  const card1ScreenBoundsRef = useRef<ScreenBounds>({ left: 0, right: 0, top: 0, bottom: 0 });
   const leadWorldRef = useRef(new THREE.Vector3());
   const supportWorldRef = useRef(new THREE.Vector3());
   const projectedRef = useRef(new THREE.Vector3());
@@ -423,6 +453,10 @@ function WorksCardPair({
   const card1BoxRef = useRef(new THREE.Box3());
   const card0PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
   const card1PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
+  const entryRightLowerPose = ALCHE_TOP_WORKS_CARDS.entryRightLower;
+  const leadCenterPose = ALCHE_TOP_WORKS_CARDS.leadCenter;
+  const queueRightLowerPose = ALCHE_TOP_WORKS_CARDS.queueRightLower;
+  const supportLeftUpperPose = ALCHE_TOP_WORKS_CARDS.supportLeftUpper;
   const geometry = useMemo(
     () =>
       createBentCardGeometry({
@@ -471,12 +505,43 @@ function WorksCardPair({
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
 
     const cardsVisible = sceneState.activeSection === "works_cards";
-    const swapMix =
-      cardsVisible ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.swapStart, ALCHE_TOP_WORKS_CARDS.swapEnd)) : 0;
-    const leadIndex = swapMix >= 0.5 ? 1 : 0;
-    const supportIndex = leadIndex === 0 ? 1 : 0;
+    const progress = sceneState.sectionProgress;
+    const aEntryMoveMix =
+      cardsVisible ? smoothstep(remapRange(progress, 0, ALCHE_TOP_WORKS_CARDS.aEntryMoveEnd)) : 0;
+    const bQueueMix =
+      cardsVisible ? smoothstep(remapRange(progress, ALCHE_TOP_WORKS_CARDS.aEntryEnd, ALCHE_TOP_WORKS_CARDS.bQueueEnd)) : 0;
+    const handoffMix =
+      cardsVisible ? smoothstep(remapRange(progress, ALCHE_TOP_WORKS_CARDS.bQueueEnd, ALCHE_TOP_WORKS_CARDS.handoffEnd)) : 0;
+    const card0Visible = cardsVisible;
+    const card1Visible = cardsVisible && progress >= ALCHE_TOP_WORKS_CARDS.aEntryEnd;
+    const leadIndex = !cardsVisible
+      ? null
+      : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
+        ? 0
+        : handoffMix >= 0.5
+          ? 1
+          : 0;
+    const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
+    const card0Pose =
+      progress < ALCHE_TOP_WORKS_CARDS.aEntryMoveEnd
+        ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, aEntryMoveMix)
+        : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
+          ? leadCenterPose
+          : progress < ALCHE_TOP_WORKS_CARDS.handoffEnd
+            ? lerpWorksCardPose(leadCenterPose, supportLeftUpperPose, handoffMix)
+            : supportLeftUpperPose;
+    const card1Pose =
+      progress < ALCHE_TOP_WORKS_CARDS.aEntryEnd
+        ? entryRightLowerPose
+        : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
+          ? lerpWorksCardPose(entryRightLowerPose, queueRightLowerPose, bQueueMix)
+          : progress < ALCHE_TOP_WORKS_CARDS.handoffEnd
+            ? lerpWorksCardPose(queueRightLowerPose, leadCenterPose, handoffMix)
+            : leadCenterPose;
 
-    groupRef.current.visible = cardsVisible;
+    groupRef.current.visible = cardsVisible && (card0Visible || card1Visible);
+    leftRef.current.visible = card0Visible;
+    rightRef.current.visible = card1Visible;
     if (!cardsVisible) {
       materials.forEach((material) => {
         material.opacity = THREE.MathUtils.damp(material.opacity, 0, 6.2, delta);
@@ -494,8 +559,14 @@ function WorksCardPair({
         layerDebugRef.current.card1WorldZ = null;
         layerDebugRef.current.card0ScreenLeft = null;
         layerDebugRef.current.card0ScreenRight = null;
+        layerDebugRef.current.card0ScreenTop = null;
+        layerDebugRef.current.card0ScreenBottom = null;
         layerDebugRef.current.card1ScreenLeft = null;
         layerDebugRef.current.card1ScreenRight = null;
+        layerDebugRef.current.card1ScreenTop = null;
+        layerDebugRef.current.card1ScreenBottom = null;
+        layerDebugRef.current.card0Visible = false;
+        layerDebugRef.current.card1Visible = false;
         layerDebugRef.current.cardsLeadWorldX = null;
         layerDebugRef.current.cardsLeadWorldZ = null;
         layerDebugRef.current.cardsSupportWorldX = null;
@@ -503,76 +574,87 @@ function WorksCardPair({
       }
       return;
     }
+    const card0Float = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
+    const card1Float = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.008;
 
-    const card0Angle = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.leadAngle, ALCHE_TOP_WORKS_CARDS.supportLeftAngle, swapMix);
-    const card1Angle = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportRightAngle, ALCHE_TOP_WORKS_CARDS.leadAngle, swapMix);
-    const card0Scale = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.leadScale, ALCHE_TOP_WORKS_CARDS.supportScale, swapMix);
-    const card1Scale = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportScale, ALCHE_TOP_WORKS_CARDS.leadScale, swapMix);
-    const card0XOffset = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.leadXOffset, ALCHE_TOP_WORKS_CARDS.supportLeftXOffset, swapMix);
-    const card1XOffset = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportRightXOffset, ALCHE_TOP_WORKS_CARDS.leadXOffset, swapMix);
-    const card0DepthOffset = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.leadDepthOffset, ALCHE_TOP_WORKS_CARDS.supportDepthOffset, swapMix);
-    const card1DepthOffset = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportDepthOffset, ALCHE_TOP_WORKS_CARDS.leadDepthOffset, swapMix);
-    const leadFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
-    const supportFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.006;
+    placeOnArc(leftRef.current, card0Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card0Pose.yOffset);
+    leftRef.current.position.x += card0Pose.xOffset;
+    leftRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card0Pose.depthOffset;
+    leftRef.current.position.y = THREE.MathUtils.damp(leftRef.current.position.y, card0Pose.yOffset + card0Float, 4.2, delta);
+    leftRef.current.scale.setScalar(THREE.MathUtils.damp(leftRef.current.scale.x, card0Pose.scale, 4.2, delta));
 
-    placeOnArc(leftRef.current, card0Angle, ALCHE_TOP_WORKS_CARDS.trackRadius);
-    placeOnArc(rightRef.current, card1Angle, ALCHE_TOP_WORKS_CARDS.trackRadius);
+    placeOnArc(rightRef.current, card1Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card1Pose.yOffset);
+    rightRef.current.position.x += card1Pose.xOffset;
+    rightRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card1Pose.depthOffset;
+    rightRef.current.position.y = THREE.MathUtils.damp(rightRef.current.position.y, card1Pose.yOffset + card1Float, 4.2, delta);
+    rightRef.current.scale.setScalar(THREE.MathUtils.damp(rightRef.current.scale.x, card1Pose.scale, 4.2, delta));
 
-    leftRef.current.position.x += card0XOffset;
-    rightRef.current.position.x += card1XOffset;
-    leftRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card0DepthOffset;
-    rightRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card1DepthOffset;
-    leftRef.current.position.y = THREE.MathUtils.damp(leftRef.current.position.y, leadFloat, 4.2, delta);
-    rightRef.current.position.y = THREE.MathUtils.damp(rightRef.current.position.y, supportFloat, 4.2, delta);
-    leftRef.current.scale.setScalar(THREE.MathUtils.damp(leftRef.current.scale.x, card0Scale, 4.2, delta));
-    rightRef.current.scale.setScalar(THREE.MathUtils.damp(rightRef.current.scale.x, card1Scale, 4.2, delta));
-    materials[0].opacity = 1;
-    materials[1].opacity = 1;
+    materials[0].opacity = card0Visible ? 1 : 0;
+    materials[1].opacity = card1Visible ? 1 : 0;
 
     if (layerDebugRef) {
       leftRef.current.getWorldPosition(card0WorldRef.current);
-      rightRef.current.getWorldPosition(card1WorldRef.current);
       measureObjectScreenBounds(
         leftRef.current,
         state.camera,
         state.size.width,
+        state.size.height,
         card0BoxRef.current,
         card0PointsRef.current,
         projectedRef.current,
         card0ScreenBoundsRef.current,
       );
-      measureObjectScreenBounds(
-        rightRef.current,
-        state.camera,
-        state.size.width,
-        card1BoxRef.current,
-        card1PointsRef.current,
-        projectedRef.current,
-        card1ScreenBoundsRef.current,
-      );
-      const leadNode = leadIndex === 0 ? leftRef.current : rightRef.current;
-      const supportNode = supportIndex === 0 ? leftRef.current : rightRef.current;
-      leadNode.getWorldPosition(leadWorldRef.current);
-      supportNode.getWorldPosition(supportWorldRef.current);
 
-      layerDebugRef.current.cardsOpacity = Math.max(...materials.map((material) => material.opacity));
+      if (card1Visible) {
+        rightRef.current.getWorldPosition(card1WorldRef.current);
+        measureObjectScreenBounds(
+          rightRef.current,
+          state.camera,
+          state.size.width,
+          state.size.height,
+          card1BoxRef.current,
+          card1PointsRef.current,
+          projectedRef.current,
+          card1ScreenBoundsRef.current,
+        );
+      }
+
+      if (leadIndex === 0) {
+        leadWorldRef.current.copy(card0WorldRef.current);
+      } else if (leadIndex === 1 && card1Visible) {
+        leadWorldRef.current.copy(card1WorldRef.current);
+      }
+
+      if (supportIndex === 0) {
+        supportWorldRef.current.copy(card0WorldRef.current);
+      } else if (supportIndex === 1 && card1Visible) {
+        supportWorldRef.current.copy(card1WorldRef.current);
+      }
+
+      layerDebugRef.current.cardsOpacity = Math.max(card0Visible ? materials[0].opacity : 0, card1Visible ? materials[1].opacity : 0);
       layerDebugRef.current.cardsLeadIndex = leadIndex;
-      layerDebugRef.current.cardsLeadOpacity = materials[leadIndex]?.opacity ?? null;
-      layerDebugRef.current.cardsSupportOpacity = materials[supportIndex]?.opacity ?? null;
-      layerDebugRef.current.card0Opacity = materials[0]?.opacity ?? null;
-      layerDebugRef.current.card1Opacity = materials[1]?.opacity ?? null;
+      layerDebugRef.current.cardsLeadOpacity = leadIndex === null ? null : materials[leadIndex]?.opacity ?? null;
+      layerDebugRef.current.cardsSupportOpacity = supportIndex === null ? null : materials[supportIndex]?.opacity ?? null;
+      layerDebugRef.current.card0Opacity = card0Visible ? materials[0]?.opacity ?? null : null;
+      layerDebugRef.current.card1Opacity = card1Visible ? materials[1]?.opacity ?? null : null;
       layerDebugRef.current.card0WorldX = card0WorldRef.current.x;
       layerDebugRef.current.card0WorldZ = card0WorldRef.current.z;
-      layerDebugRef.current.card1WorldX = card1WorldRef.current.x;
-      layerDebugRef.current.card1WorldZ = card1WorldRef.current.z;
+      layerDebugRef.current.card1WorldX = card1Visible ? card1WorldRef.current.x : null;
+      layerDebugRef.current.card1WorldZ = card1Visible ? card1WorldRef.current.z : null;
       layerDebugRef.current.card0ScreenLeft = card0ScreenBoundsRef.current.left;
       layerDebugRef.current.card0ScreenRight = card0ScreenBoundsRef.current.right;
-      layerDebugRef.current.card1ScreenLeft = card1ScreenBoundsRef.current.left;
-      layerDebugRef.current.card1ScreenRight = card1ScreenBoundsRef.current.right;
-      layerDebugRef.current.cardsLeadWorldX = leadWorldRef.current.x;
-      layerDebugRef.current.cardsLeadWorldZ = leadWorldRef.current.z;
-      layerDebugRef.current.cardsSupportWorldX = supportWorldRef.current.x;
-      layerDebugRef.current.cardsSupportWorldZ = supportWorldRef.current.z;
+      layerDebugRef.current.card0ScreenTop = card0ScreenBoundsRef.current.top;
+      layerDebugRef.current.card0ScreenBottom = card0ScreenBoundsRef.current.bottom;
+      layerDebugRef.current.card1ScreenLeft = card1Visible ? card1ScreenBoundsRef.current.left : null;
+      layerDebugRef.current.card1ScreenRight = card1Visible ? card1ScreenBoundsRef.current.right : null;
+      layerDebugRef.current.card1ScreenTop = card1Visible ? card1ScreenBoundsRef.current.top : null;
+      layerDebugRef.current.card1ScreenBottom = card1Visible ? card1ScreenBoundsRef.current.bottom : null;
+      layerDebugRef.current.card0Visible = card0Visible;
+      layerDebugRef.current.card1Visible = card1Visible;
+      layerDebugRef.current.cardsLeadWorldX = leadIndex === null ? null : leadWorldRef.current.x;
+      layerDebugRef.current.cardsLeadWorldZ = leadIndex === null ? null : leadWorldRef.current.z;
+      layerDebugRef.current.cardsSupportWorldX = supportIndex === null ? null : supportWorldRef.current.x;
+      layerDebugRef.current.cardsSupportWorldZ = supportIndex === null ? null : supportWorldRef.current.z;
     }
   });
 

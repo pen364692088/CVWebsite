@@ -138,8 +138,14 @@ export interface AlcheLayerDebugState {
   card1WorldZ: number | null;
   card0ScreenLeft: number | null;
   card0ScreenRight: number | null;
+  card0ScreenTop: number | null;
+  card0ScreenBottom: number | null;
   card1ScreenLeft: number | null;
   card1ScreenRight: number | null;
+  card1ScreenTop: number | null;
+  card1ScreenBottom: number | null;
+  card0Visible: boolean;
+  card1Visible: boolean;
   cardsLeadWorldX: number | null;
   cardsLeadWorldZ: number | null;
   cardsSupportWorldX: number | null;
@@ -307,20 +313,38 @@ export const ALCHE_TOP_WORKS_CARDS = {
   groupZ: -4.15,
   trackRadius: 2.48,
   frontOffsetZ: 2.2,
-  leadDepthOffset: 0.12,
-  supportDepthOffset: -0.48,
-  enterStart: 0,
-  enterEnd: 0.22,
-  swapStart: 0.42,
-  swapEnd: 0.88,
-  leadAngle: -0.12,
-  leadScale: 0.92,
-  leadXOffset: -0.18,
-  supportRightAngle: 0.78,
-  supportRightXOffset: 0.54,
-  supportLeftAngle: -1.08,
-  supportLeftXOffset: -0.54,
-  supportScale: 0.6,
+  aEntryMoveEnd: 0.26,
+  aEntryEnd: 0.34,
+  bQueueEnd: 0.52,
+  handoffEnd: 0.92,
+  entryRightLower: {
+    angle: 1.06,
+    xOffset: 1.02,
+    yOffset: -0.82,
+    depthOffset: -0.66,
+    scale: 0.56,
+  },
+  leadCenter: {
+    angle: -0.04,
+    xOffset: 0.14,
+    yOffset: -0.02,
+    depthOffset: 0.12,
+    scale: 0.88,
+  },
+  queueRightLower: {
+    angle: 0.82,
+    xOffset: 0.62,
+    yOffset: -0.56,
+    depthOffset: -0.46,
+    scale: 0.62,
+  },
+  supportLeftUpper: {
+    angle: -0.98,
+    xOffset: -0.18,
+    yOffset: 0.42,
+    depthOffset: -0.54,
+    scale: 0.32,
+  },
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
