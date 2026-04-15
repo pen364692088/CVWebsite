@@ -21,7 +21,7 @@ export function createBentCardGeometry({
     const y = positions.getY(index);
     const angle = x / radius;
     const bentX = Math.sin(angle) * radius;
-    const bentZ = radius - Math.cos(angle) * radius;
+    const bentZ = Math.cos(angle) * radius - radius;
 
     positions.setXYZ(index, bentX, y, bentZ);
   }

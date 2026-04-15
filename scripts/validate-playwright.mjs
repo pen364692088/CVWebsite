@@ -124,8 +124,9 @@ const expectedShotStates = {
     cardsLeadIndex: 0,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -0.65, max: -0.2 },
-    card1X: { min: 0.6, max: 1.0 },
+    card0X: { min: -0.6, max: -0.35 },
+    card1X: { min: 2.1, max: 2.45 },
+    screenGap: 150,
   },
   "cards-enter": {
     mode: "card-state",
@@ -137,8 +138,9 @@ const expectedShotStates = {
     cardsLeadIndex: 0,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -0.65, max: -0.2 },
-    card1X: { min: 0.6, max: 1.0 },
+    card0X: { min: -0.6, max: -0.35 },
+    card1X: { min: 2.1, max: 2.45 },
+    screenGap: 150,
   },
   "cards-swap-mid": {
     mode: "card-state",
@@ -149,8 +151,9 @@ const expectedShotStates = {
     moonflowOpacity: { max: 0.02 },
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -1.25, max: -0.65 },
-    card1X: { min: 0.05, max: 0.45 },
+    card0X: { min: -1.9, max: -1.55 },
+    card1X: { min: 0.8, max: 1.15 },
+    screenGap: 250,
   },
   "cards-settled": {
     mode: "card-state",
@@ -162,8 +165,9 @@ const expectedShotStates = {
     cardsLeadIndex: 1,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
-    card0X: { min: -1.55, max: -1.1 },
-    card1X: { min: -0.2, max: 0.05 },
+    card0X: { min: -2.35, max: -2.05 },
+    card1X: { min: 0.22, max: 0.48 },
+    screenGap: 120,
   },
 };
 
@@ -299,6 +303,15 @@ function assertCameraState(layerState, camera, tolerance, label) {
 function assertCardAheadOfModel(layerState, cardWorldZ, label) {
   assert(cardWorldZ !== null && layerState.modelWorldZ !== null, `Missing ${label} depth`);
   assert(cardWorldZ > layerState.modelWorldZ + 0.8, `Expected ${label} clearly ahead of model`);
+}
+
+function assertScreenGap(layerState, minimumGap, label) {
+  const leftRight = layerState.card0ScreenRight;
+  const rightLeft = layerState.card1ScreenLeft;
+  const gap = rightLeft - leftRight;
+
+  assert(leftRight !== null && rightLeft !== null, `Missing ${label} screen bounds`);
+  assert(gap >= minimumGap, `Expected ${label} screen gap >= ${minimumGap}, got ${gap}`);
 }
 
 function escapeHtml(value) {
@@ -560,6 +573,9 @@ async function captureFixedStates(browser, shots) {
           assertRange(layerState.card1Opacity, expected.card1Opacity, `${shot.name} card1 opacity`);
           assertRange(layerState.card0WorldX, expected.card0X, `${shot.name} card0 x`);
           assertRange(layerState.card1WorldX, expected.card1X, `${shot.name} card1 x`);
+          assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
+          assert((layerState.card1ScreenLeft ?? 0) < (layerState.card1ScreenRight ?? 0), `Expected ${shot.name} card1 screen bounds`);
+          assertScreenGap(layerState, expected.screenGap ?? 24, shot.name);
           assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
           assertCardAheadOfModel(layerState, layerState.card1WorldZ, `${shot.name} card1`);
           assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
@@ -627,12 +643,16 @@ async function captureFixedStates(browser, shots) {
     assert(cardsBoundaryState.cardsLeadIndex === 0, "Expected card 0 to lead at works_cards boundary.");
     assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
+    assertScreenGap(cardsBoundaryState, 150, "cards-boundary");
+    assertScreenGap(cardsEnterState, 150, "cards-enter");
+    assertScreenGap(cardsSwapMidState, 250, "cards-swap-mid");
+    assertScreenGap(cardsSettledState, 120, "cards-settled");
     assert((cardsBoundaryState.card0WorldX ?? 0) > (cardsSwapMidState.card0WorldX ?? 0), "Expected card0 to move left through the swap.");
     assert((cardsSwapMidState.card0WorldX ?? 0) > (cardsSettledState.card0WorldX ?? 0), "Expected card0 to continue left into its settled support slot.");
     assert((cardsBoundaryState.card1WorldX ?? 0) > (cardsSwapMidState.card1WorldX ?? 0), "Expected card1 to move inward from the right.");
     assert((cardsSwapMidState.card1WorldX ?? 0) > (cardsSettledState.card1WorldX ?? 0), "Expected card1 to continue inward into the center slot.");
-    assert((cardsBoundaryState.card1WorldX ?? 0) > 0.6, "Expected card1 to begin on the right at boundary.");
-    assert((cardsSwapMidState.card0WorldX ?? 0) < -0.6 && (cardsSwapMidState.card1WorldX ?? 0) < 0.5, "Expected both cards to be visibly mid-swap.");
+    assert((cardsBoundaryState.card1WorldX ?? 0) > 2.1, "Expected card1 to begin well separated on the right at boundary.");
+    assert((cardsSwapMidState.card0WorldX ?? 0) < -1.55 && (cardsSwapMidState.card1WorldX ?? 0) > 0.8, "Expected both cards to be visibly separated mid-swap.");
     const stableModelReference = holdState ?? outState;
     assert(stableModelReference, "Missing stable model reference state.");
     if (holdState && earlyState) {
