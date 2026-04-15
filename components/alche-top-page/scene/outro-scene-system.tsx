@@ -46,6 +46,7 @@ export function OutroSceneSystem({ sceneState }: OutroSceneSystemProps) {
     const visible = sceneState.outro.visible;
 
     if (groupRef.current) {
+      groupRef.current.visible = visible > 0.001;
       groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, -5.86, 3, delta);
     }
 
@@ -69,13 +70,13 @@ export function OutroSceneSystem({ sceneState }: OutroSceneSystemProps) {
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} visible={false}>
       <mesh ref={plateRef} geometry={plateGeometry} position={[0, 0, -0.4]}>
         <primitive object={plateMaterial} attach="material" />
       </mesh>
 
       <lineLoop ref={outlineRef} geometry={outlineGeometry} position={[-3.2, -0.34, -0.02]}>
-        <lineBasicMaterial color="#d6dff3" transparent opacity={0.48} />
+        <lineBasicMaterial color="#d6dff3" transparent opacity={0} />
       </lineLoop>
 
       <group ref={brandRef} position={[0.2, -0.14, 0.06]} scale={0.94}>

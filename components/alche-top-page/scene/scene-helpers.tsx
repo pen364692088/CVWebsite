@@ -132,24 +132,27 @@ export function WordSegments({
   depth: number;
 }) {
   const boxGeometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const planeGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
   const layout = useMemo(() => buildWordLayout(word), [word]);
+  const isFlat = depth <= 0.05;
 
   useEffect(() => {
     return () => {
       boxGeometry.dispose();
+      planeGeometry.dispose();
     };
-  }, [boxGeometry]);
+  }, [boxGeometry, planeGeometry]);
 
   return (
     <>
       {layout.map((segment, index) => (
         <mesh
           key={`${word}-${index}`}
-          geometry={boxGeometry}
+          geometry={isFlat ? planeGeometry : boxGeometry}
           material={material}
           position={[segment.centerX * scale, segment.y * scale, 0]}
           rotation={[0, 0, segment.rot ?? 0]}
-          scale={[segment.w * scale, segment.h * scale, depth]}
+          scale={isFlat ? [segment.w * scale, segment.h * scale, 1] : [segment.w * scale, segment.h * scale, depth]}
         />
       ))}
     </>

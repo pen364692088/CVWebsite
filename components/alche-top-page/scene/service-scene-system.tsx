@@ -63,7 +63,7 @@ export function ServiceSceneSystem({ sceneState }: ServiceSceneSystemProps) {
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} visible={false}>
       <mesh geometry={mediaGeometry} position={[-2.1, 0.22, 0.02]}>
         <primitive object={mediaMaterial} attach="material" />
       </mesh>

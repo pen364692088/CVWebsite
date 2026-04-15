@@ -47,7 +47,8 @@ export function ConceptFieldSceneSystem({ sceneState }: ConceptFieldSceneSystemP
   useFrame((state, delta) => {
     const whiteMix = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.whiteMix);
     const fieldVisible = Math.max(sceneState.missionIn.visible, sceneState.mission.visible, sceneState.vision.visible, sceneState.visionOut.visible);
-    const emblemVisible = Math.max(sceneState.missionIn.emblemMix, sceneState.mission.emblemMix, sceneState.vision.lineMix, 1 - sceneState.visionOut.drainMix * 0.82);
+    const visionOutroEmblem = sceneState.visionOut.visible > 0 ? (1 - sceneState.visionOut.drainMix * 0.82) * sceneState.visionOut.visible : 0;
+    const emblemVisible = Math.max(sceneState.missionIn.emblemMix, sceneState.mission.emblemMix, sceneState.vision.lineMix, visionOutroEmblem);
     const bandVisible = Math.max(sceneState.vision.densityMix, sceneState.visionOut.visible * 0.4);
     const systemVisible = Math.max(fieldVisible, emblemVisible, bandVisible);
 

@@ -22,7 +22,7 @@ export function StelllaSceneSystem({ sceneState }: StelllaSceneSystemProps) {
       new THREE.MeshBasicMaterial({
         color: "#070a11",
         transparent: true,
-        opacity: 0.18,
+        opacity: 0,
       }),
     [],
   );
@@ -42,6 +42,14 @@ export function StelllaSceneSystem({ sceneState }: StelllaSceneSystemProps) {
 
     if (!groupRef.current) return;
 
+    groupRef.current.visible = visible > 0.001;
+    if (!groupRef.current.visible) {
+      material.opacity = THREE.MathUtils.damp(material.opacity, 0, 5, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 0, 5, delta);
+      planeMaterial.opacity = THREE.MathUtils.damp(planeMaterial.opacity, 0, 5, delta);
+      return;
+    }
+
     groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, -6.4, 3, delta);
     groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, visible * -0.28, 3, delta);
     groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, -0.14 + sceneState.stellla.frameMix * 0.08, 3, delta);
@@ -51,7 +59,7 @@ export function StelllaSceneSystem({ sceneState }: StelllaSceneSystemProps) {
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} visible={false}>
       {[-2.4, -0.8, 1.0, 2.48].map((x, index) => (
         <group key={`stellla-frame-${x}`} position={[x, 0.2, -index * 0.7]}>
           <mesh geometry={frameGeometry} position={[-1.08, 0, 0]}>

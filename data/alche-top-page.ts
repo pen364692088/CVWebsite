@@ -13,6 +13,7 @@ export interface AlcheWorkItem {
   title: string;
   subtitle: string;
   categories: readonly string[];
+  imageSrc: string;
 }
 
 export interface AlcheServiceItem {
@@ -119,6 +120,7 @@ const sharedWorks = [
     title: "KizunaAI “Hello, Fortnite”",
     subtitle: "In-game concert / spatial runtime",
     categories: ["fortnite", "metaverse", "concert"],
+    imageSrc: "/alche-top-page/works/kizunaai-poster.png",
   },
   {
     code: "WK-02",
@@ -126,6 +128,7 @@ const sharedWorks = [
     title: "WEAR GO LAND",
     subtitle: "Fashion metaverse / mobile + unreal",
     categories: ["stellla", "mobile", "unreal"],
+    imageSrc: "/alche-top-page/works/wear-go-land-poster.png",
   },
   {
     code: "WK-03",
@@ -133,6 +136,7 @@ const sharedWorks = [
     title: "DISCOAT 2025SS EXHIBITION",
     subtitle: "Virtual exhibition / cloud rendered spatial retail",
     categories: ["fashion", "cloud", "metaverse"],
+    imageSrc: "/alche-top-page/works/discoat-poster.png",
   },
   {
     code: "WK-04",
@@ -140,6 +144,7 @@ const sharedWorks = [
     title: "Matsuken Samba II Rise Up the World",
     subtitle: "Mass live activation / performance world",
     categories: ["fortnite", "live", "brand world"],
+    imageSrc: "/alche-top-page/works/wear-go-land-side-poster.png",
   },
 ] as const;
 
@@ -164,8 +169,8 @@ const sharedService = [
 export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
   en: {
     metadata: {
-      title: "Alche Top-Page Runtime Rewrite",
-      description: "Reference-driven Alche runtime with a persistent single-canvas world, editorial DOM systems, and fine-grained top-page choreography.",
+      title: "Alche Top-Page",
+      description: "Alche top-page with a persistent single-canvas world, editorial DOM systems, and fine-grained top-page choreography.",
     },
     loading: {
       eyebrow: "Architect worlds",
@@ -199,15 +204,15 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: [...sharedNews],
     },
     hud: {
-      title: "TOP PAGE RUNTIME",
-      subtitle: "One world. Three optical parents. Multiple transition buffers.",
+      title: "ALCHE",
+      subtitle: "Black stage / technical field / brand motion",
       metrics: ["THICK REFRACTIVE A", "EMISSIVE ALCHE", "CYLINDRICAL MEDIA WALL"],
-      note: "Structure now follows the reference state graph; optical exactness remains a later pass.",
+      note: "Signal folds through the A before the wall hands authority to works.",
     },
     works: {
       eyebrow: "Works / same world, reassigned authority",
-      title: "The wall hands off to the card track without leaving the runtime.",
-      body: "The main card stabilizes while the side queue keeps the arc logic visible. Editorial metadata stays in DOM and follows the active work.",
+      title: "The project field detaches from the wall and takes foreground authority.",
+      body: "The active work holds center while the side queue keeps the curved system visible.",
       moreLabel: "More Works",
       items: [...sharedWorks],
     },
@@ -241,13 +246,13 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 Alche runtime study.",
+      copyright: "©2026 ALCHE.",
     },
   },
   "zh-CN": {
     metadata: {
-      title: "Alche 首页运行时重构",
-      description: "按参考站逆向结果重构的 Alche top-page runtime，包含单 canvas 世界、编辑化 DOM 系统和细粒度转场状态图。",
+      title: "Alche 首页",
+      description: "Alche top-page，包含单 canvas 世界、编辑化 DOM 系统和细粒度转场状态图。",
     },
     loading: {
       eyebrow: "构筑世界",
@@ -281,15 +286,15 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "TOP PAGE RUNTIME",
-      subtitle: "同一个世界，三个光学母体，多段过渡缓冲。",
+      title: "ALCHE",
+      subtitle: "黑色舞台 / 技术场 / 品牌运动",
       metrics: ["厚实体折射 A", "发光 ALCHE 字层", "圆柱媒体墙"],
-      note: "这轮先把结构对齐参考站；更高的光学精度留到下一轮。",
+      note: "信号先穿过 A，再把主读交给 works。",
     },
     works: {
       eyebrow: "Works / 同一世界内的主次转移",
-      title: "媒体墙把主读交给卡片轨道，而不是切到另一个页面。",
-      body: "主卡稳定后，侧卡仍保留弧线队列。元信息保持为 DOM，并跟随当前作品切换。",
+      title: "项目场从墙体中抽离，并接管前景主读。",
+      body: "主作品稳定在中央，侧卡继续维持弧形队列关系。",
       moreLabel: "More Works",
       items: sharedWorks.map((item) => ({ ...item })),
     },
@@ -323,13 +328,13 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       companyLabel: "品牌系统 / Zhouyu Liao · 流月工作室",
       privacyLabel: "隐私政策",
       licenseLabel: "许可",
-      copyright: "©2026 Alche runtime study.",
+      copyright: "©2026 ALCHE.",
     },
   },
   ja: {
     metadata: {
-      title: "Alche Top-Page Runtime Rewrite",
-      description: "参照サイトの逆解析に基づく Alche top-page runtime。単一 canvas、編集的 DOM、細粒度セクション構造を持つ。",
+      title: "Alche Top-Page",
+      description: "Alche top-page。単一 canvas、編集的 DOM、細粒度セクション構造を持つ。",
     },
     loading: {
       eyebrow: "Architect worlds",
@@ -363,15 +368,15 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "TOP PAGE RUNTIME",
-      subtitle: "一つの世界、三つの光学親、複数の遷移バッファ。",
+      title: "ALCHE",
+      subtitle: "黒いステージ / テクニカルフィールド / ブランドモーション",
       metrics: ["厚い屈折 A", "発光する ALCHE", "円筒メディアウォール"],
-      note: "今回は構造を参照サイトに合わせる。光学の厳密さは次の段階。",
+      note: "信号はまず A を通り、その後 works へ主読を渡す。",
     },
     works: {
       eyebrow: "Works / 同じ世界の中で権威が移る",
-      title: "メディアウォールからカードトラックへ主読が引き渡される。",
-      body: "メインカードが安定しても、サイドカードが弧の論理を保つ。メタデータは DOM に残り、アクティブ作品と同期する。",
+      title: "プロジェクトフィールドが壁から離れ、前景の主読になる。",
+      body: "メインワークが中央に定着し、サイドキューが曲面システムを維持する。",
       moreLabel: "More Works",
       items: sharedWorks.map((item) => ({ ...item })),
     },
@@ -405,13 +410,13 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 Alche runtime study.",
+      copyright: "©2026 ALCHE.",
     },
   },
   ko: {
     metadata: {
-      title: "Alche Top-Page Runtime Rewrite",
-      description: "참조 사이트 역분석 결과를 반영한 Alche top-page runtime. 단일 canvas, 편집형 DOM, 세분화된 section graph를 사용한다.",
+      title: "Alche Top-Page",
+      description: "Alche top-page. 단일 canvas, 편집형 DOM, 세분화된 section graph를 사용한다.",
     },
     loading: {
       eyebrow: "Architect worlds",
@@ -445,15 +450,15 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "TOP PAGE RUNTIME",
-      subtitle: "하나의 세계, 세 개의 광학 부모, 여러 전환 버퍼.",
+      title: "ALCHE",
+      subtitle: "블랙 스테이지 / 테크니컬 필드 / 브랜드 모션",
       metrics: ["두꺼운 굴절 A", "발광 ALCHE", "원통형 미디어 월"],
-      note: "이번 단계는 구조를 참조 사이트에 맞추는 것이다. 광학 정밀도는 다음 단계다.",
+      note: "신호는 먼저 A를 통과하고, 그 다음 works로 권한을 넘긴다.",
     },
     works: {
       eyebrow: "Works / 같은 세계 안에서 권한이 이동한다",
-      title: "미디어 월이 카드 트랙으로 주도권을 넘기되 런타임은 유지된다.",
-      body: "메인 카드는 안정되고, 사이드 큐는 호형 논리를 유지한다. 메타데이터는 DOM 에 남아 활성 작업을 따른다.",
+      title: "프로젝트 필드가 벽에서 분리되어 전경의 주도권을 잡는다.",
+      body: "메인 워크가 중앙을 잡고, 사이드 큐는 곡면 시스템을 유지한다.",
       moreLabel: "More Works",
       items: sharedWorks.map((item) => ({ ...item })),
     },
@@ -487,7 +492,7 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 Alche runtime study.",
+      copyright: "©2026 ALCHE.",
     },
   },
 };
