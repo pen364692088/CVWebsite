@@ -125,7 +125,12 @@ export interface AlcheLayerDebugState {
   worksDepthWrite: boolean | null;
   worksTransparent: boolean | null;
   cardsOpacity: number | null;
+  cardsLeadIndex: number | null;
+  cardsLeadOpacity: number | null;
+  cardsSupportOpacity: number | null;
+  cardsLeadWorldX: number | null;
   cardsLeadWorldZ: number | null;
+  cardsSupportWorldX: number | null;
   cardsSupportWorldZ: number | null;
 }
 
@@ -287,14 +292,78 @@ export const ALCHE_TOP_WORKS_CARDS = {
   bendRadius: 6,
   segments: 80,
   groupY: 0.22,
-  groupZ: -4.15,
-  trackRadius: 2.48,
-  enterStart: 0.08,
-  enterEnd: 0.38,
-  leadAngle: -0.38,
-  leadScale: 0.92,
-  supportAngle: 0.18,
-  supportScale: 1.1,
+  groupZ: -4.2,
+  revealStart: 0.72,
+  revealEnd: 0.94,
+  swapStart: 0.08,
+  swapEnd: 0.86,
+  poses: {
+    hidden: {
+      angle: 0.14,
+      trackRadius: 1.62,
+      y: 0.02,
+      scale: 0.72,
+      opacity: 0,
+      xOffset: 0,
+      zOffset: -0.72,
+      rotationX: 0.02,
+      rotationYOffset: 0.02,
+    },
+    wallAttached: {
+      angle: 0.08,
+      trackRadius: 1.92,
+      y: 0.02,
+      scale: 0.84,
+      opacity: 0.18,
+      xOffset: 0,
+      zOffset: -0.48,
+      rotationX: 0.03,
+      rotationYOffset: 0.02,
+    },
+    leadCenter: {
+      angle: -0.06,
+      trackRadius: 2.16,
+      y: -0.01,
+      scale: 1.18,
+      opacity: 1,
+      xOffset: 0,
+      zOffset: 0.02,
+      rotationX: 0.02,
+      rotationYOffset: 0.02,
+    },
+    supportRight: {
+      angle: 0.54,
+      trackRadius: 2.72,
+      y: 0.02,
+      scale: 0.82,
+      opacity: 0.78,
+      xOffset: 0.08,
+      zOffset: -0.18,
+      rotationX: 0.01,
+      rotationYOffset: 0.04,
+    },
+    supportLeft: {
+      angle: -0.56,
+      trackRadius: 2.72,
+      y: 0.02,
+      scale: 0.82,
+      opacity: 0.78,
+      xOffset: -0.08,
+      zOffset: -0.18,
+      rotationX: 0.01,
+      rotationYOffset: -0.04,
+    },
+  },
+  poseOffsets: {
+    hidden: [
+      { angle: -0.08, xOffset: -0.2, zOffset: -0.08, scaleMultiplier: 1 },
+      { angle: 0.16, xOffset: 0.28, zOffset: 0.02, scaleMultiplier: 0.94 },
+    ],
+    wallAttached: [
+      { angle: -0.12, xOffset: -0.24, zOffset: -0.1, scaleMultiplier: 1 },
+      { angle: 0.14, xOffset: 0.28, zOffset: 0.04, scaleMultiplier: 0.92 },
+    ],
+  },
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
@@ -381,9 +450,9 @@ export const ALCHE_TOP_CAMERA_STATES: Record<AlcheTopSectionId, AlcheTopCameraSt
     fov: 33.6,
   },
   works_cards: {
-    position: [0.02, 0.08, 5.38],
-    target: [0.04, 0.02, -1.02],
-    fov: 30.2,
+    position: [0.18, 0.08, 6.28],
+    target: [0.3, 0.02, -1.72],
+    fov: 32.6,
   },
   works_outro: {
     position: [0.22, 0.1, 6.32],
@@ -784,12 +853,7 @@ export function deriveTopSceneState(
 
   let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
-  if (
-    ALCHE_TOP_RUNTIME_MODE === "kv-works" &&
-    (runtimeSection === "works_intro" || runtimeSection === "works" || runtimeSection === "works_cards")
-  ) {
-    camera = ALCHE_TOP_CAMERA_STATES.kv;
-  } else {
+  {
   switch (runtimeSection) {
     case "loading":
       camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.loading, ALCHE_TOP_CAMERA_STATES.kv, smoothstep(remapRange(introProgress, 0.08, 0.48)));

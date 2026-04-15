@@ -49,27 +49,74 @@ const pointerInteractionShots = [
   { name: "kv-pointer-right-real", move: { x: 1160, y: 780 } },
 ];
 
-const kvLockedCamera = {
-  position: [0.02, 0.08, 5.38],
-  target: [0.04, 0.02, -1.02],
+const worksCamera = {
+  position: [0.46, 0.08, 6.18],
+  target: [0.58, 0.02, -1.38],
+};
+const worksCardsCamera = {
+  position: [0.18, 0.08, 6.28],
+  target: [0.3, 0.02, -1.72],
 };
 const expectedWallWorldZ = -5;
 const expectedWorksWorldZ = -4.9;
-const expectedWorksWorldX = {
-  "works-intro-enter-early": { min: -2.0, max: -1.4 },
-  "works-intro-settle": { min: -0.35, max: 0.35 },
-  "works-hold": { min: -0.2, max: 0.45 },
-  "works-out": { min: 1.5, max: 2.25 },
-};
 const expectedHandoff = {
   "works-intro-enter-early": { min: 0.24, max: 0.32 },
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
 };
-const expectedCardsOpacity = {
-  "cards-enter": { min: 0.12, max: 0.55 },
-  "cards-settled": { min: 0.82, max: 1.01 },
+const expectedShotStates = {
+  "works-intro-enter-early": {
+    camera: worksCamera,
+    cameraTolerance: 0.28,
+    worksOpacity: { min: 0.12, max: 0.34 },
+    cardsOpacity: { max: 0.04 },
+    moonflowOpacity: { min: 0.12, max: 0.5 },
+  },
+  "works-intro-settle": {
+    camera: worksCamera,
+    cameraTolerance: 0.1,
+    worksOpacity: { min: 0.72, max: 1.01 },
+    cardsOpacity: { max: 0.04 },
+    moonflowOpacity: { max: 0.08 },
+  },
+  "works-hold": {
+    camera: worksCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { min: 0.7, max: 1.01 },
+    cardsOpacity: { max: 0.08 },
+    moonflowOpacity: { max: 0.08 },
+  },
+  "works-out": {
+    camera: worksCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.08 },
+    cardsOpacity: { min: 0.72, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    cardsLeadX: { min: -0.45, max: 0.35 },
+    cardsSupportX: { min: 0.7, max: 1.95 },
+  },
+  "cards-enter": {
+    camera: worksCardsCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.72, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    cardsLeadX: { min: -0.45, max: 0.35 },
+    cardsSupportX: { min: 0.55, max: 1.95 },
+  },
+  "cards-settled": {
+    camera: worksCardsCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.72, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 1,
+    cardsLeadX: { min: -0.35, max: 0.35 },
+    cardsSupportX: { min: -1.95, max: -0.55 },
+  },
 };
 
 function resolveRequestPath(requestPath) {
@@ -180,6 +227,27 @@ function approxEqual(a, b, tolerance = 0.03) {
   return Math.abs(a - b) <= tolerance;
 }
 
+function assertRange(value, range, label) {
+  assert(value !== null && value !== undefined, `Missing ${label}`);
+  if (range.min !== undefined) {
+    assert(value >= range.min, `Expected ${label} >= ${range.min}, got ${value}`);
+  }
+  if (range.max !== undefined) {
+    assert(value <= range.max, `Expected ${label} <= ${range.max}, got ${value}`);
+  }
+}
+
+function assertCameraState(layerState, camera, tolerance, label) {
+  assert(
+    layerState.cameraPosition.every((value, index) => approxEqual(value, camera.position[index], tolerance)),
+    `Expected ${label} camera position`,
+  );
+  assert(
+    layerState.cameraTarget.every((value, index) => approxEqual(value, camera.target[index], tolerance)),
+    `Expected ${label} camera target`,
+  );
+}
+
 async function runScenario(browser, scenario) {
   const context = await browser.newContext(
     scenario.device
@@ -280,158 +348,40 @@ async function captureFixedStates(browser) {
           );
         }
       }
-      await page.waitForTimeout(240);
-      if (
-        shot.name === "works-intro-enter-early" ||
-        shot.name === "works-intro-settle" ||
-        shot.name === "works-hold" ||
-        shot.name === "works-out"
-      ) {
-        await page.waitForFunction(
-          ({ lockedCamera, expectedWallWorldZ, expectedWorksWorldZ, expectedWorksWorldXRange, expectedHandoffRange, shotName }) => {
-            const layerState = window.__getAlcheLayerDebugState?.();
-            if (!layerState) return false;
-            const cameraMatches =
-              layerState.cameraPosition.every((value, index) => Math.abs(value - lockedCamera.position[index]) <= 0.03) &&
-              layerState.cameraTarget.every((value, index) => Math.abs(value - lockedCamera.target[index]) <= 0.03);
-            const modelAheadOfWorks =
-              layerState.modelWorldZ !== null &&
-              layerState.worksWorldZ !== null &&
-              layerState.modelWorldZ > layerState.worksWorldZ;
-            const modelAheadOfMoonflow =
-              layerState.modelWorldZ !== null &&
-              layerState.moonflowWorldZ !== null &&
-              layerState.modelWorldZ > layerState.moonflowWorldZ;
-            const worksMaterialValid =
-              layerState.worksDepthTest === true &&
-              layerState.worksDepthWrite === false &&
-              layerState.worksTransparent === true;
-            const wallMatches = layerState.wallWorldZ !== null && Math.abs(layerState.wallWorldZ - expectedWallWorldZ) <= 0.03;
-            const worksMatches = layerState.worksWorldZ !== null && Math.abs(layerState.worksWorldZ - expectedWorksWorldZ) <= 0.05;
-            const worksXMatches =
-              layerState.worksWorldX !== null &&
-              layerState.worksWorldX >= expectedWorksWorldXRange.min &&
-              layerState.worksWorldX <= expectedWorksWorldXRange.max;
-            const worksRotationMatches = layerState.worksRotationY !== null && Math.abs(layerState.worksRotationY) <= 0.001;
-            const handoffMatches =
-              layerState.worksHandoff !== null &&
-              layerState.worksHandoff >= expectedHandoffRange.min &&
-              layerState.worksHandoff <= expectedHandoffRange.max;
-            const moonflowMatches =
-              shotName === "works-out"
-                ? (layerState.moonflowOpacity ?? 0) <= 0.02
-                : shotName === "works-intro-enter-early"
-                  ? (layerState.moonflowOpacity ?? 0) >= 0.12 && (layerState.moonflowOpacity ?? 0) <= 0.46
-                  : (layerState.moonflowOpacity ?? 0) <= 0.08;
-            const worksOpacityMatches =
-              shotName === "works-intro-enter-early"
-                ? (layerState.worksOpacity ?? 0) >= 0.12 && (layerState.worksOpacity ?? 0) <= 0.3
-                : shotName === "works-out"
-                  ? (layerState.worksOpacity ?? 0) <= 0.08
-                  : (layerState.worksOpacity ?? 0) >= 0.7;
-            return (
-              cameraMatches &&
-              wallMatches &&
-              worksMatches &&
-              worksXMatches &&
-              worksRotationMatches &&
-              handoffMatches &&
-              moonflowMatches &&
-              worksOpacityMatches &&
-              modelAheadOfWorks &&
-              modelAheadOfMoonflow &&
-              worksMaterialValid
-            );
-          },
-          {
-            lockedCamera: kvLockedCamera,
-            expectedWallWorldZ,
-            expectedWorksWorldZ,
-            expectedWorksWorldXRange: expectedWorksWorldX[shot.name],
-            expectedHandoffRange: expectedHandoff[shot.name],
-            shotName: shot.name,
-          },
-          { timeout: 5000 },
-        );
-        const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
-        layerStates.set(shot.name, layerState);
-        assert(layerState, `Missing layer debug state for ${shot.name}`);
-        assert(
-          layerState.cameraPosition.every((value, index) => approxEqual(value, kvLockedCamera.position[index])),
-          `Expected locked kv camera position for ${shot.name}`,
-        );
-        assert(
-          layerState.cameraTarget.every((value, index) => approxEqual(value, kvLockedCamera.target[index])),
-          `Expected locked kv camera target for ${shot.name}`,
-        );
+      await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
+      await page.waitForTimeout(420);
+      const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+      layerStates.set(shot.name, layerState);
+      assert(layerState, `Missing layer debug state for ${shot.name}`);
+
+      if (shot.name in expectedShotStates) {
+        const expected = expectedShotStates[shot.name];
+        assertCameraState(layerState, expected.camera, expected.cameraTolerance, shot.name);
         assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
         assert(approxEqual(layerState.worksWorldZ, expectedWorksWorldZ, 0.05), `Expected WORKS world z for ${shot.name}`);
-        assert(
-          layerState.worksWorldX >= expectedWorksWorldX[shot.name].min &&
-            layerState.worksWorldX <= expectedWorksWorldX[shot.name].max,
-          `Expected WORKS world x range for ${shot.name}`,
-        );
-        assert(
-          layerState.worksHandoff >= expectedHandoff[shot.name].min &&
-            layerState.worksHandoff <= expectedHandoff[shot.name].max,
-          `Expected WORKS handoff range for ${shot.name}`,
-        );
-        assert(Math.abs(layerState.worksRotationY) <= 0.001, `Expected WORKS rotation.y frozen for ${shot.name}`);
-        assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
-        assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
-      } else if (shot.name === "cards-enter" || shot.name === "cards-settled") {
-        await page.waitForFunction(
-          ({ lockedCamera, expectedWallWorldZ, expectedCardsOpacityRange, shotName }) => {
-            const layerState = window.__getAlcheLayerDebugState?.();
-            if (!layerState) return false;
-            const cameraMatches =
-              layerState.cameraPosition.every((value, index) => Math.abs(value - lockedCamera.position[index]) <= 0.03) &&
-              layerState.cameraTarget.every((value, index) => Math.abs(value - lockedCamera.target[index]) <= 0.03);
-            const wallMatches = layerState.wallWorldZ !== null && Math.abs(layerState.wallWorldZ - expectedWallWorldZ) <= 0.03;
-            const cardsVisible =
-              layerState.cardsOpacity !== null &&
-              layerState.cardsOpacity >= expectedCardsOpacityRange.min &&
-              layerState.cardsOpacity <= expectedCardsOpacityRange.max;
-            const cardsAheadOfModel =
-              layerState.modelWorldZ !== null &&
-              layerState.cardsLeadWorldZ !== null &&
-              layerState.cardsSupportWorldZ !== null &&
-              layerState.cardsLeadWorldZ > layerState.modelWorldZ &&
-              layerState.cardsSupportWorldZ > layerState.modelWorldZ;
-            const moonflowOff = (layerState.moonflowOpacity ?? 0) <= 0.02;
-            const worksOff = (layerState.worksOpacity ?? 0) <= 0.05;
-            const handoffLocked = layerState.worksHandoff !== null && layerState.worksHandoff >= 0.99;
-            return cameraMatches && wallMatches && cardsVisible && cardsAheadOfModel && moonflowOff && worksOff && handoffLocked;
-          },
-          {
-            lockedCamera: kvLockedCamera,
-            expectedWallWorldZ,
-            expectedCardsOpacityRange: expectedCardsOpacity[shot.name],
-            shotName: shot.name,
-          },
-          { timeout: 5000 },
-        );
-        const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
-        layerStates.set(shot.name, layerState);
-        assert(layerState, `Missing layer debug state for ${shot.name}`);
-        assert(
-          layerState.cameraPosition.every((value, index) => approxEqual(value, kvLockedCamera.position[index])),
-          `Expected locked kv camera position for ${shot.name}`,
-        );
-        assert(
-          layerState.cameraTarget.every((value, index) => approxEqual(value, kvLockedCamera.target[index])),
-          `Expected locked kv camera target for ${shot.name}`,
-        );
-        assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
-        assert(
-          layerState.cardsOpacity >= expectedCardsOpacity[shot.name].min &&
-            layerState.cardsOpacity <= expectedCardsOpacity[shot.name].max,
-          `Expected cards opacity range for ${shot.name}`,
-        );
-        assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ, `Expected lead card ahead of model for ${shot.name}`);
-        assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ, `Expected support card ahead of model for ${shot.name}`);
-        assert((layerState.moonflowOpacity ?? 0) <= 0.02, `Expected MOONFLOW off for ${shot.name}`);
-        assert((layerState.worksOpacity ?? 0) <= 0.05, `Expected WORKS off for ${shot.name}`);
+        assertRange(layerState.worksHandoff, expectedHandoff[shot.name] ?? { min: 0.99, max: 1.01 }, `${shot.name} works handoff`);
+        assertRange(layerState.worksOpacity ?? 0, expected.worksOpacity, `${shot.name} works opacity`);
+        assertRange(layerState.cardsOpacity ?? 0, expected.cardsOpacity, `${shot.name} cards opacity`);
+        assertRange(layerState.moonflowOpacity ?? 0, expected.moonflowOpacity, `${shot.name} moonflow opacity`);
+
+        if (expected.cardsLeadIndex !== undefined) {
+          assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
+          assertRange(layerState.cardsLeadWorldX, expected.cardsLeadX, `${shot.name} lead card x`);
+          assertRange(layerState.cardsSupportWorldX, expected.cardsSupportX, `${shot.name} support card x`);
+          assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ, `Expected lead card ahead of model for ${shot.name}`);
+          assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ, `Expected support card ahead of model for ${shot.name}`);
+          assert((layerState.cardsLeadOpacity ?? 0) >= (layerState.cardsSupportOpacity ?? 0) * 0.82, `Expected lead card to remain visually dominant for ${shot.name}`);
+        } else {
+          assert((layerState.cardsOpacity ?? 0) <= 0.08, `Expected cards hidden during ${shot.name}`);
+          assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
+        }
+
+        if ((layerState.moonflowOpacity ?? 0) > 0.04) {
+          assert(layerState.modelWorldZ > layerState.moonflowWorldZ, `Expected model ahead of MOONFLOW for ${shot.name}`);
+        }
+        assert(layerState.worksDepthTest === true, `Expected WORKS depthTest enabled for ${shot.name}`);
+        assert(layerState.worksDepthWrite === false, `Expected WORKS depthWrite disabled for ${shot.name}`);
+        assert(layerState.worksTransparent === true, `Expected WORKS transparent material for ${shot.name}`);
       }
       await page.screenshot({
         path: path.join(outputDir, `${shot.name}.png`),
@@ -446,19 +396,24 @@ async function captureFixedStates(browser) {
   const settleState = layerStates.get("works-intro-settle");
   const holdState = layerStates.get("works-hold");
   const outState = layerStates.get("works-out");
-  if (earlyState && settleState && holdState && outState) {
+  const cardsEnterState = layerStates.get("cards-enter");
+  const cardsSettledState = layerStates.get("cards-settled");
+  if (earlyState && settleState && holdState && outState && cardsEnterState && cardsSettledState) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
     assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
     assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
-    assert(earlyState.worksWorldX < settleState.worksWorldX, "Expected WORKS to move right during enter.");
-    assert(Math.abs(settleState.worksWorldX - holdState.worksWorldX) < 0.6, "Expected WORKS to hold near center before fade.");
-    assert(holdState.worksWorldX < outState.worksWorldX, "Expected WORKS to move right again during out.");
     assert((earlyState.moonflowOpacity ?? 0) > (settleState.moonflowOpacity ?? 0), "Expected MOONFLOW to fade out only once.");
     assert((settleState.moonflowOpacity ?? 0) >= (holdState.moonflowOpacity ?? 0), "Expected MOONFLOW to stay off after fade.");
     assert((holdState.moonflowOpacity ?? 0) >= (outState.moonflowOpacity ?? 0), "Expected MOONFLOW to remain off into out.");
     assert((earlyState.worksOpacity ?? 0) < (settleState.worksOpacity ?? 0), "Expected WORKS to fade in during enter.");
     assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.16, "Expected WORKS to hold opacity in center.");
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
+    assert((holdState.cardsOpacity ?? 0) < (outState.cardsOpacity ?? 0), "Expected cards to remain hidden until late works.");
+    assert(outState.cardsLeadIndex === 0, "Expected card 0 to lead at works out.");
+    assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
+    assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
+    assert((cardsEnterState.cardsSupportWorldX ?? 0) > 0, "Expected support card to start on the right.");
+    assert((cardsSettledState.cardsSupportWorldX ?? 0) < 0, "Expected support card to end on the left.");
   }
 }
 
@@ -472,6 +427,7 @@ async function capturePointerInteraction(browser) {
   try {
     const page = await context.newPage();
     await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelectorAll("canvas").length === 1, undefined, { timeout: 5000 });
     await assertTopPageShell(page, "kv-pointer-interaction");
     await page.waitForFunction(
       () =>

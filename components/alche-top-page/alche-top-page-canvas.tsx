@@ -99,7 +99,12 @@ export function AlcheTopPageCanvas({
     worksDepthWrite: null,
     worksTransparent: null,
     cardsOpacity: null,
+    cardsLeadIndex: null,
+    cardsLeadOpacity: null,
+    cardsSupportOpacity: null,
+    cardsLeadWorldX: null,
     cardsLeadWorldZ: null,
+    cardsSupportWorldX: null,
     cardsSupportWorldZ: null,
   });
 

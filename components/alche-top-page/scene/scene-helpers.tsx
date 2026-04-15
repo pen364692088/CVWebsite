@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
+import { createBentCardGeometry as createArcBentCardGeometry } from "@/components/alche-top-page/scene/bent-card-helpers";
+
 interface SegmentConfig {
   x: number;
   y: number;
@@ -209,18 +211,10 @@ export function warpPrismGeometry(geometry: THREE.ExtrudeGeometry) {
 }
 
 export function createBentCardGeometry() {
-  const geometry = new THREE.PlaneGeometry(2.66, 1.6, 28, 1);
-  const positions = geometry.getAttribute("position") as THREE.BufferAttribute;
-  const point = new THREE.Vector3();
-
-  for (let index = 0; index < positions.count; index += 1) {
-    point.fromBufferAttribute(positions, index);
-    const normalized = point.x / 1.33;
-    point.z = -Math.abs(normalized) * 0.16 - normalized * normalized * 0.06;
-    positions.setXYZ(index, point.x, point.y, point.z);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
+  return createArcBentCardGeometry({
+    width: 2.66,
+    height: 1.6,
+    radius: 6.2,
+    segments: 28,
+  });
 }

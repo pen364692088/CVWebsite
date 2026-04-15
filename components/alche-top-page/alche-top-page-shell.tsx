@@ -128,6 +128,10 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
   const kvWallTexturePath = assetPath("/alche-top-page/kv/hero-wall-grid-white.png");
+  const worksCardItems = copy.works.items.slice(0, 2).map((item) => ({
+    title: item.title,
+    imageSrc: item.imageSrc,
+  }));
   const introSettled = currentIntroProgress > 0.995 || captureMode;
   const baseTrackedSection =
     debugOverride?.section === "loading" ? "kv" : ((debugOverride?.section as AlcheScrollableSectionId | undefined) ?? trackedSection ?? "kv");
@@ -259,11 +263,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               reducedMotion={reducedMotion}
               minimalScene={minimalScene}
               kvWallTexturePath={kvWallTexturePath}
-              worksCardItems={copy.works.items.slice(0, 2).map((item) => ({
-                title: item.title,
-                imageSrc: item.imageSrc,
-              }))}
-              workCount={copy.works.items.length}
+              worksCardItems={worksCardItems}
+              workCount={worksCardItems.length}
               serviceCount={copy.service.items.length}
               canvasEventSource={canvasEventSource}
               pointerDebugEnabled={pointerDebugEnabled}
