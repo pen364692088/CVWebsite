@@ -49,73 +49,74 @@ const pointerInteractionShots = [
   { name: "kv-pointer-right-real", move: { x: 1160, y: 780 } },
 ];
 
-const worksCamera = {
-  position: [0.46, 0.08, 6.18],
-  target: [0.58, 0.02, -1.38],
-};
-const worksCardsCamera = {
-  position: [0.18, 0.08, 6.28],
-  target: [0.3, 0.02, -1.72],
+const kvLockedCamera = {
+  position: [0.02, 0.08, 5.38],
+  target: [0.04, 0.02, -1.02],
 };
 const expectedWallWorldZ = -5;
 const expectedWorksWorldZ = -4.9;
+const expectedWorksWorldX = {
+  "works-intro-enter-early": { min: -2.0, max: -1.4 },
+  "works-intro-settle": { min: -0.35, max: 0.35 },
+  "works-hold": { min: -0.2, max: 0.45 },
+  "works-out": { min: 1.5, max: 2.25 },
+};
 const expectedHandoff = {
   "works-intro-enter-early": { min: 0.24, max: 0.32 },
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
+  "cards-enter": { min: 0.99, max: 1.01 },
+  "cards-settled": { min: 0.99, max: 1.01 },
 };
 const expectedShotStates = {
   "works-intro-enter-early": {
-    camera: worksCamera,
-    cameraTolerance: 0.28,
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
     worksOpacity: { min: 0.12, max: 0.34 },
     cardsOpacity: { max: 0.04 },
     moonflowOpacity: { min: 0.12, max: 0.5 },
   },
   "works-intro-settle": {
-    camera: worksCamera,
-    cameraTolerance: 0.1,
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
     worksOpacity: { min: 0.72, max: 1.01 },
     cardsOpacity: { max: 0.04 },
     moonflowOpacity: { max: 0.08 },
   },
   "works-hold": {
-    camera: worksCamera,
+    camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { min: 0.7, max: 1.01 },
-    cardsOpacity: { max: 0.08 },
+    cardsOpacity: { max: 0.04 },
     moonflowOpacity: { max: 0.08 },
   },
   "works-out": {
-    camera: worksCamera,
+    camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.08 },
-    cardsOpacity: { min: 0.72, max: 1.01 },
+    cardsOpacity: { max: 0.04 },
     moonflowOpacity: { max: 0.02 },
-    cardsLeadIndex: 0,
-    cardsLeadX: { min: -0.45, max: 0.35 },
-    cardsSupportX: { min: 0.7, max: 1.95 },
   },
   "cards-enter": {
-    camera: worksCardsCamera,
+    camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.72, max: 1.01 },
+    cardsOpacity: { min: 0.12, max: 0.55 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 0,
-    cardsLeadX: { min: -0.45, max: 0.35 },
-    cardsSupportX: { min: 0.55, max: 1.95 },
+    cardsLeadX: { min: -0.65, max: 0.15 },
+    cardsSupportX: { min: 0.55, max: 1.35 },
   },
   "cards-settled": {
-    camera: worksCardsCamera,
+    camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.72, max: 1.01 },
+    cardsOpacity: { min: 0.7, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 1,
-    cardsLeadX: { min: -0.35, max: 0.35 },
-    cardsSupportX: { min: -1.95, max: -0.55 },
+    cardsLeadX: { min: -0.3, max: 0.25 },
+    cardsSupportX: { min: -1.65, max: -0.65 },
   },
 };
 
@@ -358,11 +359,13 @@ async function captureFixedStates(browser) {
         const expected = expectedShotStates[shot.name];
         assertCameraState(layerState, expected.camera, expected.cameraTolerance, shot.name);
         assert(approxEqual(layerState.wallWorldZ, expectedWallWorldZ), `Expected wall world z for ${shot.name}`);
+        assert((layerState.wallRotationY ?? 0) <= 0.02 && (layerState.wallRotationY ?? 0) >= -0.02, `Expected wall rotation locked for ${shot.name}`);
         assert(approxEqual(layerState.worksWorldZ, expectedWorksWorldZ, 0.05), `Expected WORKS world z for ${shot.name}`);
         assertRange(layerState.worksHandoff, expectedHandoff[shot.name] ?? { min: 0.99, max: 1.01 }, `${shot.name} works handoff`);
         assertRange(layerState.worksOpacity ?? 0, expected.worksOpacity, `${shot.name} works opacity`);
         assertRange(layerState.cardsOpacity ?? 0, expected.cardsOpacity, `${shot.name} cards opacity`);
         assertRange(layerState.moonflowOpacity ?? 0, expected.moonflowOpacity, `${shot.name} moonflow opacity`);
+        assertRange(layerState.modelScale, { min: 0.5, max: 1.2 }, `${shot.name} model scale`);
 
         if (expected.cardsLeadIndex !== undefined) {
           assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
@@ -373,6 +376,8 @@ async function captureFixedStates(browser) {
           assert((layerState.cardsLeadOpacity ?? 0) >= (layerState.cardsSupportOpacity ?? 0) * 0.82, `Expected lead card to remain visually dominant for ${shot.name}`);
         } else {
           assert((layerState.cardsOpacity ?? 0) <= 0.08, `Expected cards hidden during ${shot.name}`);
+          assertRange(layerState.worksWorldX, expectedWorksWorldX[shot.name], `${shot.name} works x`);
+          assert(Math.abs(layerState.worksRotationY ?? 0) <= 0.001, `Expected WORKS rotation.y frozen for ${shot.name}`);
           assert(layerState.modelWorldZ > layerState.worksWorldZ, `Expected model ahead of WORKS for ${shot.name}`);
         }
 
@@ -402,18 +407,27 @@ async function captureFixedStates(browser) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
     assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
     assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
+    assert(earlyState.worksWorldX < settleState.worksWorldX, "Expected WORKS to move right during enter.");
+    assert(Math.abs((settleState.worksWorldX ?? 0) - (holdState.worksWorldX ?? 0)) < 0.6, "Expected WORKS to hold near center before fade.");
+    assert(holdState.worksWorldX < outState.worksWorldX, "Expected WORKS to move right again during out.");
     assert((earlyState.moonflowOpacity ?? 0) > (settleState.moonflowOpacity ?? 0), "Expected MOONFLOW to fade out only once.");
     assert((settleState.moonflowOpacity ?? 0) >= (holdState.moonflowOpacity ?? 0), "Expected MOONFLOW to stay off after fade.");
     assert((holdState.moonflowOpacity ?? 0) >= (outState.moonflowOpacity ?? 0), "Expected MOONFLOW to remain off into out.");
     assert((earlyState.worksOpacity ?? 0) < (settleState.worksOpacity ?? 0), "Expected WORKS to fade in during enter.");
     assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.16, "Expected WORKS to hold opacity in center.");
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
-    assert((holdState.cardsOpacity ?? 0) < (outState.cardsOpacity ?? 0), "Expected cards to remain hidden until late works.");
-    assert(outState.cardsLeadIndex === 0, "Expected card 0 to lead at works out.");
+    assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
+    assert((outState.cardsOpacity ?? 0) <= 0.04, "Expected cards to remain hidden until works fully exits.");
     assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
     assert((cardsEnterState.cardsSupportWorldX ?? 0) > 0, "Expected support card to start on the right.");
     assert((cardsSettledState.cardsSupportWorldX ?? 0) < 0, "Expected support card to end on the left.");
+    assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");
+    assert(approxEqual(holdState.modelScale, cardsEnterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards enter.");
+    assert(approxEqual(cardsEnterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
+    assert(approxEqual(earlyState.modelWorldZ, holdState.modelWorldZ, 0.05), "Expected center model z to stay fixed through works.");
+    assert(approxEqual(holdState.modelWorldZ, cardsEnterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards enter.");
+    assert(approxEqual(cardsEnterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
   }
 }
 

@@ -113,8 +113,10 @@ export interface AlcheLayerDebugState {
   cameraPosition: readonly [number, number, number];
   cameraTarget: readonly [number, number, number];
   wallWorldZ: number | null;
+  wallRotationY: number | null;
   worksWorldX: number | null;
   modelWorldZ: number | null;
+  modelScale: number | null;
   moonflowWorldZ: number | null;
   worksWorldZ: number | null;
   worksRotationY: number | null;
@@ -292,78 +294,17 @@ export const ALCHE_TOP_WORKS_CARDS = {
   bendRadius: 6,
   segments: 80,
   groupY: 0.22,
-  groupZ: -4.2,
-  revealStart: 0.72,
-  revealEnd: 0.94,
-  swapStart: 0.08,
-  swapEnd: 0.86,
-  poses: {
-    hidden: {
-      angle: 0.14,
-      trackRadius: 1.62,
-      y: 0.02,
-      scale: 0.72,
-      opacity: 0,
-      xOffset: 0,
-      zOffset: -0.72,
-      rotationX: 0.02,
-      rotationYOffset: 0.02,
-    },
-    wallAttached: {
-      angle: 0.08,
-      trackRadius: 1.92,
-      y: 0.02,
-      scale: 0.84,
-      opacity: 0.18,
-      xOffset: 0,
-      zOffset: -0.48,
-      rotationX: 0.03,
-      rotationYOffset: 0.02,
-    },
-    leadCenter: {
-      angle: -0.06,
-      trackRadius: 2.16,
-      y: -0.01,
-      scale: 1.18,
-      opacity: 1,
-      xOffset: 0,
-      zOffset: 0.02,
-      rotationX: 0.02,
-      rotationYOffset: 0.02,
-    },
-    supportRight: {
-      angle: 0.54,
-      trackRadius: 2.72,
-      y: 0.02,
-      scale: 0.82,
-      opacity: 0.78,
-      xOffset: 0.08,
-      zOffset: -0.18,
-      rotationX: 0.01,
-      rotationYOffset: 0.04,
-    },
-    supportLeft: {
-      angle: -0.56,
-      trackRadius: 2.72,
-      y: 0.02,
-      scale: 0.82,
-      opacity: 0.78,
-      xOffset: -0.08,
-      zOffset: -0.18,
-      rotationX: 0.01,
-      rotationYOffset: -0.04,
-    },
-  },
-  poseOffsets: {
-    hidden: [
-      { angle: -0.08, xOffset: -0.2, zOffset: -0.08, scaleMultiplier: 1 },
-      { angle: 0.16, xOffset: 0.28, zOffset: 0.02, scaleMultiplier: 0.94 },
-    ],
-    wallAttached: [
-      { angle: -0.12, xOffset: -0.24, zOffset: -0.1, scaleMultiplier: 1 },
-      { angle: 0.14, xOffset: 0.28, zOffset: 0.04, scaleMultiplier: 0.92 },
-    ],
-  },
+  groupZ: -4.15,
+  trackRadius: 2.48,
+  enterStart: 0.08,
+  enterEnd: 0.34,
+  swapStart: 0.42,
+  swapEnd: 0.88,
+  leadAngle: -0.18,
+  leadScale: 1.04,
+  supportRightAngle: 0.34,
+  supportLeftAngle: -0.6,
+  supportScale: 0.84,
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
@@ -853,32 +794,41 @@ export function deriveTopSceneState(
 
   let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
-  {
-  switch (runtimeSection) {
-    case "loading":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.loading, ALCHE_TOP_CAMERA_STATES.kv, smoothstep(remapRange(introProgress, 0.08, 0.48)));
-      break;
-    case "works_intro":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.kv, ALCHE_TOP_CAMERA_STATES.works, worksIntro.handoffMix);
-      break;
-    case "works_outro":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works, ALCHE_TOP_CAMERA_STATES.mission_in, worksOutro.clearMix);
-      break;
-    case "mission_in":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works_outro, ALCHE_TOP_CAMERA_STATES.mission, missionIn.flattenMix);
-      break;
-    case "vision_out":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision, ALCHE_TOP_CAMERA_STATES.service_in, visionOut.drainMix);
-      break;
-    case "service_in":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision_out, ALCHE_TOP_CAMERA_STATES.service, serviceIn.entryMix);
-      break;
-    case "outro":
-      camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.stellla, ALCHE_TOP_CAMERA_STATES.outro, outro.stageMix);
-      break;
-    default:
-      break;
-  }
+  if (
+    ALCHE_TOP_RUNTIME_MODE === "kv-works" &&
+    (runtimeSection === "works_intro" || runtimeSection === "works" || runtimeSection === "works_cards")
+  ) {
+    camera = ALCHE_TOP_CAMERA_STATES.kv;
+  } else {
+    switch (runtimeSection) {
+      case "loading":
+        camera = lerpCameraState(
+          ALCHE_TOP_CAMERA_STATES.loading,
+          ALCHE_TOP_CAMERA_STATES.kv,
+          smoothstep(remapRange(introProgress, 0.08, 0.48)),
+        );
+        break;
+      case "works_intro":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.kv, ALCHE_TOP_CAMERA_STATES.works, worksIntro.handoffMix);
+        break;
+      case "works_outro":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works, ALCHE_TOP_CAMERA_STATES.mission_in, worksOutro.clearMix);
+        break;
+      case "mission_in":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works_outro, ALCHE_TOP_CAMERA_STATES.mission, missionIn.flattenMix);
+        break;
+      case "vision_out":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision, ALCHE_TOP_CAMERA_STATES.service_in, visionOut.drainMix);
+        break;
+      case "service_in":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision_out, ALCHE_TOP_CAMERA_STATES.service, serviceIn.entryMix);
+        break;
+      case "outro":
+        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.stellla, ALCHE_TOP_CAMERA_STATES.outro, outro.stageMix);
+        break;
+      default:
+        break;
+    }
   }
 
   const kv = deriveKvSceneState(
