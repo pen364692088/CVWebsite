@@ -40,6 +40,7 @@ const fixedStateShots = [
   { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
   { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
   { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-boundary", search: "?alcheSection=works_cards&alcheProgress=0&alcheIntro=1&alcheCapture=1" },
   { name: "cards-enter", search: "?alcheSection=works_cards&alcheProgress=0.18&alcheIntro=1&alcheCapture=1" },
   { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.72&alcheIntro=1&alcheCapture=1" },
 ];
@@ -66,6 +67,7 @@ const expectedHandoff = {
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
+  "cards-boundary": { min: 0.99, max: 1.01 },
   "cards-enter": { min: 0.99, max: 1.01 },
   "cards-settled": { min: 0.99, max: 1.01 },
 };
@@ -102,7 +104,17 @@ const expectedShotStates = {
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.12, max: 0.55 },
+    cardsOpacity: { min: 0.72, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    cardsLeadX: { min: -0.65, max: 0.15 },
+    cardsSupportX: { min: 0.55, max: 1.35 },
+  },
+  "cards-boundary": {
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.12, max: 0.32 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 0,
     cardsLeadX: { min: -0.65, max: 0.15 },
@@ -371,8 +383,8 @@ async function captureFixedStates(browser) {
           assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
           assertRange(layerState.cardsLeadWorldX, expected.cardsLeadX, `${shot.name} lead card x`);
           assertRange(layerState.cardsSupportWorldX, expected.cardsSupportX, `${shot.name} support card x`);
-          assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ, `Expected lead card ahead of model for ${shot.name}`);
-          assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ, `Expected support card ahead of model for ${shot.name}`);
+          assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ + 0.8, `Expected lead card clearly ahead of model for ${shot.name}`);
+          assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ + 0.8, `Expected support card clearly ahead of model for ${shot.name}`);
           assert((layerState.cardsLeadOpacity ?? 0) >= (layerState.cardsSupportOpacity ?? 0) * 0.82, `Expected lead card to remain visually dominant for ${shot.name}`);
         } else {
           assert((layerState.cardsOpacity ?? 0) <= 0.08, `Expected cards hidden during ${shot.name}`);
@@ -401,9 +413,10 @@ async function captureFixedStates(browser) {
   const settleState = layerStates.get("works-intro-settle");
   const holdState = layerStates.get("works-hold");
   const outState = layerStates.get("works-out");
+  const cardsBoundaryState = layerStates.get("cards-boundary");
   const cardsEnterState = layerStates.get("cards-enter");
   const cardsSettledState = layerStates.get("cards-settled");
-  if (earlyState && settleState && holdState && outState && cardsEnterState && cardsSettledState) {
+  if (earlyState && settleState && holdState && outState && cardsBoundaryState && cardsEnterState && cardsSettledState) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
     assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
     assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
@@ -418,8 +431,11 @@ async function captureFixedStates(browser) {
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
     assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
     assert((outState.cardsOpacity ?? 0) <= 0.04, "Expected cards to remain hidden until works fully exits.");
+    assert((cardsBoundaryState.cardsOpacity ?? 0) > 0.12, "Expected cards to be visible immediately at works_cards boundary.");
+    assert(cardsBoundaryState.cardsLeadIndex === 0, "Expected card 0 to lead at works_cards boundary.");
     assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
+    assert((cardsBoundaryState.cardsSupportWorldX ?? 0) > 0, "Expected support card to begin on the right at boundary.");
     assert((cardsEnterState.cardsSupportWorldX ?? 0) > 0, "Expected support card to start on the right.");
     assert((cardsSettledState.cardsSupportWorldX ?? 0) < 0, "Expected support card to end on the left.");
     assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");

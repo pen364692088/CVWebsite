@@ -411,15 +411,11 @@ function WorksCardPair({
   useFrame((state, delta) => {
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
 
+    const cardsVisible = sceneState.activeSection === "works_cards";
     const enterMix =
-      sceneState.activeSection === "works_cards"
-        ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.enterStart, ALCHE_TOP_WORKS_CARDS.enterEnd))
-        : 0;
+      cardsVisible ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.enterStart, ALCHE_TOP_WORKS_CARDS.enterEnd)) : 0;
     const swapMix =
-      sceneState.activeSection === "works_cards"
-        ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.swapStart, ALCHE_TOP_WORKS_CARDS.swapEnd))
-        : 0;
-    const cardsVisible = enterMix > 0.001;
+      cardsVisible ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.swapStart, ALCHE_TOP_WORKS_CARDS.swapEnd)) : 0;
     const leadIndex = swapMix >= 0.5 ? 1 : 0;
     const supportIndex = leadIndex === 0 ? 1 : 0;
 
@@ -447,14 +443,18 @@ function WorksCardPair({
     const card1Scale = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportScale, ALCHE_TOP_WORKS_CARDS.leadScale, swapMix);
     const leadOpacity = 1;
     const supportOpacity = 0.78;
-    const card0Opacity = THREE.MathUtils.lerp(leadOpacity, supportOpacity, swapMix) * enterMix;
-    const card1Opacity = THREE.MathUtils.lerp(supportOpacity, leadOpacity, swapMix) * enterMix;
+    const card0TargetOpacity = THREE.MathUtils.lerp(leadOpacity, supportOpacity, swapMix);
+    const card1TargetOpacity = THREE.MathUtils.lerp(supportOpacity, leadOpacity, swapMix);
+    const card0Opacity = THREE.MathUtils.lerp(0.18, card0TargetOpacity, enterMix);
+    const card1Opacity = THREE.MathUtils.lerp(0.14, card1TargetOpacity, enterMix);
     const leadFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
     const supportFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.006;
 
     placeOnArc(leftRef.current, card0Angle, ALCHE_TOP_WORKS_CARDS.trackRadius);
     placeOnArc(rightRef.current, card1Angle, ALCHE_TOP_WORKS_CARDS.trackRadius);
 
+    leftRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ;
+    rightRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ;
     leftRef.current.position.y = THREE.MathUtils.damp(leftRef.current.position.y, leadFloat, 4.2, delta);
     rightRef.current.position.y = THREE.MathUtils.damp(rightRef.current.position.y, supportFloat, 4.2, delta);
     leftRef.current.scale.setScalar(THREE.MathUtils.damp(leftRef.current.scale.x, card0Scale, 4.2, delta));
@@ -481,8 +481,8 @@ function WorksCardPair({
 
   return (
     <group ref={groupRef} position={[0, ALCHE_TOP_WORKS_CARDS.groupY, ALCHE_TOP_WORKS_CARDS.groupZ]} visible={false}>
-      <mesh ref={leftRef} geometry={geometry} material={materials[0]} />
-      <mesh ref={rightRef} geometry={geometry} material={materials[1]} />
+      <mesh ref={leftRef} geometry={geometry} material={materials[0]} renderOrder={6} />
+      <mesh ref={rightRef} geometry={geometry} material={materials[1]} renderOrder={6} />
     </group>
   );
 }
