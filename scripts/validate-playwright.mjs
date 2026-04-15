@@ -11,6 +11,8 @@ const exportDir = path.join(root, "out");
 const outputDir = path.join(root, ".playwright-artifacts", "alche-top-page");
 const basePath = "/CVWebsite";
 const baseUrl = "http://127.0.0.1:3000/CVWebsite";
+const cliArgs = new Set(process.argv.slice(2));
+const cardsOnlyMode = cliArgs.has("--cards-only");
 
 fs.mkdirSync(outputDir, { recursive: true });
 
@@ -47,6 +49,10 @@ const fixedStateShots = [
 ];
 
 const referenceBoardShots = ["works-out", "cards-boundary", "cards-enter", "cards-swap-mid", "cards-settled"];
+const cardsOnlyShotNames = new Set(referenceBoardShots);
+const activeFixedStateShots = cardsOnlyMode
+  ? fixedStateShots.filter((shot) => cardsOnlyShotNames.has(shot.name))
+  : fixedStateShots;
 
 const pointerInteractionShots = [
   { name: "kv-pointer-left-real", move: { x: 280, y: 240 } },
@@ -458,9 +464,9 @@ async function runScenario(browser, scenario) {
   }
 }
 
-async function captureFixedStates(browser) {
+async function captureFixedStates(browser, shots) {
   const layerStates = new Map();
-  for (const shot of fixedStateShots) {
+  for (const shot of shots) {
     console.log(`Capturing ${shot.name}...`);
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1080 },
@@ -596,7 +602,8 @@ async function captureFixedStates(browser) {
   const cardsEnterState = layerStates.get("cards-enter");
   const cardsSwapMidState = layerStates.get("cards-swap-mid");
   const cardsSettledState = layerStates.get("cards-settled");
-  if (earlyState && settleState && holdState && outState && cardsBoundaryState && cardsEnterState && cardsSwapMidState && cardsSettledState) {
+
+  if (earlyState && settleState && holdState && outState) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
     assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
     assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
@@ -609,7 +616,12 @@ async function captureFixedStates(browser) {
     assert((earlyState.worksOpacity ?? 0) < (settleState.worksOpacity ?? 0), "Expected WORKS to fade in during enter.");
     assert(Math.abs((settleState.worksOpacity ?? 0) - (holdState.worksOpacity ?? 0)) < 0.16, "Expected WORKS to hold opacity in center.");
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
-    assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
+  }
+
+  if (outState && cardsBoundaryState && cardsEnterState && cardsSwapMidState && cardsSettledState) {
+    if (holdState) {
+      assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
+    }
     assert((outState.cardsOpacity ?? 0) <= 0.04, "Expected cards to remain hidden until works fully exits.");
     assert((cardsBoundaryState.cardsOpacity ?? 0) > 0.98, "Expected cards to be fully visible immediately at works_cards boundary.");
     assert(cardsBoundaryState.cardsLeadIndex === 0, "Expected card 0 to lead at works_cards boundary.");
@@ -621,11 +633,15 @@ async function captureFixedStates(browser) {
     assert((cardsSwapMidState.card1WorldX ?? 0) > (cardsSettledState.card1WorldX ?? 0), "Expected card1 to continue inward into the center slot.");
     assert((cardsBoundaryState.card1WorldX ?? 0) > 0.6, "Expected card1 to begin on the right at boundary.");
     assert((cardsSwapMidState.card0WorldX ?? 0) < -0.6 && (cardsSwapMidState.card1WorldX ?? 0) < 0.5, "Expected both cards to be visibly mid-swap.");
-    assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");
-    assert(approxEqual(holdState.modelScale, cardsEnterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards enter.");
+    const stableModelReference = holdState ?? outState;
+    assert(stableModelReference, "Missing stable model reference state.");
+    if (holdState && earlyState) {
+      assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");
+      assert(approxEqual(earlyState.modelWorldZ, holdState.modelWorldZ, 0.05), "Expected center model z to stay fixed through works.");
+    }
+    assert(approxEqual(stableModelReference.modelScale, cardsEnterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards enter.");
     assert(approxEqual(cardsEnterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
-    assert(approxEqual(earlyState.modelWorldZ, holdState.modelWorldZ, 0.05), "Expected center model z to stay fixed through works.");
-    assert(approxEqual(holdState.modelWorldZ, cardsEnterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards enter.");
+    assert(approxEqual(stableModelReference.modelWorldZ, cardsEnterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards enter.");
     assert(approxEqual(cardsEnterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
   }
 }
@@ -829,34 +845,38 @@ async function run() {
     const browser = await chromium.launch({ headless: true });
 
     try {
-      const scenarios = [
-        {
-          name: "desktop-en",
-          locale: "en-US",
-          expectedPath: "/en/",
-          viewport: { width: 1440, height: 1080 },
-        },
-        {
-          name: "tablet-ja",
-          locale: "ja-JP",
-          expectedPath: "/ja/",
-          viewport: { width: 834, height: 1194 },
-        },
-        {
-          name: "mobile-zh",
-          locale: "zh-CN",
-          expectedPath: "/zh-CN/",
-          device: devices["iPhone 12"],
-        },
-      ];
+      if (!cardsOnlyMode) {
+        const scenarios = [
+          {
+            name: "desktop-en",
+            locale: "en-US",
+            expectedPath: "/en/",
+            viewport: { width: 1440, height: 1080 },
+          },
+          {
+            name: "tablet-ja",
+            locale: "ja-JP",
+            expectedPath: "/ja/",
+            viewport: { width: 834, height: 1194 },
+          },
+          {
+            name: "mobile-zh",
+            locale: "zh-CN",
+            expectedPath: "/zh-CN/",
+            device: devices["iPhone 12"],
+          },
+        ];
 
-      for (const scenario of scenarios) {
-        await runScenario(browser, scenario);
+        for (const scenario of scenarios) {
+          await runScenario(browser, scenario);
+        }
       }
 
-      await captureFixedStates(browser);
-      await captureRealWheelHandoff(browser);
-      await capturePointerInteraction(browser);
+      await captureFixedStates(browser, activeFixedStateShots);
+      if (!cardsOnlyMode) {
+        await captureRealWheelHandoff(browser);
+        await capturePointerInteraction(browser);
+      }
       await writeReferenceBoard();
     } finally {
       await browser.close();
@@ -874,7 +894,7 @@ async function run() {
     });
   }
 
-  console.log("Playwright validation passed.");
+  console.log(`Playwright validation passed (${cardsOnlyMode ? "cards-only" : "full"}).`);
 }
 
 run().catch((error) => {

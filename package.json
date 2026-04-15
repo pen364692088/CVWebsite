@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "verify:static": "node scripts/verify-static-export.mjs",
     "verify:links": "bash scripts/linkcheck-local.sh",
+    "validate:alche-cards": "node scripts/validate-playwright.mjs --cards-only",
     "validate:playwright": "node scripts/validate-playwright.mjs",
+    "verify:alche-cards": "npm run typecheck && npm run build && npm run verify:static && npm run validate:alche-cards",
     "verify": "npm run lint && npm run typecheck && npm run build && npm run verify:static"
   },
   "dependencies": {
