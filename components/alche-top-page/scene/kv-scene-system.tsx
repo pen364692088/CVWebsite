@@ -362,6 +362,8 @@ function WorksCardPair({
   const rightRef = useRef<THREE.Mesh>(null);
   const texturePaths = useMemo(() => worksCardItems.map((item) => assetPath(item.imageSrc)), [worksCardItems]);
   const textures = useLoader(THREE.TextureLoader, texturePaths);
+  const card0WorldRef = useRef(new THREE.Vector3());
+  const card1WorldRef = useRef(new THREE.Vector3());
   const leadWorldRef = useRef(new THREE.Vector3());
   const supportWorldRef = useRef(new THREE.Vector3());
   const geometry = useMemo(
@@ -412,8 +414,6 @@ function WorksCardPair({
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
 
     const cardsVisible = sceneState.activeSection === "works_cards";
-    const enterMix =
-      cardsVisible ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.enterStart, ALCHE_TOP_WORKS_CARDS.enterEnd)) : 0;
     const swapMix =
       cardsVisible ? smoothstep(remapRange(sceneState.sectionProgress, ALCHE_TOP_WORKS_CARDS.swapStart, ALCHE_TOP_WORKS_CARDS.swapEnd)) : 0;
     const leadIndex = swapMix >= 0.5 ? 1 : 0;
@@ -429,6 +429,12 @@ function WorksCardPair({
         layerDebugRef.current.cardsLeadIndex = null;
         layerDebugRef.current.cardsLeadOpacity = null;
         layerDebugRef.current.cardsSupportOpacity = null;
+        layerDebugRef.current.card0Opacity = null;
+        layerDebugRef.current.card1Opacity = null;
+        layerDebugRef.current.card0WorldX = null;
+        layerDebugRef.current.card0WorldZ = null;
+        layerDebugRef.current.card1WorldX = null;
+        layerDebugRef.current.card1WorldZ = null;
         layerDebugRef.current.cardsLeadWorldX = null;
         layerDebugRef.current.cardsLeadWorldZ = null;
         layerDebugRef.current.cardsSupportWorldX = null;
@@ -441,12 +447,6 @@ function WorksCardPair({
     const card1Angle = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportRightAngle, ALCHE_TOP_WORKS_CARDS.leadAngle, swapMix);
     const card0Scale = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.leadScale, ALCHE_TOP_WORKS_CARDS.supportScale, swapMix);
     const card1Scale = THREE.MathUtils.lerp(ALCHE_TOP_WORKS_CARDS.supportScale, ALCHE_TOP_WORKS_CARDS.leadScale, swapMix);
-    const leadOpacity = 1;
-    const supportOpacity = 0.78;
-    const card0TargetOpacity = THREE.MathUtils.lerp(leadOpacity, supportOpacity, swapMix);
-    const card1TargetOpacity = THREE.MathUtils.lerp(supportOpacity, leadOpacity, swapMix);
-    const card0Opacity = THREE.MathUtils.lerp(0.18, card0TargetOpacity, enterMix);
-    const card1Opacity = THREE.MathUtils.lerp(0.14, card1TargetOpacity, enterMix);
     const leadFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
     const supportFloat = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.006;
 
@@ -459,10 +459,12 @@ function WorksCardPair({
     rightRef.current.position.y = THREE.MathUtils.damp(rightRef.current.position.y, supportFloat, 4.2, delta);
     leftRef.current.scale.setScalar(THREE.MathUtils.damp(leftRef.current.scale.x, card0Scale, 4.2, delta));
     rightRef.current.scale.setScalar(THREE.MathUtils.damp(rightRef.current.scale.x, card1Scale, 4.2, delta));
-    materials[0].opacity = THREE.MathUtils.damp(materials[0].opacity, card0Opacity, 5.2, delta);
-    materials[1].opacity = THREE.MathUtils.damp(materials[1].opacity, card1Opacity, 5.2, delta);
+    materials[0].opacity = 1;
+    materials[1].opacity = 1;
 
     if (layerDebugRef) {
+      leftRef.current.getWorldPosition(card0WorldRef.current);
+      rightRef.current.getWorldPosition(card1WorldRef.current);
       const leadNode = leadIndex === 0 ? leftRef.current : rightRef.current;
       const supportNode = supportIndex === 0 ? leftRef.current : rightRef.current;
       leadNode.getWorldPosition(leadWorldRef.current);
@@ -472,6 +474,12 @@ function WorksCardPair({
       layerDebugRef.current.cardsLeadIndex = leadIndex;
       layerDebugRef.current.cardsLeadOpacity = materials[leadIndex]?.opacity ?? null;
       layerDebugRef.current.cardsSupportOpacity = materials[supportIndex]?.opacity ?? null;
+      layerDebugRef.current.card0Opacity = materials[0]?.opacity ?? null;
+      layerDebugRef.current.card1Opacity = materials[1]?.opacity ?? null;
+      layerDebugRef.current.card0WorldX = card0WorldRef.current.x;
+      layerDebugRef.current.card0WorldZ = card0WorldRef.current.z;
+      layerDebugRef.current.card1WorldX = card1WorldRef.current.x;
+      layerDebugRef.current.card1WorldZ = card1WorldRef.current.z;
       layerDebugRef.current.cardsLeadWorldX = leadWorldRef.current.x;
       layerDebugRef.current.cardsLeadWorldZ = leadWorldRef.current.z;
       layerDebugRef.current.cardsSupportWorldX = supportWorldRef.current.x;

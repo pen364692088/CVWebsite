@@ -130,6 +130,12 @@ export interface AlcheLayerDebugState {
   cardsLeadIndex: number | null;
   cardsLeadOpacity: number | null;
   cardsSupportOpacity: number | null;
+  card0Opacity: number | null;
+  card1Opacity: number | null;
+  card0WorldX: number | null;
+  card0WorldZ: number | null;
+  card1WorldX: number | null;
+  card1WorldZ: number | null;
   cardsLeadWorldX: number | null;
   cardsLeadWorldZ: number | null;
   cardsSupportWorldX: number | null;

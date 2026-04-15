@@ -42,8 +42,11 @@ const fixedStateShots = [
   { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
   { name: "cards-boundary", search: "?alcheSection=works_cards&alcheProgress=0&alcheIntro=1&alcheCapture=1" },
   { name: "cards-enter", search: "?alcheSection=works_cards&alcheProgress=0.18&alcheIntro=1&alcheCapture=1" },
+  { name: "cards-swap-mid", search: "?alcheSection=works_cards&alcheProgress=0.65&alcheIntro=1&alcheCapture=1" },
   { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.72&alcheIntro=1&alcheCapture=1" },
 ];
+
+const referenceBoardShots = ["works-out", "cards-boundary", "cards-enter", "cards-swap-mid", "cards-settled"];
 
 const pointerInteractionShots = [
   { name: "kv-pointer-left-real", move: { x: 280, y: 240 } },
@@ -69,10 +72,12 @@ const expectedHandoff = {
   "works-out": { min: 0.92, max: 1.0 },
   "cards-boundary": { min: 0.99, max: 1.01 },
   "cards-enter": { min: 0.99, max: 1.01 },
+  "cards-swap-mid": { min: 0.99, max: 1.01 },
   "cards-settled": { min: 0.99, max: 1.01 },
 };
 const expectedShotStates = {
   "works-intro-enter-early": {
+    mode: "hidden",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { min: 0.12, max: 0.34 },
@@ -80,6 +85,7 @@ const expectedShotStates = {
     moonflowOpacity: { min: 0.12, max: 0.5 },
   },
   "works-intro-settle": {
+    mode: "hidden",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { min: 0.72, max: 1.01 },
@@ -87,6 +93,7 @@ const expectedShotStates = {
     moonflowOpacity: { max: 0.08 },
   },
   "works-hold": {
+    mode: "hidden",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { min: 0.7, max: 1.01 },
@@ -94,41 +101,63 @@ const expectedShotStates = {
     moonflowOpacity: { max: 0.08 },
   },
   "works-out": {
+    mode: "hidden",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.08 },
     cardsOpacity: { max: 0.04 },
     moonflowOpacity: { max: 0.02 },
   },
-  "cards-enter": {
-    camera: kvLockedCamera,
-    cameraTolerance: 0.08,
-    worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.72, max: 1.01 },
-    moonflowOpacity: { max: 0.02 },
-    cardsLeadIndex: 0,
-    cardsLeadX: { min: -0.65, max: 0.15 },
-    cardsSupportX: { min: 0.55, max: 1.35 },
-  },
   "cards-boundary": {
+    mode: "card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.12, max: 0.32 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 0,
-    cardsLeadX: { min: -0.65, max: 0.15 },
-    cardsSupportX: { min: 0.55, max: 1.35 },
+    card0Opacity: { min: 0.98, max: 1.01 },
+    card1Opacity: { min: 0.98, max: 1.01 },
+    card0X: { min: -0.65, max: -0.2 },
+    card1X: { min: 0.6, max: 1.0 },
+  },
+  "cards-enter": {
+    mode: "card-state",
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    card0Opacity: { min: 0.98, max: 1.01 },
+    card1Opacity: { min: 0.98, max: 1.01 },
+    card0X: { min: -0.65, max: -0.2 },
+    card1X: { min: 0.6, max: 1.0 },
+  },
+  "cards-swap-mid": {
+    mode: "card-state",
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    card0Opacity: { min: 0.98, max: 1.01 },
+    card1Opacity: { min: 0.98, max: 1.01 },
+    card0X: { min: -1.25, max: -0.65 },
+    card1X: { min: 0.05, max: 0.45 },
   },
   "cards-settled": {
+    mode: "card-state",
     camera: kvLockedCamera,
     cameraTolerance: 0.08,
     worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.7, max: 1.01 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
     moonflowOpacity: { max: 0.02 },
     cardsLeadIndex: 1,
-    cardsLeadX: { min: -0.3, max: 0.25 },
-    cardsSupportX: { min: -1.65, max: -0.65 },
+    card0Opacity: { min: 0.98, max: 1.01 },
+    card1Opacity: { min: 0.98, max: 1.01 },
+    card0X: { min: -1.55, max: -1.1 },
+    card1X: { min: -0.2, max: 0.05 },
   },
 };
 
@@ -261,6 +290,139 @@ function assertCameraState(layerState, camera, tolerance, label) {
   );
 }
 
+function assertCardAheadOfModel(layerState, cardWorldZ, label) {
+  assert(cardWorldZ !== null && layerState.modelWorldZ !== null, `Missing ${label} depth`);
+  assert(cardWorldZ > layerState.modelWorldZ + 0.8, `Expected ${label} clearly ahead of model`);
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+async function writeReferenceBoard() {
+  const boardPath = path.join(outputDir, "reference-board.html");
+  const shotsByName = new Map(fixedStateShots.map((shot) => [shot.name, shot]));
+  const references = [
+    { label: "Reference Home", src: path.relative(outputDir, path.join(root, "Task", "alche-reference-home.png")) },
+    { label: "Reference Scroll Start", src: path.relative(outputDir, path.join(root, "Task", "滚动前.png")) },
+  ].map((entry) => ({
+    ...entry,
+    src: entry.src.replaceAll(path.sep, "/"),
+  }));
+  const videoSrc = path.relative(outputDir, path.join(root, "Task", "参考视频.mp4")).replaceAll(path.sep, "/");
+  const currentCards = referenceBoardShots
+    .map((shotName) => {
+      const shot = shotsByName.get(shotName);
+      if (!shot) return "";
+      return `
+        <article class="panel">
+          <img src="${escapeHtml(`${shotName}.png`)}" alt="${escapeHtml(shotName)}" />
+          <h2>${escapeHtml(shotName)}</h2>
+          <p>${escapeHtml(shot.search)}</p>
+        </article>
+      `;
+    })
+    .join("");
+  const referenceCards = references
+    .map(
+      (entry) => `
+        <article class="panel">
+          <img src="${escapeHtml(entry.src)}" alt="${escapeHtml(entry.label)}" />
+          <h2>${escapeHtml(entry.label)}</h2>
+        </article>
+      `,
+    )
+    .join("");
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alche Cards Reference Board</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050608;
+        --panel: #101317;
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #f5f7fb;
+        --muted: #a8b0bd;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: radial-gradient(circle at top, #18202d, var(--bg) 42%);
+        color: var(--text);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+      }
+      h1, h2 { margin: 0; }
+      p { margin: 0; color: var(--muted); }
+      .section { margin-top: 28px; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        background: rgba(8, 12, 18, 0.88);
+        border-radius: 18px;
+        padding: 14px;
+      }
+      .panel img, video {
+        display: block;
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #000;
+      }
+      .panel h2 {
+        font-size: 14px;
+        margin-top: 10px;
+      }
+      .panel p {
+        font-size: 12px;
+        margin-top: 8px;
+        line-height: 1.5;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ALCHE Cards Reference Board</h1>
+    <p>Current shots, static references, and the source video in one place.</p>
+
+    <section class="section">
+      <h2>Current Frames</h2>
+      <div class="grid">${currentCards}</div>
+    </section>
+
+    <section class="section">
+      <h2>Reference Stills</h2>
+      <div class="grid">${referenceCards}</div>
+    </section>
+
+    <section class="section">
+      <h2>Reference Video</h2>
+      <div class="grid">
+        <article class="panel">
+          <video controls preload="metadata" src="${escapeHtml(videoSrc)}"></video>
+          <h2>Task/参考视频.mp4</h2>
+        </article>
+      </div>
+    </section>
+  </body>
+</html>`;
+
+  await fs.promises.writeFile(boardPath, html, "utf8");
+}
+
 async function runScenario(browser, scenario) {
   const context = await browser.newContext(
     scenario.device
@@ -278,6 +440,11 @@ async function runScenario(browser, scenario) {
     const page = await context.newPage();
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
+    await page.waitForFunction(
+      () => document.querySelectorAll("canvas").length === 1 && document.querySelector("[data-active-section]") !== null,
+      undefined,
+      { timeout: 8000 },
+    );
 
     await assertTopPageShell(page, scenario.name);
 
@@ -379,12 +546,24 @@ async function captureFixedStates(browser) {
         assertRange(layerState.moonflowOpacity ?? 0, expected.moonflowOpacity, `${shot.name} moonflow opacity`);
         assertRange(layerState.modelScale, { min: 0.5, max: 1.2 }, `${shot.name} model scale`);
 
-        if (expected.cardsLeadIndex !== undefined) {
+        if (expected.mode === "card-state") {
+          if (expected.cardsLeadIndex !== undefined) {
+            assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
+          }
+          assertRange(layerState.card0Opacity, expected.card0Opacity, `${shot.name} card0 opacity`);
+          assertRange(layerState.card1Opacity, expected.card1Opacity, `${shot.name} card1 opacity`);
+          assertRange(layerState.card0WorldX, expected.card0X, `${shot.name} card0 x`);
+          assertRange(layerState.card1WorldX, expected.card1X, `${shot.name} card1 x`);
+          assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
+          assertCardAheadOfModel(layerState, layerState.card1WorldZ, `${shot.name} card1`);
+          assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
+          assertCardAheadOfModel(layerState, layerState.cardsSupportWorldZ, `${shot.name} support card`);
+        } else if (expected.cardsLeadIndex !== undefined) {
           assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
           assertRange(layerState.cardsLeadWorldX, expected.cardsLeadX, `${shot.name} lead card x`);
           assertRange(layerState.cardsSupportWorldX, expected.cardsSupportX, `${shot.name} support card x`);
-          assert(layerState.cardsLeadWorldZ > layerState.modelWorldZ + 0.8, `Expected lead card clearly ahead of model for ${shot.name}`);
-          assert(layerState.cardsSupportWorldZ > layerState.modelWorldZ + 0.8, `Expected support card clearly ahead of model for ${shot.name}`);
+          assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
+          assertCardAheadOfModel(layerState, layerState.cardsSupportWorldZ, `${shot.name} support card`);
           assert((layerState.cardsLeadOpacity ?? 0) >= (layerState.cardsSupportOpacity ?? 0) * 0.82, `Expected lead card to remain visually dominant for ${shot.name}`);
         } else {
           assert((layerState.cardsOpacity ?? 0) <= 0.08, `Expected cards hidden during ${shot.name}`);
@@ -415,8 +594,9 @@ async function captureFixedStates(browser) {
   const outState = layerStates.get("works-out");
   const cardsBoundaryState = layerStates.get("cards-boundary");
   const cardsEnterState = layerStates.get("cards-enter");
+  const cardsSwapMidState = layerStates.get("cards-swap-mid");
   const cardsSettledState = layerStates.get("cards-settled");
-  if (earlyState && settleState && holdState && outState && cardsBoundaryState && cardsEnterState && cardsSettledState) {
+  if (earlyState && settleState && holdState && outState && cardsBoundaryState && cardsEnterState && cardsSwapMidState && cardsSettledState) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
     assert(settleState.worksHandoff < holdState.worksHandoff, "Expected WORKS handoff to continue into hold.");
     assert(holdState.worksHandoff < outState.worksHandoff, "Expected WORKS handoff to continue into out.");
@@ -431,13 +611,16 @@ async function captureFixedStates(browser) {
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
     assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
     assert((outState.cardsOpacity ?? 0) <= 0.04, "Expected cards to remain hidden until works fully exits.");
-    assert((cardsBoundaryState.cardsOpacity ?? 0) > 0.12, "Expected cards to be visible immediately at works_cards boundary.");
+    assert((cardsBoundaryState.cardsOpacity ?? 0) > 0.98, "Expected cards to be fully visible immediately at works_cards boundary.");
     assert(cardsBoundaryState.cardsLeadIndex === 0, "Expected card 0 to lead at works_cards boundary.");
     assert(cardsEnterState.cardsLeadIndex === 0, "Expected card 0 to still lead at early works_cards.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
-    assert((cardsBoundaryState.cardsSupportWorldX ?? 0) > 0, "Expected support card to begin on the right at boundary.");
-    assert((cardsEnterState.cardsSupportWorldX ?? 0) > 0, "Expected support card to start on the right.");
-    assert((cardsSettledState.cardsSupportWorldX ?? 0) < 0, "Expected support card to end on the left.");
+    assert((cardsBoundaryState.card0WorldX ?? 0) > (cardsSwapMidState.card0WorldX ?? 0), "Expected card0 to move left through the swap.");
+    assert((cardsSwapMidState.card0WorldX ?? 0) > (cardsSettledState.card0WorldX ?? 0), "Expected card0 to continue left into its settled support slot.");
+    assert((cardsBoundaryState.card1WorldX ?? 0) > (cardsSwapMidState.card1WorldX ?? 0), "Expected card1 to move inward from the right.");
+    assert((cardsSwapMidState.card1WorldX ?? 0) > (cardsSettledState.card1WorldX ?? 0), "Expected card1 to continue inward into the center slot.");
+    assert((cardsBoundaryState.card1WorldX ?? 0) > 0.6, "Expected card1 to begin on the right at boundary.");
+    assert((cardsSwapMidState.card0WorldX ?? 0) < -0.6 && (cardsSwapMidState.card1WorldX ?? 0) < 0.5, "Expected both cards to be visibly mid-swap.");
     assert(approxEqual(earlyState.modelScale, holdState.modelScale, 0.01), "Expected center model scale to stay fixed through works.");
     assert(approxEqual(holdState.modelScale, cardsEnterState.modelScale, 0.01), "Expected center model scale to stay fixed into cards enter.");
     assert(approxEqual(cardsEnterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
@@ -674,6 +857,7 @@ async function run() {
       await captureFixedStates(browser);
       await captureRealWheelHandoff(browser);
       await capturePointerInteraction(browser);
+      await writeReferenceBoard();
     } finally {
       await browser.close();
     }
