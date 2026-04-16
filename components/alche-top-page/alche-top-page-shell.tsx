@@ -21,9 +21,12 @@ import {
 import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import {
   ALCHE_WORKS_CAPTURE_SHOTS,
+  getDefaultAlcheWorksCardDebugMode,
   getAdjacentAlcheWorksShotId,
   getAlcheWorksShotOverride,
   readAlcheWorksShotId,
+  resolveAlcheWorksCardDebugMode,
+  type AlcheWorksCardDebugMode,
   type AlcheWorksShotId,
 } from "@/lib/alche-works-shotbook";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
@@ -132,6 +135,20 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
   window.history.replaceState(window.history.state, "", url.toString());
 }
 
+function writeAlcheCardDebugModeToLocation(nextMode: AlcheWorksCardDebugMode) {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  const defaultMode = getDefaultAlcheWorksCardDebugMode(url.searchParams);
+  if (nextMode === defaultMode) {
+    url.searchParams.delete("alcheCardDebug");
+  } else {
+    url.searchParams.set("alcheCardDebug", nextMode);
+  }
+
+  window.history.replaceState(window.history.state, "", url.toString());
+}
+
 export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const copy = alcheTopPageCopy[locale];
   const router = useRouter();
@@ -163,7 +180,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     useTopPageScroll({
       sectionRefs,
     });
-  const debugOverride = typeof window === "undefined" ? null : readShellDebugOverride(new URLSearchParams(window.location.search));
+  const runtimeSearchParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+  const debugOverride = readShellDebugOverride(runtimeSearchParams);
+  const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams);
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
@@ -201,6 +220,14 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     },
     [currentHeroShotId],
   );
+
+  const handleCardDebugModeChange = useCallback((nextMode: AlcheWorksCardDebugMode) => {
+    if (typeof window === "undefined") return;
+    writeAlcheCardDebugModeToLocation(nextMode);
+    flushSync(() => {
+      setDebugOverrideVersion((currentValue) => currentValue + 1);
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -328,6 +355,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               sectionProgress={currentSectionProgress}
               introProgress={currentIntroProgress}
               heroShotId={currentHeroShotId}
+              cardDebugMode={currentCardDebugMode}
               reducedMotion={reducedMotion}
               minimalScene={minimalScene}
               kvWallTexturePath={kvWallTexturePath}
@@ -445,7 +473,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem" }}>
               <strong style={{ fontSize: "0.74rem" }}>ALCHE Shotbook</strong>
-              <span style={{ color: "rgba(255,255,255,0.62)" }}>{currentShotId ?? "manual"}</span>
+              <span style={{ color: "rgba(255,255,255,0.62)" }}>
+                {currentShotId ?? "manual"} / {currentCardDebugMode}
+              </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0.5rem", marginTop: "0.65rem" }}>
               <select
@@ -499,6 +529,28 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               >
                 Next
               </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.5rem" }}>
+              {(["identity", "poster"] as const).map((mode) => {
+                const selected = currentCardDebugMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => handleCardDebugModeChange(mode)}
+                    style={{
+                      padding: "0.5rem 0.7rem",
+                      borderRadius: "0.6rem",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      background: selected ? "rgba(124, 156, 255, 0.24)" : "rgba(18,22,28,0.95)",
+                      color: "#fff",
+                      font: "inherit",
+                    }}
+                  >
+                    {mode === "identity" ? "Identity" : "Poster"}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : null}

@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { AlcheTopPageScene } from "@/components/alche-top-page/scene/alche-top-page-scene";
 import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
+import type { AlcheWorksCardDebugMode } from "@/lib/alche-works-shotbook";
 import {
   deriveTopSceneState,
   deriveWorksWordHandoff,
@@ -20,6 +21,7 @@ interface AlcheTopPageCanvasProps {
   sectionProgress: number;
   introProgress: number;
   heroShotId: AlcheHeroShotId | null;
+  cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
   reducedMotion: boolean;
   minimalScene: boolean;
@@ -48,6 +50,7 @@ export function AlcheTopPageCanvas({
   sectionProgress,
   introProgress,
   heroShotId,
+  cardDebugMode,
   worksWordHandoff,
   reducedMotion,
   minimalScene,
@@ -226,6 +229,7 @@ export function AlcheTopPageCanvas({
         minimalScene={minimalScene}
         kvWallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
+        cardDebugMode={cardDebugMode}
         workCount={workCount}
         captureMode={captureMode}
         worksWordHandoff={captureOverride ? deriveWorksWordHandoff(captureOverride.section, captureOverride.progress) : worksWordHandoff}

@@ -10,6 +10,10 @@ export const ALCHE_WORKS_CARD_POSE_IDS = [
 
 export type AlcheWorksCardPoseId = (typeof ALCHE_WORKS_CARD_POSE_IDS)[number];
 
+export const ALCHE_WORKS_CARD_DEBUG_MODES = ["identity", "poster"] as const;
+
+export type AlcheWorksCardDebugMode = (typeof ALCHE_WORKS_CARD_DEBUG_MODES)[number];
+
 export interface AlcheWorksCardPoseDefinition {
   angle: number;
   xOffset: number;
@@ -79,6 +83,23 @@ export const ALCHE_WORKS_CARDS_SHOTS = ALCHE_WORKS_SHOTS.filter(
 export function readAlcheWorksShotId(value: string | null | undefined): AlcheWorksShotId | null {
   if (!value) return null;
   return ALCHE_WORKS_SHOT_IDS.find((shotId) => shotId === value) ?? null;
+}
+
+export function readAlcheWorksCardDebugMode(value: string | null | undefined): AlcheWorksCardDebugMode | null {
+  if (!value) return null;
+  return ALCHE_WORKS_CARD_DEBUG_MODES.find((mode) => mode === value) ?? null;
+}
+
+export function getDefaultAlcheWorksCardDebugMode(params: Pick<URLSearchParams, "get"> | null): AlcheWorksCardDebugMode {
+  if (!params) return "poster";
+  const captureMode = params.get("alcheCapture") === "1";
+  const shotId = readAlcheWorksShotId(params.get("alcheShot"));
+  return captureMode || shotId ? "identity" : "poster";
+}
+
+export function resolveAlcheWorksCardDebugMode(params: Pick<URLSearchParams, "get"> | null): AlcheWorksCardDebugMode {
+  if (!params) return "poster";
+  return readAlcheWorksCardDebugMode(params.get("alcheCardDebug")) ?? getDefaultAlcheWorksCardDebugMode(params);
 }
 
 export function getAlcheWorksShotDefinition(shotId: AlcheWorksShotId) {

@@ -20,6 +20,10 @@ fs.mkdirSync(outputDir, { recursive: true });
 const worksShotbook = JSON.parse(fs.readFileSync(path.join(root, "data", "alche-works-shotbook.json"), "utf8"));
 const worksShotNames = worksShotbook.shots.map((shot) => shot.id);
 
+function withIdentityCardDebug(search) {
+  return search.includes("alcheCardDebug=") ? search : `${search}${search.includes("?") ? "&" : "?"}alcheCardDebug=identity`;
+}
+
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -40,14 +44,14 @@ const contentTypes = {
 const expectedSections = ["kv", "works_intro", "works", "works_cards"];
 
 const fixedStateShots = [
-  { name: "loading-settled", search: "?alcheSection=loading&alcheIntro=0.4&alcheCapture=1" },
-  { name: "kv-settled", search: "?alcheSection=kv&alcheIntro=1&alcheCapture=1" },
-  { name: "works-intro-enter-early", search: "?alcheSection=works_intro&alcheProgress=0.62&alcheIntro=1&alcheCapture=1" },
-  { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
-  { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
+  { name: "loading-settled", search: withIdentityCardDebug("?alcheSection=loading&alcheIntro=0.4&alcheCapture=1") },
+  { name: "kv-settled", search: withIdentityCardDebug("?alcheSection=kv&alcheIntro=1&alcheCapture=1") },
+  { name: "works-intro-enter-early", search: withIdentityCardDebug("?alcheSection=works_intro&alcheProgress=0.62&alcheIntro=1&alcheCapture=1") },
+  { name: "works-intro-settle", search: withIdentityCardDebug("?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1") },
+  { name: "works-hold", search: withIdentityCardDebug("?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1") },
   ...worksShotbook.shots.map((shot) => ({
     name: shot.id,
-    search: `?alcheShot=${shot.id}&alcheCapture=1`,
+    search: withIdentityCardDebug(`?alcheShot=${shot.id}&alcheCapture=1`),
     override: {
       shotId: shot.id,
       section: shot.section,

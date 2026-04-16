@@ -19,9 +19,12 @@ If you only want to refresh the extracted video references, run:
 
 The preferred debug entry is `alcheShot`, not raw `alcheProgress`.
 
+Card identity debug defaults to `identity` for `alcheShot` / `alcheCapture` flows. Use `alcheCardDebug=poster` to switch a debug shot back to poster art, or `alcheCardDebug=identity` to force A/B mode explicitly.
+
 Examples:
 
 - `/en/?alcheShot=cards-a-entry`
+- `/en/?alcheShot=cards-a-entry&alcheCardDebug=poster`
 - `/en/?alcheShot=cards-a-center`
 - `/en/?alcheShot=cards-b-queue`
 - `/en/?alcheShot=cards-handoff-mid`
@@ -59,6 +62,12 @@ The focused loop refreshes these artifacts under `.playwright-artifacts/alche-to
 - extracted reference frame from `Task/参考视频.mp4`
 - optional still from `Task/滚动效果/首页滚动至work`
 - debug summary with visibility, centers, and screen gap
+
+When the current capture is in identity mode:
+
+- `card0` is always rendered as `A`
+- `card1` is always rendered as `B`
+- the letters represent fixed identity, not the current lead/support role
 
 ## When To Use Full Validation
 

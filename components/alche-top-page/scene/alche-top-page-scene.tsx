@@ -11,6 +11,7 @@ import { OutroSceneSystem } from "@/components/alche-top-page/scene/outro-scene-
 import { ServiceSceneSystem } from "@/components/alche-top-page/scene/service-scene-system";
 import { StelllaSceneSystem } from "@/components/alche-top-page/scene/stellla-scene-system";
 import { WorksSceneSystem } from "@/components/alche-top-page/scene/works-scene-system";
+import type { AlcheWorksCardDebugMode } from "@/lib/alche-works-shotbook";
 import type { AlcheLayerDebugState, AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top-page";
 
 interface AlcheTopPageSceneProps {
@@ -19,6 +20,7 @@ interface AlcheTopPageSceneProps {
   minimalScene: boolean;
   kvWallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
+  cardDebugMode: AlcheWorksCardDebugMode;
   workCount: number;
   captureMode: boolean;
   worksWordHandoff: number;
@@ -33,6 +35,7 @@ export function AlcheTopPageScene({
   minimalScene,
   kvWallTexturePath,
   worksCardItems,
+  cardDebugMode,
   workCount,
   captureMode,
   worksWordHandoff,
@@ -106,6 +109,7 @@ export function AlcheTopPageScene({
         backgroundOnly={minimalScene}
         wallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
+        cardDebugMode={cardDebugMode}
         worksWordHandoff={worksWordHandoff}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}

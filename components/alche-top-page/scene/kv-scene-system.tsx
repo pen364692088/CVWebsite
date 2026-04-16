@@ -8,6 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
+  type AlcheWorksCardDebugMode,
   getAlcheWorksCardPoseDefinition,
   getAlcheWorksCardsSegment,
 } from "@/lib/alche-works-shotbook";
@@ -44,6 +45,7 @@ interface KvSceneSystemProps {
   backgroundOnly?: boolean;
   wallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
+  cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
   pointerOverride?: { x: number; y: number } | null;
   pointerDebugRef?: { current: AlchePointerDebugState };
@@ -76,6 +78,41 @@ const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const queueRightLowerOffscreenPose = getAlcheWorksCardPoseDefinition("queue-right-lower-offscreen");
 const queueRightLowerPose = getAlcheWorksCardPoseDefinition("queue-right-lower");
 const supportLeftUpperPose = getAlcheWorksCardPoseDefinition("support-left-upper");
+
+function configureCardTexture(texture: THREE.Texture) {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+}
+
+function createIdentityCardTexture(label: "A" | "B", background: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 640;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Failed to create card debug canvas context.");
+  }
+
+  context.fillStyle = background;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.strokeStyle = "rgba(255,255,255,0.2)";
+  context.lineWidth = 14;
+  context.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
+  context.fillStyle = "#f7f9ff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = '700 420px "IBM Plex Mono", "Arial Black", sans-serif';
+  context.fillText(label, canvas.width * 0.5, canvas.height * 0.54);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  configureCardTexture(texture);
+  return texture;
+}
 
 function measureObjectScreenBounds(
   object: THREE.Object3D,
@@ -444,14 +481,19 @@ function WallWordSweep({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneS
 function WorksCardPair({
   sceneState,
   worksCardItems,
+  cardDebugMode,
   reducedMotion,
   layerDebugRef,
-}: Pick<KvSceneSystemProps, "sceneState" | "worksCardItems" | "reducedMotion" | "layerDebugRef">) {
+}: Pick<KvSceneSystemProps, "sceneState" | "worksCardItems" | "cardDebugMode" | "reducedMotion" | "layerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const leftRef = useRef<THREE.Mesh>(null);
   const rightRef = useRef<THREE.Mesh>(null);
   const texturePaths = useMemo(() => worksCardItems.map((item) => assetPath(item.imageSrc)), [worksCardItems]);
-  const textures = useLoader(THREE.TextureLoader, texturePaths);
+  const posterTextures = useLoader(THREE.TextureLoader, texturePaths);
+  const identityTextures = useMemo(
+    () => [createIdentityCardTexture("A", "#0f1d37"), createIdentityCardTexture("B", "#30131d")] as const,
+    [],
+  );
   const card0WorldRef = useRef(new THREE.Vector3());
   const card1WorldRef = useRef(new THREE.Vector3());
   const card0ScreenBoundsRef = useRef<ScreenBounds>({ left: 0, right: 0, top: 0, bottom: 0 });
@@ -474,9 +516,9 @@ function WorksCardPair({
       }),
     [],
   );
-  const materials = useMemo(
+  const posterMaterials = useMemo(
     () =>
-      textures.map(
+      posterTextures.map(
         (texture) =>
           new THREE.MeshStandardMaterial({
             map: texture,
@@ -488,25 +530,40 @@ function WorksCardPair({
             opacity: 0,
           }),
       ),
-    [textures],
+    [posterTextures],
   );
+  const identityMaterials = useMemo(
+    () =>
+      identityTextures.map(
+        (texture) =>
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            color: "#ffffff",
+            roughness: 0.35,
+            metalness: 0,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+          }),
+      ),
+    [identityTextures],
+  );
+  const materials = cardDebugMode === "identity" ? identityMaterials : posterMaterials;
 
   useEffect(() => {
-    textures.forEach((texture) => {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.wrapS = THREE.ClampToEdgeWrapping;
-      texture.wrapT = THREE.ClampToEdgeWrapping;
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.generateMipmaps = true;
-      texture.needsUpdate = true;
+    posterTextures.forEach((texture) => {
+      configureCardTexture(texture);
     });
+  }, [posterTextures]);
 
+  useEffect(() => {
     return () => {
       geometry.dispose();
-      materials.forEach((material) => material.dispose());
+      posterMaterials.forEach((material) => material.dispose());
+      identityMaterials.forEach((material) => material.dispose());
+      identityTextures.forEach((texture) => texture.dispose());
     };
-  }, [geometry, materials, textures]);
+  }, [geometry, identityMaterials, identityTextures, posterMaterials]);
 
   useFrame((state, delta) => {
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
@@ -1003,6 +1060,7 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
         <WorksCardPair
           sceneState={props.sceneState}
           worksCardItems={props.worksCardItems}
+          cardDebugMode={props.cardDebugMode}
           reducedMotion={props.reducedMotion}
           layerDebugRef={props.layerDebugRef}
         />
