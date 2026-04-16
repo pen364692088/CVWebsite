@@ -76,6 +76,16 @@ function getAbsoluteTop(node: HTMLElement | null) {
   return rect.top + window.scrollY;
 }
 
+function getWorksCardsProgress(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
+  const worksCards = sectionRefs.works_cards;
+  if (!worksCards) return 0;
+
+  const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
+  const start = getAbsoluteTop(worksCards) - viewportLine;
+  const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+  return clamp01((window.scrollY - start) / Math.max(maxScroll - start, 1));
+}
+
 function getWorksWordHandoff(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const worksIntro = sectionRefs.works_intro;
   const works = sectionRefs.works;
@@ -118,6 +128,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
   const lenisRef = useRef<Lenis | null>(null);
   const trackedSectionRef = useRef<AlcheScrollableSectionId>(debugState?.section === "loading" ? "kv" : (debugState?.section ?? "kv"));
   const introRef = useRef(debugState?.intro ?? (reducedMotion ? 1 : 0));
+  const worksCardsProgressRef = useRef(debugState?.section === "works_cards" ? debugState.progress : 0);
   const progressRef = useRef<Record<AlcheScrollableSectionId, number>>(
     Object.fromEntries(
       ALCHE_SCROLLABLE_SECTION_IDS.map((sectionId) => [sectionId, debugState?.section === sectionId ? debugState.progress : 0]),
@@ -129,6 +140,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     debugState?.section === "loading" ? "kv" : (debugState?.section ?? "kv"),
   );
   const [sectionProgress, setSectionProgress] = useState(debugState?.progress ?? 0);
+  const [worksCardsProgress, setWorksCardsProgress] = useState(debugState?.section === "works_cards" ? debugState.progress : 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
   const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
   const [worksWordHandoff, setWorksWordHandoff] = useState(debugState ? deriveWorksWordHandoff(debugState.section, debugState.progress) : 0);
@@ -139,6 +151,8 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       : ((renderDebugState?.section as AlcheScrollableSectionId | undefined) ?? trackedSection);
   const resolvedActiveSection = renderDebugState?.section ?? activeSection;
   const resolvedSectionProgress = renderDebugState?.progress ?? sectionProgress;
+  const resolvedWorksCardsProgress =
+    renderDebugState?.section === "works_cards" ? renderDebugState.progress : worksCardsProgress;
   const resolvedIntroProgress = renderDebugState?.intro ?? introProgress;
   const resolvedHeroShotId = renderDebugState?.heroShotId ?? heroShotId;
   const resolvedWorksWordHandoff =
@@ -164,9 +178,11 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       const debugTracked = nextDebugState.section === "loading" ? "kv" : (nextDebugState.section as AlcheScrollableSectionId);
       trackedSectionRef.current = debugTracked;
       progressRef.current[debugTracked] = nextDebugState.progress;
+      worksCardsProgressRef.current = nextDebugState.section === "works_cards" ? nextDebugState.progress : 0;
       setTrackedSection(debugTracked);
       setActiveSection(nextDebugState.section);
       setSectionProgress(nextDebugState.progress);
+      setWorksCardsProgress(nextDebugState.section === "works_cards" ? nextDebugState.progress : 0);
       setIntroProgress(nextDebugState.intro);
       setHeroShotId(nextDebugState.heroShotId);
       setWorksWordHandoff(deriveWorksWordHandoff(nextDebugState.section, nextDebugState.progress));
@@ -188,6 +204,12 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       });
     };
 
+    const syncWorksCardsProgress = () => {
+      const nextProgress = getWorksCardsProgress(sectionRefs.current);
+      worksCardsProgressRef.current = nextProgress;
+      setWorksCardsProgress(nextProgress);
+    };
+
     if (!reducedMotion) {
       lenis = new Lenis({
         duration: ALCHE_TOP_SCROLL_TUNING.duration,
@@ -200,6 +222,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       lenis.on("scroll", () => {
         ScrollTrigger.update();
         setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
+        syncWorksCardsProgress();
       });
 
       const raf = (time: number) => {
@@ -263,6 +286,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         const nextSection = findSectionAtViewport(sectionRefs.current);
         const progress = getSectionProgress(sectionRefs.current[nextSection]);
         progressRef.current[nextSection] = progress;
+        syncWorksCardsProgress();
         setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
         syncDisplaySection(nextSection, progress);
       };
@@ -281,6 +305,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     }
 
     ScrollTrigger.refresh();
+    syncWorksCardsProgress();
     setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
 
     return () => {
@@ -316,6 +341,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     trackedSection: resolvedTrackedSection,
     activeGroup,
     sectionProgress: resolvedSectionProgress,
+    worksCardsProgress: resolvedWorksCardsProgress,
     groupProgress,
     introProgress: resolvedIntroProgress,
     heroShotId: resolvedHeroShotId,

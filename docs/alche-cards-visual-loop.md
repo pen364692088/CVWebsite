@@ -26,7 +26,6 @@ Examples:
 - `/en/?alcheShot=cards-a-entry`
 - `/en/?alcheShot=cards-a-entry&alcheCardDebug=poster`
 - `/en/?alcheShot=cards-a-center`
-- `/en/?alcheShot=cards-a-hold`
 - `/en/?alcheShot=cards-b-queue`
 - `/en/?alcheShot=cards-handoff-mid`
 - `/en/?alcheShot=cards-settled`
@@ -38,7 +37,6 @@ Each shot resolves to a named section/progress pair from `data/alche-works-shotb
 - `works-out`: `WORKS` is gone and cards are still hidden
 - `cards-a-entry`: only `A` is visible in the right-lower quadrant
 - `cards-a-center`: only `A` is visible and centered
-- `cards-a-hold`: only `A` is visible and it stays centered before `B` loads
 - `cards-b-queue`: `A` holds center while `B` appears from the right-lower queue lane
 - `cards-handoff-mid`: both cards stay visible while `A` moves toward left-upper and `B` moves toward center
 - `cards-settled`: `A` remains visible in the left-upper support slot and `B` holds center
@@ -52,10 +50,13 @@ The focused loop refreshes these artifacts under `.playwright-artifacts/alche-to
 - `works-out.png`
 - `cards-a-entry.png`
 - `cards-a-center.png`
-- `cards-a-hold.png`
 - `cards-b-queue.png`
 - `cards-handoff-mid.png`
 - `cards-settled.png`
+- `cards-wheel-entry.png`
+- `cards-wheel-center.png`
+- `cards-wheel-queue.png`
+- `cards-wheel-handoff.png`
 - `reference-video/*.png`
 - `reference-board.html`
 

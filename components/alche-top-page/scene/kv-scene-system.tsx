@@ -483,8 +483,9 @@ function WorksCardPair({
   worksCardItems,
   cardDebugMode,
   reducedMotion,
+  worksWordHandoff,
   layerDebugRef,
-}: Pick<KvSceneSystemProps, "sceneState" | "worksCardItems" | "cardDebugMode" | "reducedMotion" | "layerDebugRef">) {
+}: Pick<KvSceneSystemProps, "sceneState" | "worksCardItems" | "cardDebugMode" | "reducedMotion" | "worksWordHandoff" | "layerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const leftRef = useRef<THREE.Mesh>(null);
   const rightRef = useRef<THREE.Mesh>(null);
@@ -567,17 +568,19 @@ function WorksCardPair({
   useFrame((state, delta) => {
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
 
-    const cardsVisible = sceneState.activeSection === "works_cards";
-    const progress = sceneState.sectionProgress;
+    const cardsVisible = worksWordHandoff >= 0.985;
+    const progress = sceneState.worksCardsProgress;
     const segment = getAlcheWorksCardsSegment(progress);
     const entryMix = smoothstep(clamp01(segment.phase === "entry" ? segment.mix : 1));
     const queueMix = smoothstep(clamp01(segment.phase === "queue" ? segment.mix : segment.phase === "handoff" || segment.phase === "settled" ? 1 : 0));
     const handoffMix = smoothstep(clamp01(segment.phase === "handoff" ? segment.mix : segment.phase === "settled" ? 1 : 0));
     const card0Visible = cardsVisible;
-    const card1Visible = cardsVisible && (segment.phase === "queue" || segment.phase === "handoff" || segment.phase === "settled");
+    const card1Visible =
+      cardsVisible &&
+      (segment.phase === "handoff" || segment.phase === "settled" || (segment.phase === "queue" && queueMix >= 0.18));
     const leadIndex = !cardsVisible
       ? null
-      : segment.phase === "entry" || segment.phase === "hold" || segment.phase === "queue"
+      : segment.phase === "entry" || segment.phase === "queue"
         ? 0
         : handoffMix >= 0.5
           ? 1
@@ -586,13 +589,13 @@ function WorksCardPair({
     const card0Pose =
       segment.phase === "entry"
         ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
-        : segment.phase === "hold" || segment.phase === "queue"
+        : segment.phase === "queue"
           ? leadCenterPose
         : segment.phase === "handoff"
             ? lerpWorksCardPose(leadCenterPose, supportLeftUpperPose, handoffMix)
             : supportLeftUpperPose;
     const card1Pose =
-      segment.phase === "entry" || segment.phase === "hold"
+      segment.phase === "entry"
         ? queueRightLowerOffscreenPose
         : segment.phase === "queue"
           ? lerpWorksCardPose(queueRightLowerOffscreenPose, queueRightLowerPose, queueMix)
@@ -1061,6 +1064,7 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
           worksCardItems={props.worksCardItems}
           cardDebugMode={props.cardDebugMode}
           reducedMotion={props.reducedMotion}
+          worksWordHandoff={props.worksWordHandoff}
           layerDebugRef={props.layerDebugRef}
         />
       ) : null}

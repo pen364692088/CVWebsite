@@ -19,6 +19,7 @@ import {
 interface AlcheTopPageCanvasProps {
   activeSection: AlcheTopSectionId;
   sectionProgress: number;
+  worksCardsProgress: number;
   introProgress: number;
   heroShotId: AlcheHeroShotId | null;
   cardDebugMode: AlcheWorksCardDebugMode;
@@ -48,6 +49,7 @@ interface AlchePointerOverride {
 export function AlcheTopPageCanvas({
   activeSection,
   sectionProgress,
+  worksCardsProgress,
   introProgress,
   heroShotId,
   cardDebugMode,
@@ -66,11 +68,21 @@ export function AlcheTopPageCanvas({
   const [pointerOverride, setPointerOverride] = useState<AlchePointerOverride | null>(null);
   const resolvedActiveSection = captureOverride?.section ?? activeSection;
   const resolvedSectionProgress = captureOverride?.progress ?? sectionProgress;
+  const resolvedWorksCardsProgress = captureOverride ? (captureOverride.section === "works_cards" ? captureOverride.progress : 0) : worksCardsProgress;
   const resolvedIntroProgress = captureOverride?.intro ?? introProgress;
   const resolvedHeroShotId = captureOverride?.heroShotId ?? heroShotId;
   const sceneState = useMemo(
-    () => deriveTopSceneState(resolvedActiveSection, resolvedSectionProgress, resolvedIntroProgress, resolvedHeroShotId, workCount, serviceCount),
-    [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, serviceCount, workCount],
+    () =>
+      deriveTopSceneState(
+        resolvedActiveSection,
+        resolvedSectionProgress,
+        resolvedWorksCardsProgress,
+        resolvedIntroProgress,
+        resolvedHeroShotId,
+        workCount,
+        serviceCount,
+      ),
+    [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, resolvedWorksCardsProgress, serviceCount, workCount],
   );
   const sceneReducedMotion = reducedMotion || captureMode;
   const pointerDebugRef = useRef<AlchePointerDebugState>({

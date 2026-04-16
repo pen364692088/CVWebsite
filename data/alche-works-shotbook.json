@@ -75,7 +75,7 @@
     {
       "id": "cards-a-center",
       "section": "works_cards",
-      "progress": 0.28,
+      "progress": 0.54,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -91,26 +91,9 @@
       }
     },
     {
-      "id": "cards-a-hold",
-      "section": "works_cards",
-      "progress": 0.54,
-      "intro": 1,
-      "card0": {
-        "visible": true,
-        "poseId": "lead-center"
-      },
-      "card1": {
-        "visible": false,
-        "poseId": null
-      },
-      "reference": {
-        "videoTime": 9.82
-      }
-    },
-    {
       "id": "cards-b-queue",
       "section": "works_cards",
-      "progress": 0.68,
+      "progress": 0.78,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -128,7 +111,7 @@
     {
       "id": "cards-handoff-mid",
       "section": "works_cards",
-      "progress": 0.84,
+      "progress": 0.9,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -145,7 +128,7 @@
     {
       "id": "cards-settled",
       "section": "works_cards",
-      "progress": 0.96,
+      "progress": 0.99,
       "intro": 1,
       "card0": {
         "visible": true,

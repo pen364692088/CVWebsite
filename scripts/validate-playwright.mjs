@@ -149,18 +149,6 @@ const expectedShotStates = {
     card1Visible: false,
     card0Opacity: { min: 0.98, max: 1.01 },
   },
-  "cards-a-hold": {
-    mode: "single-card-state",
-    camera: kvLockedCamera,
-    cameraTolerance: 0.08,
-    worksOpacity: { max: 0.05 },
-    cardsOpacity: { min: 0.98, max: 1.01 },
-    moonflowOpacity: { max: 0.02 },
-    cardsLeadIndex: 0,
-    card0Visible: true,
-    card1Visible: false,
-    card0Opacity: { min: 0.98, max: 1.01 },
-  },
   "cards-b-queue": {
     mode: "dual-card-state",
     camera: kvLockedCamera,
@@ -208,8 +196,8 @@ const laneTargets = {
     width: { min: 180, max: 380 },
   },
   leadCenter: {
-    centerX: { min: 560, max: 840 },
-    centerY: { min: 280, max: 470 },
+    centerX: { min: 520, max: 860 },
+    centerY: { min: 280, max: 520 },
     width: { min: 620, max: 980 },
   },
   supportLeft: {
@@ -407,6 +395,24 @@ function assertCardSeparation(layerState, minimumGap, label) {
   assert(leftRight !== null && rightLeft !== null, `Missing ${label} separation bounds`);
   const gap = rightLeft - leftRight;
   assert(gap >= minimumGap, `Expected ${label} screen gap >= ${minimumGap}, got ${gap}`);
+}
+
+function matchesCardInLane(layerState, cardIndex, lane) {
+  try {
+    assertCardInLane(layerState, cardIndex, lane, "lane-check");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function matchesCardSeparation(layerState, minimumGap) {
+  try {
+    assertCardSeparation(layerState, minimumGap, "gap-check");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function waitForShotLayerState(page, shotName, expectedState) {
@@ -854,7 +860,6 @@ async function captureFixedStates(browser, shots) {
   const outState = layerStates.get("works-out");
   const cardsAEntryState = layerStates.get("cards-a-entry");
   const cardsACenterState = layerStates.get("cards-a-center");
-  const cardsAHoldState = layerStates.get("cards-a-hold");
   const cardsBQueueState = layerStates.get("cards-b-queue");
   const cardsHandoffMidState = layerStates.get("cards-handoff-mid");
   const cardsSettledState = layerStates.get("cards-settled");
@@ -874,7 +879,7 @@ async function captureFixedStates(browser, shots) {
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
   }
 
-  if (outState && cardsAEntryState && cardsACenterState && cardsAHoldState && cardsBQueueState && cardsHandoffMidState && cardsSettledState) {
+  if (outState && cardsAEntryState && cardsACenterState && cardsBQueueState && cardsHandoffMidState && cardsSettledState) {
     if (holdState) {
       assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
     }
@@ -882,19 +887,16 @@ async function captureFixedStates(browser, shots) {
     assert((cardsAEntryState.cardsOpacity ?? 0) > 0.98, "Expected card A to appear immediately in works_cards.");
     assert(cardsAEntryState.cardsLeadIndex === 0, "Expected card 0 to lead during A entry.");
     assert(cardsACenterState.cardsLeadIndex === 0, "Expected card 0 to still lead at A center.");
-    assert(cardsAHoldState.cardsLeadIndex === 0, "Expected card 0 to keep leading during A hold.");
     assert(cardsBQueueState.cardsLeadIndex === 0, "Expected card 0 to still lead while B queues.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
     assert(
       cardsAEntryState.card1Visible === false &&
-        cardsACenterState.card1Visible === false &&
-        cardsAHoldState.card1Visible === false,
-      "Expected card B to remain unloaded through A hold.",
+        cardsACenterState.card1Visible === false,
+      "Expected card B to remain unloaded until the queue phase.",
     );
     assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
     assertCardInLane(cardsAEntryState, 0, laneTargets.entryRightLower, "cards-a-entry");
     assertCardInLane(cardsACenterState, 0, laneTargets.leadCenter, "cards-a-center");
-    assertCardInLane(cardsAHoldState, 0, laneTargets.leadCenter, "cards-a-hold");
     assertCardInLane(cardsBQueueState, 0, laneTargets.leadCenter, "cards-b-queue");
     assertCardInLane(cardsBQueueState, 1, laneTargets.queueRight, "cards-b-queue");
     assertCardInLane(cardsSettledState, 0, laneTargets.supportLeft, "cards-settled");
@@ -903,9 +905,7 @@ async function captureFixedStates(browser, shots) {
     assertCardSeparation(cardsHandoffMidState, 12, "cards-handoff-mid");
     assertCardSeparation(cardsSettledState, 12, "cards-settled");
     assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
-    assert(Math.abs(getCardScreenCenterX(cardsACenterState, 0) - getCardScreenCenterX(cardsAHoldState, 0)) < 40, "Expected card A to hold nearly still in x between center and hold.");
-    assert(Math.abs(getCardScreenCenterY(cardsACenterState, 0) - getCardScreenCenterY(cardsAHoldState, 0)) < 40, "Expected card A to hold nearly still in y between center and hold.");
-    assert(getCardScreenCenterX(cardsAHoldState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left only after the hold phase.");
+    assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to move left only after reaching center.");
     assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
     assert(getCardScreenCenterY(cardsAEntryState, 0) > getCardScreenCenterY(cardsACenterState, 0), "Expected card A to move upward from right-lower into center.");
     assert(getCardScreenCenterY(cardsSettledState, 0) < getCardScreenCenterY(cardsACenterState, 0), "Expected card A to end above center in the left-upper slot.");
@@ -1048,8 +1048,9 @@ async function captureRealWheelHandoff(browser) {
 
     const samples = [];
     const capturedShots = new Set();
+    const capturedStates = new Map();
 
-    for (let step = 0; step < 28; step += 1) {
+    for (let step = 0; step < 44; step += 1) {
       await page.mouse.wheel(0, 420);
       await page.waitForTimeout(520);
       const snapshot = await page.evaluate((stepLabel) => {
@@ -1068,54 +1069,143 @@ async function captureRealWheelHandoff(browser) {
           worksRotationY: layerState?.worksRotationY ?? null,
           modelWorldZ: layerState?.modelWorldZ ?? null,
           worksWorldZ: layerState?.worksWorldZ ?? null,
+          cardsOpacity: layerState?.cardsOpacity ?? null,
+          cardsLeadIndex: layerState?.cardsLeadIndex ?? null,
+          card0Visible: layerState?.card0Visible ?? false,
+          card1Visible: layerState?.card1Visible ?? false,
+          card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
+          card0ScreenRight: layerState?.card0ScreenRight ?? null,
+          card0ScreenTop: layerState?.card0ScreenTop ?? null,
+          card0ScreenBottom: layerState?.card0ScreenBottom ?? null,
+          card1ScreenLeft: layerState?.card1ScreenLeft ?? null,
+          card1ScreenRight: layerState?.card1ScreenRight ?? null,
+          card1ScreenTop: layerState?.card1ScreenTop ?? null,
+          card1ScreenBottom: layerState?.card1ScreenBottom ?? null,
         };
       }, step);
       samples.push(snapshot);
 
-      if (snapshot.handoff !== null && snapshot.handoff >= 0.24 && !capturedShots.has("works-wheel-intro")) {
+      if (
+        !capturedShots.has("cards-wheel-entry") &&
+        (snapshot.worksOpacity ?? 1) <= 0.08 &&
+        (snapshot.cardsOpacity ?? 0) > 0.98 &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === false &&
+        matchesCardInLane(snapshot, 0, laneTargets.entryRightLower)
+      ) {
         await page.screenshot({
-          path: path.join(outputDir, "works-wheel-intro.png"),
+          path: path.join(outputDir, "cards-wheel-entry.png"),
           fullPage: false,
         });
-        capturedShots.add("works-wheel-intro");
-      }
-
-      if (snapshot.handoff !== null && snapshot.handoff >= 0.55 && !capturedShots.has("works-wheel-hold")) {
-        await page.screenshot({
-          path: path.join(outputDir, "works-wheel-hold.png"),
-          fullPage: false,
-        });
-        capturedShots.add("works-wheel-hold");
+        capturedShots.add("cards-wheel-entry");
+        capturedStates.set("cards-wheel-entry", snapshot);
       }
 
       if (
-        snapshot.active === "works" &&
-        snapshot.handoff !== null &&
-        snapshot.handoff >= 0.6 &&
-        snapshot.worksOpacity !== null &&
-        snapshot.worksOpacity >= 0.12
+        !capturedShots.has("cards-wheel-center") &&
+        (snapshot.worksOpacity ?? 1) <= 0.08 &&
+        (snapshot.cardsOpacity ?? 0) > 0.98 &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === false &&
+        matchesCardInLane(snapshot, 0, laneTargets.leadCenter)
       ) {
+        await page.screenshot({
+          path: path.join(outputDir, "cards-wheel-center.png"),
+          fullPage: false,
+        });
+        capturedShots.add("cards-wheel-center");
+        capturedStates.set("cards-wheel-center", snapshot);
+      }
+
+      if (
+        !capturedShots.has("cards-wheel-queue") &&
+        (snapshot.worksOpacity ?? 1) <= 0.08 &&
+        (snapshot.cardsOpacity ?? 0) > 0.98 &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === true &&
+        snapshot.cardsLeadIndex === 0 &&
+        matchesCardInLane(snapshot, 0, laneTargets.leadCenter) &&
+        matchesCardInLane(snapshot, 1, laneTargets.queueRight) &&
+        matchesCardSeparation(snapshot, 12)
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, "cards-wheel-queue.png"),
+          fullPage: false,
+        });
+        capturedShots.add("cards-wheel-queue");
+        capturedStates.set("cards-wheel-queue", snapshot);
+      }
+
+      const queueState = capturedStates.get("cards-wheel-queue");
+      if (
+        !capturedShots.has("cards-wheel-handoff") &&
+        queueState &&
+        (snapshot.worksOpacity ?? 1) <= 0.08 &&
+        (snapshot.cardsOpacity ?? 0) > 0.98 &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === true &&
+        matchesCardSeparation(snapshot, 12) &&
+        getCardScreenCenterX(snapshot, 0) < getCardScreenCenterX(queueState, 0) - 40 &&
+        getCardScreenCenterX(snapshot, 1) < getCardScreenCenterX(queueState, 1) - 40 &&
+        getCardScreenCenterY(snapshot, 0) < getCardScreenCenterY(queueState, 0) + 10 &&
+        getCardScreenCenterY(snapshot, 1) < getCardScreenCenterY(queueState, 1) - 30
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, "cards-wheel-handoff.png"),
+          fullPage: false,
+        });
+        capturedShots.add("cards-wheel-handoff");
+        capturedStates.set("cards-wheel-handoff", snapshot);
+      }
+
+      if (capturedShots.size >= 4) {
         break;
       }
     }
 
     const handoffSamples = samples.filter((sample) => sample.handoff !== null);
-    const introSample = handoffSamples.find((sample) => sample.handoff >= 0.24 && sample.handoff <= 0.45);
-    const worksSample = handoffSamples.find((sample) => sample.handoff >= 0.55 && (sample.worksOpacity ?? 0) >= 0.12);
-    assert(introSample, "Expected real wheel scrolling to begin the WORKS handoff.");
-    assert(worksSample, "Expected real wheel scrolling to reach the WORKS hold region.");
-    assert(introSample.step < worksSample.step, "Expected WORKS intro motion to occur before hold during real wheel scrolling.");
+    const cardsWheelEntry = capturedStates.get("cards-wheel-entry");
+    const cardsWheelCenter = capturedStates.get("cards-wheel-center");
+    const cardsWheelQueue = capturedStates.get("cards-wheel-queue");
+    const cardsWheelHandoff = capturedStates.get("cards-wheel-handoff");
+    const firstVisibleCardsIndex = samples.findIndex((sample) => (sample.cardsOpacity ?? 0) > 0.98);
+    const firstVisibleCardsSample = firstVisibleCardsIndex >= 0 ? samples[firstVisibleCardsIndex] : null;
+
+    assert(cardsWheelEntry, "Expected real wheel scrolling to capture card A entering from the right-lower lane.");
+    assert(cardsWheelCenter, "Expected real wheel scrolling to capture card A reaching center before B appears.");
+    assert(cardsWheelQueue, "Expected real wheel scrolling to capture card B queuing from the right-lower lane.");
+    assert(cardsWheelHandoff, "Expected real wheel scrolling to capture the A-left / B-center handoff.");
+    assert(cardsWheelEntry.step < cardsWheelCenter.step, "Expected wheel entry to occur before wheel center.");
+    assert(cardsWheelCenter.step < cardsWheelQueue.step, "Expected wheel center to occur before B queues.");
+    assert(cardsWheelQueue.step < cardsWheelHandoff.step, "Expected B queue to occur before the handoff mid-state.");
+    assert(firstVisibleCardsSample, "Expected real wheel scrolling to eventually reveal cards.");
+    assert((firstVisibleCardsSample.worksOpacity ?? 1) <= 0.08, "Expected WORKS to be gone before cards first appear during real scrolling.");
+    assert(firstVisibleCardsSample.card0Visible === true && firstVisibleCardsSample.card1Visible === false, "Expected only card A to appear first during real scrolling.");
+    assert(
+      !samples.slice(0, firstVisibleCardsIndex).some((sample) => sample.card1Visible === true),
+      "Expected card B to remain hidden until after card A has already appeared.",
+    );
+    assert(
+      !samples.slice(firstVisibleCardsIndex).some((sample) => (sample.cardsOpacity ?? 0) < 0.5),
+      "Expected cards to stay on-screen once the works_cards choreography begins.",
+    );
+    assertCardInLane(cardsWheelEntry, 0, laneTargets.entryRightLower, "cards-wheel-entry");
+    assertCardInLane(cardsWheelCenter, 0, laneTargets.leadCenter, "cards-wheel-center");
+    assertCardInLane(cardsWheelQueue, 0, laneTargets.leadCenter, "cards-wheel-queue");
+    assertCardInLane(cardsWheelQueue, 1, laneTargets.queueRight, "cards-wheel-queue");
+    assertCardSeparation(cardsWheelQueue, 12, "cards-wheel-queue");
+    assertCardSeparation(cardsWheelHandoff, 12, "cards-wheel-handoff");
+    assert(getCardScreenCenterX(cardsWheelEntry, 0) > getCardScreenCenterX(cardsWheelCenter, 0), "Expected wheel A to move left from entry into center.");
+    assert(getCardScreenCenterY(cardsWheelEntry, 0) > getCardScreenCenterY(cardsWheelCenter, 0), "Expected wheel A to move upward from entry into center.");
+    assert(getCardScreenCenterX(cardsWheelCenter, 0) > getCardScreenCenterX(cardsWheelHandoff, 0), "Expected wheel A to start moving left only after it reaches center.");
+    assert(getCardScreenCenterX(cardsWheelQueue, 1) > getCardScreenCenterX(cardsWheelHandoff, 1), "Expected wheel B to move left from queue toward center.");
+    assert(getCardScreenCenterY(cardsWheelQueue, 1) > getCardScreenCenterY(cardsWheelHandoff, 1), "Expected wheel B to move upward from queue toward center.");
+
     for (let index = 1; index < handoffSamples.length; index += 1) {
       const previous = handoffSamples[index - 1].handoff ?? 0;
       const next = handoffSamples[index].handoff ?? 0;
       assert(next + 0.02 >= previous, "Expected real wheel handoff to stay monotonic while scrolling down.");
     }
-    assert(introSample.worksRotationY !== null && Math.abs(introSample.worksRotationY) <= 0.001, "Expected WORKS rotation to stay frozen during real wheel intro.");
-    assert(worksSample.worksRotationY !== null && Math.abs(worksSample.worksRotationY) <= 0.001, "Expected WORKS rotation to stay frozen during real wheel hold.");
-    assert(introSample.modelWorldZ !== null && introSample.worksWorldZ !== null && introSample.modelWorldZ > introSample.worksWorldZ, "Expected model ahead of WORKS during real wheel intro.");
-    assert(worksSample.modelWorldZ !== null && worksSample.worksWorldZ !== null && worksSample.modelWorldZ > worksSample.worksWorldZ, "Expected model ahead of WORKS during real wheel hold.");
-    assert(introSample.moonflowOpacity !== null && worksSample.moonflowOpacity !== null && introSample.moonflowOpacity > worksSample.moonflowOpacity, "Expected MOONFLOW to fade down through the real wheel handoff.");
-    assert((introSample.worksOpacity ?? 0) < (worksSample.worksOpacity ?? 0), "Expected WORKS opacity to rise between intro and hold during real wheel scrolling.");
   } finally {
     await context.close();
   }

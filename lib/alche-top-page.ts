@@ -229,6 +229,7 @@ export interface AlcheOutroSceneState {
 export interface AlcheTopSceneState {
   activeSection: AlcheTopSectionId;
   sectionProgress: number;
+  worksCardsProgress: number;
   introProgress: number;
   heroShotId: AlcheHeroShotId | null;
   camera: AlcheTopCameraState;
@@ -748,6 +749,7 @@ export function deriveWorksWordHandoff(activeSection: AlcheTopSectionId, section
 export function deriveTopSceneState(
   activeSection: AlcheTopSectionId,
   sectionProgress: number,
+  worksCardsProgress: number,
   introProgress: number,
   heroShotId: AlcheHeroShotId | null,
   workCount: number,
@@ -755,6 +757,7 @@ export function deriveTopSceneState(
 ): AlcheTopSceneState {
   const runtimeSection = normalizeTopRuntimeSection(activeSection);
   const progress = clamp01(sectionProgress);
+  const cardsProgress = clamp01(worksCardsProgress);
   const worksIntro: AlcheWorksIntroSceneState =
     runtimeSection === "works_intro"
       ? deriveWorksIntroSceneState(progress)
@@ -869,6 +872,7 @@ export function deriveTopSceneState(
   return {
     activeSection: runtimeSection,
     sectionProgress: progress,
+    worksCardsProgress: cardsProgress,
     introProgress,
     heroShotId,
     camera,

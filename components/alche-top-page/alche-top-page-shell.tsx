@@ -176,7 +176,17 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const [pointerDebugEnabled, setPointerDebugEnabled] = useState(false);
   const [pointerDebugState, setPointerDebugState] = useState<AlchePointerDebugState | null>(null);
   const [debugOverrideVersion, setDebugOverrideVersion] = useState(0);
-  const { reducedMotion, activeSection, trackedSection, sectionProgress, introProgress, heroShotId, worksWordHandoff, scrollToSection } =
+  const {
+    reducedMotion,
+    activeSection,
+    trackedSection,
+    sectionProgress,
+    worksCardsProgress,
+    introProgress,
+    heroShotId,
+    worksWordHandoff,
+    scrollToSection,
+  } =
     useTopPageScroll({
       sectionRefs,
     });
@@ -185,6 +195,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const runtimeHostname = typeof window === "undefined" ? null : window.location.hostname;
   const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams, runtimeHostname);
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
+  const currentWorksCardsProgress = debugOverride ? (debugOverride.section === "works_cards" ? debugOverride.progress : 0) : worksCardsProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
   const kvWallTexturePath = assetPath("/alche-top-page/kv/hero-wall-grid-white.png");
@@ -355,6 +366,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             <AlcheTopPageCanvas
               activeSection={currentActiveSection}
               sectionProgress={currentSectionProgress}
+              worksCardsProgress={currentWorksCardsProgress}
               introProgress={currentIntroProgress}
               heroShotId={currentHeroShotId}
               cardDebugMode={currentCardDebugMode}

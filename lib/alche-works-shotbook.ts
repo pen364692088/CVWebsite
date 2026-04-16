@@ -26,7 +26,6 @@ export const ALCHE_WORKS_SHOT_IDS = [
   "works-out",
   "cards-a-entry",
   "cards-a-center",
-  "cards-a-hold",
   "cards-b-queue",
   "cards-handoff-mid",
   "cards-settled",
@@ -57,11 +56,10 @@ export interface AlcheWorksShotDefinition {
 export type AlcheWorksCardsShotDefinition = AlcheWorksShotDefinition & { section: "works_cards" };
 
 export interface AlcheWorksCardsSegment {
-  phase: "entry" | "hold" | "queue" | "handoff" | "settled";
+  phase: "entry" | "queue" | "handoff" | "settled";
   mix: number;
   entryShot: AlcheWorksCardsShotDefinition;
   centerShot: AlcheWorksCardsShotDefinition;
-  holdShot: AlcheWorksCardsShotDefinition;
   queueShot: AlcheWorksCardsShotDefinition;
   handoffShot: AlcheWorksCardsShotDefinition;
   settledShot: AlcheWorksCardsShotDefinition;
@@ -140,8 +138,8 @@ export function getAlcheWorksShotOverride(shotId: AlcheWorksShotId) {
 }
 
 export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegment {
-  const [entryShot, centerShot, holdShot, queueShot, handoffShot, settledShot] = ALCHE_WORKS_CARDS_SHOTS;
-  if (!entryShot || !centerShot || !holdShot || !queueShot || !handoffShot || !settledShot) {
+  const [entryShot, centerShot, queueShot, handoffShot, settledShot] = ALCHE_WORKS_CARDS_SHOTS;
+  if (!entryShot || !centerShot || !queueShot || !handoffShot || !settledShot) {
     throw new Error("ALCHE works shotbook is missing required works_cards shots.");
   }
 
@@ -151,7 +149,6 @@ export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegm
       mix: 0,
       entryShot,
       centerShot,
-      holdShot,
       queueShot,
       handoffShot,
       settledShot,
@@ -164,20 +161,6 @@ export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegm
       mix: (progress - entryShot.progress) / Math.max(centerShot.progress - entryShot.progress, 0.0001),
       entryShot,
       centerShot,
-      holdShot,
-      queueShot,
-      handoffShot,
-      settledShot,
-    };
-  }
-
-  if (progress <= holdShot.progress) {
-    return {
-      phase: "hold" as const,
-      mix: (progress - centerShot.progress) / Math.max(holdShot.progress - centerShot.progress, 0.0001),
-      entryShot,
-      centerShot,
-      holdShot,
       queueShot,
       handoffShot,
       settledShot,
@@ -187,10 +170,9 @@ export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegm
   if (progress <= queueShot.progress) {
     return {
       phase: "queue" as const,
-      mix: (progress - holdShot.progress) / Math.max(queueShot.progress - holdShot.progress, 0.0001),
+      mix: (progress - centerShot.progress) / Math.max(queueShot.progress - centerShot.progress, 0.0001),
       entryShot,
       centerShot,
-      holdShot,
       queueShot,
       handoffShot,
       settledShot,
@@ -203,7 +185,6 @@ export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegm
       mix: (progress - queueShot.progress) / Math.max(settledShot.progress - queueShot.progress, 0.0001),
       entryShot,
       centerShot,
-      holdShot,
       queueShot,
       handoffShot,
       settledShot,
@@ -215,7 +196,6 @@ export function getAlcheWorksCardsSegment(progress: number): AlcheWorksCardsSegm
     mix: 1,
     entryShot,
     centerShot,
-    holdShot,
     queueShot,
     handoffShot,
     settledShot,
