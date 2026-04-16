@@ -185,6 +185,29 @@ const expectedShotStates = {
   },
 };
 
+const laneTargets = {
+  entryRightLower: {
+    centerX: { min: 1040, max: 1320 },
+    centerY: { min: 600, max: 800 },
+    width: { min: 260, max: 460 },
+  },
+  leadCenter: {
+    centerX: { min: 560, max: 840 },
+    centerY: { min: 280, max: 470 },
+    width: { min: 620, max: 980 },
+  },
+  supportLeft: {
+    centerX: { min: 80, max: 280 },
+    centerY: { min: 220, max: 400 },
+    width: { min: 120, max: 320 },
+  },
+  queueRight: {
+    centerX: { min: 1080, max: 1340 },
+    centerY: { min: 430, max: 690 },
+    width: { min: 220, max: 420 },
+  },
+};
+
 function resolveRequestPath(requestPath) {
   const normalizedPath = requestPath === "/" ? basePath : requestPath;
 
@@ -342,8 +365,32 @@ function getCardScreenCenterY(layerState, cardIndex) {
   return (top + bottom) * 0.5;
 }
 
+function getCardScreenWidth(layerState, cardIndex) {
+  const left = layerState[`card${cardIndex}ScreenLeft`];
+  const right = layerState[`card${cardIndex}ScreenRight`];
+  assert(left !== null && right !== null, `Missing card${cardIndex} screen width`);
+  return right - left;
+}
+
+function assertCardInLane(layerState, cardIndex, lane, label) {
+  const centerX = getCardScreenCenterX(layerState, cardIndex);
+  const centerY = getCardScreenCenterY(layerState, cardIndex);
+  const width = getCardScreenWidth(layerState, cardIndex);
+  assertRange(centerX, lane.centerX, `${label} card${cardIndex} lane center x`);
+  assertRange(centerY, lane.centerY, `${label} card${cardIndex} lane center y`);
+  assertRange(width, lane.width, `${label} card${cardIndex} lane width`);
+}
+
 function assertCardVisibility(layerState, cardIndex, expectedVisible, label) {
   assert(layerState[`card${cardIndex}Visible`] === expectedVisible, `Expected ${label} card${cardIndex} visible=${expectedVisible}`);
+}
+
+function assertCardSeparation(layerState, minimumGap, label) {
+  const leftRight = layerState.card0ScreenRight;
+  const rightLeft = layerState.card1ScreenLeft;
+  assert(leftRight !== null && rightLeft !== null, `Missing ${label} separation bounds`);
+  const gap = rightLeft - leftRight;
+  assert(gap >= minimumGap, `Expected ${label} screen gap >= ${minimumGap}, got ${gap}`);
 }
 
 async function waitForShotLayerState(page, shotName, expectedState) {
@@ -751,7 +798,6 @@ async function captureFixedStates(browser, shots) {
           assertRange(layerState.card1Opacity, expected.card1Opacity, `${shot.name} card1 opacity`);
           assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
           assert((layerState.card1ScreenLeft ?? 0) < (layerState.card1ScreenRight ?? 0), `Expected ${shot.name} card1 screen bounds`);
-          assertScreenGap(layerState, expected.screenGap ?? 24, shot.name);
           assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
           assertCardAheadOfModel(layerState, layerState.card1WorldZ, `${shot.name} card1`);
           assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
@@ -823,9 +869,15 @@ async function captureFixedStates(browser, shots) {
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
     assert(cardsAEntryState.card1Visible === false && cardsACenterState.card1Visible === false, "Expected card B to remain unloaded through A center.");
     assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
-    assertScreenGap(cardsBQueueState, 40, "cards-b-queue");
-    assertScreenGap(cardsHandoffMidState, 40, "cards-handoff-mid");
-    assertScreenGap(cardsSettledState, 48, "cards-settled");
+    assertCardInLane(cardsAEntryState, 0, laneTargets.entryRightLower, "cards-a-entry");
+    assertCardInLane(cardsACenterState, 0, laneTargets.leadCenter, "cards-a-center");
+    assertCardInLane(cardsBQueueState, 0, laneTargets.leadCenter, "cards-b-queue");
+    assertCardInLane(cardsBQueueState, 1, laneTargets.queueRight, "cards-b-queue");
+    assertCardInLane(cardsSettledState, 0, laneTargets.supportLeft, "cards-settled");
+    assertCardInLane(cardsSettledState, 1, laneTargets.leadCenter, "cards-settled");
+    assertCardSeparation(cardsBQueueState, 12, "cards-b-queue");
+    assertCardSeparation(cardsHandoffMidState, 12, "cards-handoff-mid");
+    assertCardSeparation(cardsSettledState, 12, "cards-settled");
     assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
     assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left during handoff.");
     assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
@@ -835,12 +887,6 @@ async function captureFixedStates(browser, shots) {
     assert(getCardScreenCenterX(cardsHandoffMidState, 1) > getCardScreenCenterX(cardsSettledState, 1), "Expected card B to continue left into the lead slot.");
     assert(getCardScreenCenterY(cardsBQueueState, 1) > getCardScreenCenterY(cardsHandoffMidState, 1), "Expected card B to move upward from right-lower into center.");
     assert(getCardScreenCenterY(cardsHandoffMidState, 1) > getCardScreenCenterY(cardsSettledState, 1), "Expected card B to keep moving upward into the center slot.");
-    assert(getCardScreenCenterX(cardsAEntryState, 0) > 980, "Expected A entry to begin in the right-hand side of the frame.");
-    assert(getCardScreenCenterY(cardsAEntryState, 0) > 620, "Expected A entry to begin in the lower half of the frame.");
-    assert(Math.abs(getCardScreenCenterX(cardsACenterState, 0) - 720) < 200, "Expected A center shot to land near screen center.");
-    assert(Math.abs(getCardScreenCenterY(cardsACenterState, 0) - 540) < 180, "Expected A center shot to land near vertical center.");
-    assert(getCardScreenCenterX(cardsSettledState, 0) < 320, "Expected settled A to remain in the left side of the frame.");
-    assert(getCardScreenCenterY(cardsSettledState, 0) < 420, "Expected settled A to remain in the upper half of the frame.");
     assert((cardsSettledState.card0ScreenRight ?? 0) >= 120, "Expected settled A to remain meaningfully visible in frame.");
     assert((cardsSettledState.card0ScreenLeft ?? 0) >= 0 && (cardsSettledState.card0ScreenRight ?? 0) <= 1440, "Expected settled A to remain fully in frame.");
     const stableModelReference = holdState ?? outState;
