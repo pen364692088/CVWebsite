@@ -90,8 +90,8 @@ export function readAlcheWorksCardDebugMode(value: string | null | undefined): A
   return ALCHE_WORKS_CARD_DEBUG_MODES.find((mode) => mode === value) ?? null;
 }
 
-function isLocalDebugHost(hostname: string | null | undefined) {
-  return hostname === "localhost" || hostname === "127.0.0.1";
+function isIdentityDefaultHost(hostname: string | null | undefined) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || Boolean(hostname?.endsWith(".github.io"));
 }
 
 export function getDefaultAlcheWorksCardDebugMode(
@@ -101,7 +101,7 @@ export function getDefaultAlcheWorksCardDebugMode(
   if (!params) return "poster";
   const captureMode = params.get("alcheCapture") === "1";
   const shotId = readAlcheWorksShotId(params.get("alcheShot"));
-  return captureMode || shotId || isLocalDebugHost(hostname) ? "identity" : "poster";
+  return captureMode || shotId || isIdentityDefaultHost(hostname) ? "identity" : "poster";
 }
 
 export function resolveAlcheWorksCardDebugMode(

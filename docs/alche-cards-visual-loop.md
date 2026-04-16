@@ -19,7 +19,7 @@ If you only want to refresh the extracted video references, run:
 
 The preferred debug entry is `alcheShot`, not raw `alcheProgress`.
 
-Card identity debug defaults to `identity` for `alcheShot` / `alcheCapture` flows and for local `localhost` / `127.0.0.1` debugging. Use `alcheCardDebug=poster` to switch a debug shot back to poster art, or `alcheCardDebug=identity` to force A/B mode explicitly.
+Card identity debug defaults to `identity` for `alcheShot` / `alcheCapture` flows, for local `localhost` / `127.0.0.1` debugging, and on the GitHub Pages host. Use `alcheCardDebug=poster` to switch a debug shot back to poster art, or `alcheCardDebug=identity` to force A/B mode explicitly.
 
 Examples:
 
