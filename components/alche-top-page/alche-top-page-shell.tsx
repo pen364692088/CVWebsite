@@ -139,7 +139,7 @@ function writeAlcheCardDebugModeToLocation(nextMode: AlcheWorksCardDebugMode) {
   if (typeof window === "undefined") return;
 
   const url = new URL(window.location.href);
-  const defaultMode = getDefaultAlcheWorksCardDebugMode(url.searchParams);
+  const defaultMode = getDefaultAlcheWorksCardDebugMode(url.searchParams, url.hostname);
   if (nextMode === defaultMode) {
     url.searchParams.delete("alcheCardDebug");
   } else {
@@ -182,7 +182,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     });
   const runtimeSearchParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const debugOverride = readShellDebugOverride(runtimeSearchParams);
-  const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams);
+  const runtimeHostname = typeof window === "undefined" ? null : window.location.hostname;
+  const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams, runtimeHostname);
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
   const currentIntroProgress = debugOverride?.intro ?? introProgress;
   const currentHeroShotId = debugOverride?.heroShotId ?? heroShotId;
@@ -200,6 +201,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentTrackedSection = currentActiveSection === "loading" ? "kv" : baseTrackedSection;
   const currentShotId = debugOverride?.shotId ?? null;
   const showShotSelector = !captureMode && currentShotId !== null;
+  const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -449,7 +451,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             ].join("\n")}
           </div>
         ) : null}
-        {showShotSelector ? (
+        {showShotSelector || showCardDebugToggle ? (
           <div
             data-alche-shot-selector
             style={{
@@ -472,64 +474,66 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem" }}>
-              <strong style={{ fontSize: "0.74rem" }}>ALCHE Shotbook</strong>
+              <strong style={{ fontSize: "0.74rem" }}>{showShotSelector ? "ALCHE Shotbook" : "ALCHE Card Debug"}</strong>
               <span style={{ color: "rgba(255,255,255,0.62)" }}>
                 {currentShotId ?? "manual"} / {currentCardDebugMode}
               </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0.5rem", marginTop: "0.65rem" }}>
-              <select
-                value={currentShotId ?? ""}
-                onChange={(event) => handleShotOverride(readAlcheWorksShotId(event.target.value))}
-                style={{
-                  minWidth: 0,
-                  padding: "0.5rem 0.65rem",
-                  borderRadius: "0.6rem",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "rgba(18,22,28,0.95)",
-                  color: "#fff",
-                  font: "inherit",
-                  textTransform: "none",
-                }}
-              >
-                <option value="">manual / non-shot</option>
-                {ALCHE_WORKS_CAPTURE_SHOTS.map((shot) => (
-                  <option key={shot.id} value={shot.id}>
-                    {shot.id}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, -1))}
-                disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, -1)}
-                style={{
-                  padding: "0.5rem 0.7rem",
-                  borderRadius: "0.6rem",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "rgba(18,22,28,0.95)",
-                  color: "#fff",
-                  font: "inherit",
-                }}
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, 1))}
-                disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, 1)}
-                style={{
-                  padding: "0.5rem 0.7rem",
-                  borderRadius: "0.6rem",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "rgba(18,22,28,0.95)",
-                  color: "#fff",
-                  font: "inherit",
-                }}
-              >
-                Next
-              </button>
-            </div>
+            {showShotSelector ? (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0.5rem", marginTop: "0.65rem" }}>
+                <select
+                  value={currentShotId ?? ""}
+                  onChange={(event) => handleShotOverride(readAlcheWorksShotId(event.target.value))}
+                  style={{
+                    minWidth: 0,
+                    padding: "0.5rem 0.65rem",
+                    borderRadius: "0.6rem",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(18,22,28,0.95)",
+                    color: "#fff",
+                    font: "inherit",
+                    textTransform: "none",
+                  }}
+                >
+                  <option value="">manual / non-shot</option>
+                  {ALCHE_WORKS_CAPTURE_SHOTS.map((shot) => (
+                    <option key={shot.id} value={shot.id}>
+                      {shot.id}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, -1))}
+                  disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, -1)}
+                  style={{
+                    padding: "0.5rem 0.7rem",
+                    borderRadius: "0.6rem",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(18,22,28,0.95)",
+                    color: "#fff",
+                    font: "inherit",
+                  }}
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, 1))}
+                  disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, 1)}
+                  style={{
+                    padding: "0.5rem 0.7rem",
+                    borderRadius: "0.6rem",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(18,22,28,0.95)",
+                    color: "#fff",
+                    font: "inherit",
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            ) : null}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.5rem" }}>
               {(["identity", "poster"] as const).map((mode) => {
                 const selected = currentCardDebugMode === mode;

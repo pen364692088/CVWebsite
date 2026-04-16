@@ -90,16 +90,26 @@ export function readAlcheWorksCardDebugMode(value: string | null | undefined): A
   return ALCHE_WORKS_CARD_DEBUG_MODES.find((mode) => mode === value) ?? null;
 }
 
-export function getDefaultAlcheWorksCardDebugMode(params: Pick<URLSearchParams, "get"> | null): AlcheWorksCardDebugMode {
+function isLocalDebugHost(hostname: string | null | undefined) {
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
+export function getDefaultAlcheWorksCardDebugMode(
+  params: Pick<URLSearchParams, "get"> | null,
+  hostname?: string | null,
+): AlcheWorksCardDebugMode {
   if (!params) return "poster";
   const captureMode = params.get("alcheCapture") === "1";
   const shotId = readAlcheWorksShotId(params.get("alcheShot"));
-  return captureMode || shotId ? "identity" : "poster";
+  return captureMode || shotId || isLocalDebugHost(hostname) ? "identity" : "poster";
 }
 
-export function resolveAlcheWorksCardDebugMode(params: Pick<URLSearchParams, "get"> | null): AlcheWorksCardDebugMode {
+export function resolveAlcheWorksCardDebugMode(
+  params: Pick<URLSearchParams, "get"> | null,
+  hostname?: string | null,
+): AlcheWorksCardDebugMode {
   if (!params) return "poster";
-  return readAlcheWorksCardDebugMode(params.get("alcheCardDebug")) ?? getDefaultAlcheWorksCardDebugMode(params);
+  return readAlcheWorksCardDebugMode(params.get("alcheCardDebug")) ?? getDefaultAlcheWorksCardDebugMode(params, hostname);
 }
 
 export function getAlcheWorksShotDefinition(shotId: AlcheWorksShotId) {
