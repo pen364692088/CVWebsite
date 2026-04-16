@@ -18,7 +18,14 @@ import {
   type AlcheScrollableSectionId,
   type AlcheTopSectionId,
 } from "@/lib/alche-top-page";
-import { readAlcheHeroShotId } from "@/lib/alche-hero-lock";
+import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
+import {
+  ALCHE_WORKS_CAPTURE_SHOTS,
+  getAdjacentAlcheWorksShotId,
+  getAlcheWorksShotOverride,
+  readAlcheWorksShotId,
+  type AlcheWorksShotId,
+} from "@/lib/alche-works-shotbook";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { SITE, assetPath } from "@/lib/site";
 import { useTopPageScroll } from "@/components/alche-top-page/use-top-page-scroll";
@@ -45,17 +52,43 @@ function supportsWebGL() {
   }
 }
 
-function readShellDebugOverride(params: Pick<URLSearchParams, "get"> | null) {
+interface AlcheShellDebugOverride {
+  section: AlcheTopSectionId;
+  progress: number;
+  intro: number;
+  heroShotId: AlcheHeroShotId | null;
+  shotId: AlcheWorksShotId | null;
+}
+
+function createShellDebugOverrideFromShot(shotId: AlcheWorksShotId, heroShotId: AlcheHeroShotId | null): AlcheShellDebugOverride | null {
+  const shotOverride = getAlcheWorksShotOverride(shotId);
+  if (!shotOverride) return null;
+
+  return {
+    ...shotOverride,
+    section: normalizeTopRuntimeSection(shotOverride.section),
+    heroShotId,
+  };
+}
+
+function readShellDebugOverride(params: Pick<URLSearchParams, "get"> | null): AlcheShellDebugOverride | null {
   if (!params) return null;
+  const shotId = readAlcheWorksShotId(params.get("alcheShot"));
+  const heroShotId = readAlcheHeroShotId(params.get("alcheHeroShot"));
+  if (shotId) {
+    return createShellDebugOverrideFromShot(shotId, heroShotId);
+  }
+
   const section = params.get("alcheSection");
   if (!section || !ALCHE_TOP_SECTION_IDS.includes(section as AlcheTopSectionId)) return null;
   const normalizedSection = normalizeTopRuntimeSection(section as AlcheTopSectionId);
 
   return {
+    shotId: null,
     section: normalizedSection,
     progress: Number(params.get("alcheProgress") ?? (normalizedSection === "loading" ? "0" : "1")),
     intro: Number(params.get("alcheIntro") ?? (normalizedSection === "loading" ? "0.2" : "1")),
-    heroShotId: readAlcheHeroShotId(params.get("alcheHeroShot")),
+    heroShotId,
   };
 }
 
@@ -71,14 +104,23 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
     : null;
 
   if (!normalizedOverride) {
+    url.searchParams.delete("alcheShot");
     url.searchParams.delete("alcheSection");
     url.searchParams.delete("alcheProgress");
     url.searchParams.delete("alcheIntro");
     url.searchParams.delete("alcheHeroShot");
   } else {
-    url.searchParams.set("alcheSection", normalizedOverride.section);
-    url.searchParams.set("alcheProgress", String(normalizedOverride.progress));
-    url.searchParams.set("alcheIntro", String(normalizedOverride.intro));
+    if (normalizedOverride.shotId) {
+      url.searchParams.set("alcheShot", normalizedOverride.shotId);
+      url.searchParams.delete("alcheSection");
+      url.searchParams.delete("alcheProgress");
+      url.searchParams.delete("alcheIntro");
+    } else {
+      url.searchParams.delete("alcheShot");
+      url.searchParams.set("alcheSection", normalizedOverride.section);
+      url.searchParams.set("alcheProgress", String(normalizedOverride.progress));
+      url.searchParams.set("alcheIntro", String(normalizedOverride.intro));
+    }
 
     if (normalizedOverride.heroShotId) {
       url.searchParams.set("alcheHeroShot", normalizedOverride.heroShotId);
@@ -89,8 +131,6 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
 
   window.history.replaceState(window.history.state, "", url.toString());
 }
-
-type AlcheShellDebugOverride = NonNullable<ReturnType<typeof readShellDebugOverride>>;
 
 export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const copy = alcheTopPageCopy[locale];
@@ -139,6 +179,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     debugOverride?.section ?? (introSettled ? baseTrackedSection : activeSection),
   );
   const currentTrackedSection = currentActiveSection === "loading" ? "kv" : baseTrackedSection;
+  const currentShotId = debugOverride?.shotId ?? null;
+  const showShotSelector = !captureMode && currentShotId !== null;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -147,6 +189,18 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   useEffect(() => {
     setCanRenderLive(supportsWebGL());
   }, []);
+
+  const handleShotOverride = useCallback(
+    (shotId: AlcheWorksShotId | null) => {
+      if (typeof window === "undefined") return;
+      const host = window as typeof window & {
+        __setAlcheDebugOverride?: (nextOverride: AlcheShellDebugOverride | null) => void;
+      };
+      const nextOverride = shotId ? createShellDebugOverrideFromShot(shotId, currentHeroShotId) : null;
+      host.__setAlcheDebugOverride?.(nextOverride);
+    },
+    [currentHeroShotId],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -180,7 +234,12 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     if (typeof window === "undefined") return;
     const host = window as typeof window & {
       __setAlcheDebugOverride?: (nextOverride: AlcheShellDebugOverride | null) => void;
-      __setAlcheSceneOverride?: (nextOverride: AlcheShellDebugOverride | null) => void;
+      __setAlcheSceneOverride?: (nextOverride: {
+        section: AlcheTopSectionId;
+        progress: number;
+        intro: number;
+        heroShotId: AlcheHeroShotId | null;
+      } | null) => void;
     };
 
     host.__setAlcheDebugOverride = (nextOverride) => {
@@ -196,7 +255,16 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       flushSync(() => {
         setDebugOverrideVersion((currentValue) => currentValue + 1);
       });
-      host.__setAlcheSceneOverride?.(normalizedOverride);
+      host.__setAlcheSceneOverride?.(
+        normalizedOverride
+          ? {
+              section: normalizedOverride.section,
+              progress: normalizedOverride.progress,
+              intro: normalizedOverride.intro,
+              heroShotId: normalizedOverride.heroShotId,
+            }
+          : null,
+      );
 
       const stage = stageRef.current;
       if (!stage) return;
@@ -351,6 +419,87 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
                 pointerDebugState?.modelRotationY?.toFixed(3) ?? "null"
               } z=${pointerDebugState?.modelRotationZ?.toFixed(3) ?? "null"}`,
             ].join("\n")}
+          </div>
+        ) : null}
+        {showShotSelector ? (
+          <div
+            data-alche-shot-selector
+            style={{
+              position: "absolute",
+              right: "1rem",
+              bottom: pointerDebugEnabled ? "10rem" : "1rem",
+              zIndex: 30,
+              width: "min(22rem, calc(100vw - 2rem))",
+              padding: "0.8rem 0.9rem",
+              borderRadius: "0.85rem",
+              background: "rgba(8, 8, 12, 0.9)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: "#fff",
+              fontFamily: "\"IBM Plex Mono\", \"Courier New\", monospace",
+              fontSize: "0.7rem",
+              lineHeight: 1.5,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              pointerEvents: "auto",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem" }}>
+              <strong style={{ fontSize: "0.74rem" }}>ALCHE Shotbook</strong>
+              <span style={{ color: "rgba(255,255,255,0.62)" }}>{currentShotId ?? "manual"}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0.5rem", marginTop: "0.65rem" }}>
+              <select
+                value={currentShotId ?? ""}
+                onChange={(event) => handleShotOverride(readAlcheWorksShotId(event.target.value))}
+                style={{
+                  minWidth: 0,
+                  padding: "0.5rem 0.65rem",
+                  borderRadius: "0.6rem",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(18,22,28,0.95)",
+                  color: "#fff",
+                  font: "inherit",
+                  textTransform: "none",
+                }}
+              >
+                <option value="">manual / non-shot</option>
+                {ALCHE_WORKS_CAPTURE_SHOTS.map((shot) => (
+                  <option key={shot.id} value={shot.id}>
+                    {shot.id}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, -1))}
+                disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, -1)}
+                style={{
+                  padding: "0.5rem 0.7rem",
+                  borderRadius: "0.6rem",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(18,22,28,0.95)",
+                  color: "#fff",
+                  font: "inherit",
+                }}
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => currentShotId && handleShotOverride(getAdjacentAlcheWorksShotId(currentShotId, 1))}
+                disabled={!currentShotId || !getAdjacentAlcheWorksShotId(currentShotId, 1)}
+                style={{
+                  padding: "0.5rem 0.7rem",
+                  borderRadius: "0.6rem",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(18,22,28,0.95)",
+                  color: "#fff",
+                  font: "inherit",
+                }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         ) : null}
       </div>

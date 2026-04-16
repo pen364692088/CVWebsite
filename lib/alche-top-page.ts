@@ -313,38 +313,6 @@ export const ALCHE_TOP_WORKS_CARDS = {
   groupZ: -4.15,
   trackRadius: 2.48,
   frontOffsetZ: 2.2,
-  aEntryMoveEnd: 0.26,
-  aEntryEnd: 0.34,
-  bQueueEnd: 0.52,
-  handoffEnd: 0.92,
-  entryRightLower: {
-    angle: 1.06,
-    xOffset: 1.02,
-    yOffset: -0.82,
-    depthOffset: -0.66,
-    scale: 0.56,
-  },
-  leadCenter: {
-    angle: -0.04,
-    xOffset: 0.14,
-    yOffset: -0.02,
-    depthOffset: 0.12,
-    scale: 0.88,
-  },
-  queueRightLower: {
-    angle: 0.82,
-    xOffset: 0.62,
-    yOffset: -0.56,
-    depthOffset: -0.46,
-    scale: 0.62,
-  },
-  supportLeftUpper: {
-    angle: -0.98,
-    xOffset: -0.18,
-    yOffset: 0.42,
-    depthOffset: -0.54,
-    scale: 0.32,
-  },
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {

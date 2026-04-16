@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { readAlcheHeroShotId, type AlcheHeroShotId } from "@/lib/alche-hero-lock";
+import { getAlcheWorksShotOverride, readAlcheWorksShotId } from "@/lib/alche-works-shotbook";
 import {
   ALCHE_SCROLLABLE_SECTION_IDS,
   ALCHE_TOP_RENDERABLE_SECTIONS,
@@ -38,8 +39,19 @@ function readDebugState(): DebugState | null {
   if (typeof window === "undefined") return null;
 
   const params = new URLSearchParams(window.location.search);
+  const shotId = readAlcheWorksShotId(params.get("alcheShot"));
   const section = params.get("alcheSection") ?? params.get("alchePhase");
   const heroShotId = readAlcheHeroShotId(params.get("alcheHeroShot"));
+  if (shotId) {
+    const shotOverride = getAlcheWorksShotOverride(shotId);
+    if (!shotOverride) return null;
+    return {
+      section: normalizeTopRuntimeSection(shotOverride.section),
+      progress: clamp01(shotOverride.progress),
+      intro: clamp01(shotOverride.intro),
+      heroShotId,
+    };
+  }
   if (!section || !ALCHE_TOP_SECTION_IDS.includes(section as AlcheTopSectionId)) return null;
   const normalizedSection = normalizeTopRuntimeSection(section as AlcheTopSectionId);
 

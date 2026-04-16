@@ -8,6 +8,10 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
+  getAlcheWorksCardPoseDefinition,
+  getAlcheWorksCardsSegment,
+} from "@/lib/alche-works-shotbook";
+import {
   ALCHE_TOP_CENTER_MODEL,
   ALCHE_TOP_MOONFLOW,
   ALCHE_TOP_KV_WALL_ARC_STRENGTH,
@@ -66,6 +70,12 @@ interface WorksCardPose {
   depthOffset: number;
   scale: number;
 }
+
+const entryRightLowerPose = getAlcheWorksCardPoseDefinition("entry-right-lower");
+const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
+const queueRightLowerOffscreenPose = getAlcheWorksCardPoseDefinition("queue-right-lower-offscreen");
+const queueRightLowerPose = getAlcheWorksCardPoseDefinition("queue-right-lower");
+const supportLeftUpperPose = getAlcheWorksCardPoseDefinition("support-left-upper");
 
 function measureObjectScreenBounds(
   object: THREE.Object3D,
@@ -453,10 +463,7 @@ function WorksCardPair({
   const card1BoxRef = useRef(new THREE.Box3());
   const card0PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
   const card1PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
-  const entryRightLowerPose = ALCHE_TOP_WORKS_CARDS.entryRightLower;
-  const leadCenterPose = ALCHE_TOP_WORKS_CARDS.leadCenter;
-  const queueRightLowerPose = ALCHE_TOP_WORKS_CARDS.queueRightLower;
-  const supportLeftUpperPose = ALCHE_TOP_WORKS_CARDS.supportLeftUpper;
+  const pinnedShotMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("alcheShot");
   const geometry = useMemo(
     () =>
       createBentCardGeometry({
@@ -506,36 +513,34 @@ function WorksCardPair({
 
     const cardsVisible = sceneState.activeSection === "works_cards";
     const progress = sceneState.sectionProgress;
-    const aEntryMoveMix =
-      cardsVisible ? smoothstep(remapRange(progress, 0, ALCHE_TOP_WORKS_CARDS.aEntryMoveEnd)) : 0;
-    const bQueueMix =
-      cardsVisible ? smoothstep(remapRange(progress, ALCHE_TOP_WORKS_CARDS.aEntryEnd, ALCHE_TOP_WORKS_CARDS.bQueueEnd)) : 0;
-    const handoffMix =
-      cardsVisible ? smoothstep(remapRange(progress, ALCHE_TOP_WORKS_CARDS.bQueueEnd, ALCHE_TOP_WORKS_CARDS.handoffEnd)) : 0;
+    const segment = getAlcheWorksCardsSegment(progress);
+    const entryMix = smoothstep(clamp01(segment.phase === "entry" ? segment.mix : 1));
+    const queueMix = smoothstep(clamp01(segment.phase === "queue" ? segment.mix : segment.phase === "handoff" || segment.phase === "settled" ? 1 : 0));
+    const handoffMix = smoothstep(clamp01(segment.phase === "handoff" ? segment.mix : segment.phase === "settled" ? 1 : 0));
     const card0Visible = cardsVisible;
-    const card1Visible = cardsVisible && progress >= ALCHE_TOP_WORKS_CARDS.aEntryEnd;
+    const card1Visible = cardsVisible && progress > segment.centerShot.progress;
     const leadIndex = !cardsVisible
       ? null
-      : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
+      : segment.phase === "entry" || segment.phase === "queue"
         ? 0
         : handoffMix >= 0.5
           ? 1
           : 0;
     const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
     const card0Pose =
-      progress < ALCHE_TOP_WORKS_CARDS.aEntryMoveEnd
-        ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, aEntryMoveMix)
-        : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
+      segment.phase === "entry"
+        ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
+        : segment.phase === "queue"
           ? leadCenterPose
-          : progress < ALCHE_TOP_WORKS_CARDS.handoffEnd
+          : segment.phase === "handoff"
             ? lerpWorksCardPose(leadCenterPose, supportLeftUpperPose, handoffMix)
             : supportLeftUpperPose;
     const card1Pose =
-      progress < ALCHE_TOP_WORKS_CARDS.aEntryEnd
-        ? entryRightLowerPose
-        : progress < ALCHE_TOP_WORKS_CARDS.bQueueEnd
-          ? lerpWorksCardPose(entryRightLowerPose, queueRightLowerPose, bQueueMix)
-          : progress < ALCHE_TOP_WORKS_CARDS.handoffEnd
+      segment.phase === "entry"
+        ? queueRightLowerOffscreenPose
+        : segment.phase === "queue"
+          ? lerpWorksCardPose(queueRightLowerOffscreenPose, queueRightLowerPose, queueMix)
+          : segment.phase === "handoff"
             ? lerpWorksCardPose(queueRightLowerPose, leadCenterPose, handoffMix)
             : leadCenterPose;
 
@@ -574,20 +579,30 @@ function WorksCardPair({
       }
       return;
     }
-    const card0Float = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
-    const card1Float = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.008;
+    const card0Float = reducedMotion || pinnedShotMode ? 0 : Math.sin(state.clock.elapsedTime * 0.48) * 0.012;
+    const card1Float = reducedMotion || pinnedShotMode ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.008;
+    const card0TargetY = card0Pose.yOffset + card0Float;
+    const card1TargetY = card1Pose.yOffset + card1Float;
 
     placeOnArc(leftRef.current, card0Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card0Pose.yOffset);
     leftRef.current.position.x += card0Pose.xOffset;
     leftRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card0Pose.depthOffset;
-    leftRef.current.position.y = THREE.MathUtils.damp(leftRef.current.position.y, card0Pose.yOffset + card0Float, 4.2, delta);
-    leftRef.current.scale.setScalar(THREE.MathUtils.damp(leftRef.current.scale.x, card0Pose.scale, 4.2, delta));
+    leftRef.current.position.y = pinnedShotMode
+      ? card0TargetY
+      : THREE.MathUtils.damp(leftRef.current.position.y, card0TargetY, 4.2, delta);
+    leftRef.current.scale.setScalar(
+      pinnedShotMode ? card0Pose.scale : THREE.MathUtils.damp(leftRef.current.scale.x, card0Pose.scale, 4.2, delta),
+    );
 
     placeOnArc(rightRef.current, card1Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card1Pose.yOffset);
     rightRef.current.position.x += card1Pose.xOffset;
     rightRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card1Pose.depthOffset;
-    rightRef.current.position.y = THREE.MathUtils.damp(rightRef.current.position.y, card1Pose.yOffset + card1Float, 4.2, delta);
-    rightRef.current.scale.setScalar(THREE.MathUtils.damp(rightRef.current.scale.x, card1Pose.scale, 4.2, delta));
+    rightRef.current.position.y = pinnedShotMode
+      ? card1TargetY
+      : THREE.MathUtils.damp(rightRef.current.position.y, card1TargetY, 4.2, delta);
+    rightRef.current.scale.setScalar(
+      pinnedShotMode ? card1Pose.scale : THREE.MathUtils.damp(rightRef.current.scale.x, card1Pose.scale, 4.2, delta),
+    );
 
     materials[0].opacity = card0Visible ? 1 : 0;
     materials[1].opacity = card1Visible ? 1 : 0;

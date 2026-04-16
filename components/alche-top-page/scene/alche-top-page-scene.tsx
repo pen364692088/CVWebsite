@@ -47,17 +47,24 @@ export function AlcheTopPageScene({
   const nextTargetRef = useRef(new THREE.Vector3());
   const nextPositionRef = useRef(new THREE.Vector3());
   const fogColor = useMemo(() => new THREE.Color("#010204"), []);
+  const pinnedShotMode =
+    captureMode || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("alcheShot"));
 
   useFrame((_, delta) => {
     const cameraState = sceneState.camera;
     nextTargetRef.current.set(...cameraState.target);
     nextPositionRef.current.set(...cameraState.position);
 
-    targetRef.current.lerp(nextTargetRef.current, 1 - Math.exp(-delta * 3.8));
-    positionRef.current.lerp(nextPositionRef.current, 1 - Math.exp(-delta * 3.4));
+    if (pinnedShotMode) {
+      targetRef.current.copy(nextTargetRef.current);
+      positionRef.current.copy(nextPositionRef.current);
+    } else {
+      targetRef.current.lerp(nextTargetRef.current, 1 - Math.exp(-delta * 3.8));
+      positionRef.current.lerp(nextPositionRef.current, 1 - Math.exp(-delta * 3.4));
+    }
 
     perspectiveCamera.position.copy(positionRef.current);
-    perspectiveCamera.fov = THREE.MathUtils.damp(perspectiveCamera.fov, cameraState.fov, 4, delta);
+    perspectiveCamera.fov = pinnedShotMode ? cameraState.fov : THREE.MathUtils.damp(perspectiveCamera.fov, cameraState.fov, 4, delta);
     perspectiveCamera.updateProjectionMatrix();
     perspectiveCamera.lookAt(targetRef.current);
     layerDebugRef.current.cameraPosition = [

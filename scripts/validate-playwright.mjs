@@ -5,6 +5,7 @@ import http from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { chromium, devices } from "playwright";
+import { generateAlcheReferenceFrames } from "./generate-alche-reference-frames.mjs";
 
 const root = process.cwd();
 const exportDir = path.join(root, "out");
@@ -15,6 +16,9 @@ const cliArgs = new Set(process.argv.slice(2));
 const cardsOnlyMode = cliArgs.has("--cards-only");
 
 fs.mkdirSync(outputDir, { recursive: true });
+
+const worksShotbook = JSON.parse(fs.readFileSync(path.join(root, "data", "alche-works-shotbook.json"), "utf8"));
+const worksShotNames = worksShotbook.shots.map((shot) => shot.id);
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -41,15 +45,20 @@ const fixedStateShots = [
   { name: "works-intro-enter-early", search: "?alcheSection=works_intro&alcheProgress=0.62&alcheIntro=1&alcheCapture=1" },
   { name: "works-intro-settle", search: "?alcheSection=works_intro&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
   { name: "works-hold", search: "?alcheSection=works&alcheProgress=0.22&alcheIntro=1&alcheCapture=1" },
-  { name: "works-out", search: "?alcheSection=works&alcheProgress=0.92&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-a-entry", search: "?alcheSection=works_cards&alcheProgress=0.12&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-a-center", search: "?alcheSection=works_cards&alcheProgress=0.32&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-b-queue", search: "?alcheSection=works_cards&alcheProgress=0.46&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-handoff-mid", search: "?alcheSection=works_cards&alcheProgress=0.78&alcheIntro=1&alcheCapture=1" },
-  { name: "cards-settled", search: "?alcheSection=works_cards&alcheProgress=0.96&alcheIntro=1&alcheCapture=1" },
+  ...worksShotbook.shots.map((shot) => ({
+    name: shot.id,
+    search: `?alcheShot=${shot.id}&alcheCapture=1`,
+    override: {
+      shotId: shot.id,
+      section: shot.section,
+      progress: shot.progress,
+      intro: shot.intro,
+      heroShotId: null,
+    },
+  })),
 ];
 
-const referenceBoardShots = ["works-out", "cards-a-entry", "cards-a-center", "cards-b-queue", "cards-handoff-mid", "cards-settled"];
+const referenceBoardShots = worksShotNames;
 const cardsOnlyShotNames = new Set(referenceBoardShots);
 const activeFixedStateShots = cardsOnlyMode
   ? fixedStateShots.filter((shot) => cardsOnlyShotNames.has(shot.name))
@@ -77,11 +86,7 @@ const expectedHandoff = {
   "works-intro-settle": { min: 0.38, max: 0.45 },
   "works-hold": { min: 0.5, max: 0.65 },
   "works-out": { min: 0.92, max: 1.0 },
-  "cards-a-entry": { min: 0.99, max: 1.01 },
-  "cards-a-center": { min: 0.99, max: 1.01 },
-  "cards-b-queue": { min: 0.99, max: 1.01 },
-  "cards-handoff-mid": { min: 0.99, max: 1.01 },
-  "cards-settled": { min: 0.99, max: 1.01 },
+  ...Object.fromEntries(worksShotNames.filter((shotName) => shotName !== "works-out").map((shotName) => [shotName, { min: 0.99, max: 1.01 }])),
 };
 const expectedShotStates = {
   "works-intro-enter-early": {
@@ -341,6 +346,78 @@ function assertCardVisibility(layerState, cardIndex, expectedVisible, label) {
   assert(layerState[`card${cardIndex}Visible`] === expectedVisible, `Expected ${label} card${cardIndex} visible=${expectedVisible}`);
 }
 
+async function waitForShotLayerState(page, shotName, expectedState) {
+  if (!expectedState) {
+    await page.waitForTimeout(420);
+    return;
+  }
+
+  await page.waitForFunction(
+    ({ shotName: currentShotName, expected }) => {
+      const state = window.__getAlcheLayerDebugState?.();
+      if (!state) return false;
+
+      const hasBounds = (cardIndex) =>
+        state[`card${cardIndex}ScreenLeft`] !== null &&
+        state[`card${cardIndex}ScreenRight`] !== null &&
+        state[`card${cardIndex}ScreenTop`] !== null &&
+        state[`card${cardIndex}ScreenBottom`] !== null;
+      const lacksBounds = (cardIndex) =>
+        state[`card${cardIndex}ScreenLeft`] === null &&
+        state[`card${cardIndex}ScreenRight`] === null &&
+        state[`card${cardIndex}ScreenTop`] === null &&
+        state[`card${cardIndex}ScreenBottom`] === null;
+
+      if (expected.mode === "single-card-state") {
+        const card0Ready = expected.card0Visible ? hasBounds(0) : lacksBounds(0);
+        const card1Ready = expected.card1Visible ? hasBounds(1) : lacksBounds(1);
+        return (
+          state.cardsOpacity !== null &&
+          state.card0Opacity !== null &&
+          (expected.card1Visible ? state.card1Opacity !== null : state.card1Opacity === null) &&
+          state.card0Visible === expected.card0Visible &&
+          state.card1Visible === expected.card1Visible &&
+          card0Ready &&
+          card1Ready
+        );
+      }
+
+      if (expected.mode === "dual-card-state") {
+        return (
+          state.cardsOpacity !== null &&
+          state.card0Opacity !== null &&
+          state.card1Opacity !== null &&
+          state.card0Visible === expected.card0Visible &&
+          state.card1Visible === expected.card1Visible &&
+          hasBounds(0) &&
+          hasBounds(1)
+        );
+      }
+
+      if (expected.mode === "hidden") {
+        return (
+          state.cardsOpacity !== null &&
+          state.worksOpacity !== null &&
+          state.card0Visible === false &&
+          state.card1Visible === false &&
+          lacksBounds(0) &&
+          lacksBounds(1)
+        );
+      }
+
+      if (currentShotName === "works-out") {
+        return state.cardsOpacity !== null && state.card0Visible === false && state.card1Visible === false;
+      }
+
+      return state.modelWorldZ !== null;
+    },
+    { shotName, expected: expectedState },
+    { timeout: 5000 },
+  );
+
+  await page.waitForTimeout(180);
+}
+
 function escapeHtml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -349,39 +426,78 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-async function writeReferenceBoard() {
+function formatLayerStateSummary(layerState) {
+  if (!layerState) return "debug: unavailable";
+
+  const card0CenterX =
+    layerState.card0ScreenLeft !== null && layerState.card0ScreenRight !== null
+      ? ((layerState.card0ScreenLeft + layerState.card0ScreenRight) * 0.5).toFixed(1)
+      : "null";
+  const card0CenterY =
+    layerState.card0ScreenTop !== null && layerState.card0ScreenBottom !== null
+      ? ((layerState.card0ScreenTop + layerState.card0ScreenBottom) * 0.5).toFixed(1)
+      : "null";
+  const card1CenterX =
+    layerState.card1ScreenLeft !== null && layerState.card1ScreenRight !== null
+      ? ((layerState.card1ScreenLeft + layerState.card1ScreenRight) * 0.5).toFixed(1)
+      : "null";
+  const card1CenterY =
+    layerState.card1ScreenTop !== null && layerState.card1ScreenBottom !== null
+      ? ((layerState.card1ScreenTop + layerState.card1ScreenBottom) * 0.5).toFixed(1)
+      : "null";
+  const screenGap =
+    layerState.card0ScreenRight !== null && layerState.card1ScreenLeft !== null
+      ? (layerState.card1ScreenLeft - layerState.card0ScreenRight).toFixed(1)
+      : "null";
+
+  return [
+    `debug: c0=${layerState.card0Visible ? "on" : "off"} @ ${card0CenterX},${card0CenterY}`,
+    `debug: c1=${layerState.card1Visible ? "on" : "off"} @ ${card1CenterX},${card1CenterY}`,
+    `debug: lead=${layerState.cardsLeadIndex ?? "null"} gap=${screenGap}`,
+  ].join(" | ");
+}
+
+async function writeReferenceBoard(layerStates) {
   const boardPath = path.join(outputDir, "reference-board.html");
   const shotsByName = new Map(fixedStateShots.map((shot) => [shot.name, shot]));
-  const references = [
-    { label: "Reference Home", src: path.relative(outputDir, path.join(root, "Task", "alche-reference-home.png")) },
-    { label: "Reference Scroll Start", src: path.relative(outputDir, path.join(root, "Task", "滚动前.png")) },
-  ].map((entry) => ({
-    ...entry,
-    src: entry.src.replaceAll(path.sep, "/"),
-  }));
   const videoSrc = path.relative(outputDir, path.join(root, "Task", "参考视频.mp4")).replaceAll(path.sep, "/");
-  const currentCards = referenceBoardShots
-    .map((shotName) => {
-      const shot = shotsByName.get(shotName);
-      if (!shot) return "";
+  const shotRows = worksShotbook.shots
+    .map((shot) => {
+      const capture = shotsByName.get(shot.id);
+      const taskStillSrc = shot.reference.taskStillPath
+        ? path.relative(outputDir, path.join(root, shot.reference.taskStillPath)).replaceAll(path.sep, "/")
+        : null;
+      const layerState = layerStates.get(shot.id) ?? null;
       return `
-        <article class="panel">
-          <img src="${escapeHtml(`${shotName}.png`)}" alt="${escapeHtml(shotName)}" />
-          <h2>${escapeHtml(shotName)}</h2>
-          <p>${escapeHtml(shot.search)}</p>
-        </article>
+        <section class="shot">
+          <div class="shotMeta">
+            <h2>${escapeHtml(shot.id)}</h2>
+            <p>${escapeHtml(capture?.search ?? "")}</p>
+            <p>${escapeHtml(`section=${shot.section} progress=${shot.progress.toFixed(2)} intro=${shot.intro.toFixed(2)}`)}</p>
+            <p>${escapeHtml(`videoTime=${shot.reference.videoTime.toFixed(2)}s`)}</p>
+            <p>${escapeHtml(formatLayerStateSummary(layerState))}</p>
+          </div>
+          <div class="shotGrid">
+            <article class="panel">
+              <img src="${escapeHtml(`${shot.id}.png`)}" alt="${escapeHtml(`${shot.id} current`)}" />
+              <h2>Current</h2>
+            </article>
+            <article class="panel">
+              <img src="${escapeHtml(`reference-video/${shot.id}.png`)}" alt="${escapeHtml(`${shot.id} video reference`)}" />
+              <h2>Video Reference</h2>
+            </article>
+            <article class="panel">
+              ${
+                taskStillSrc
+                  ? `<img src="${escapeHtml(taskStillSrc)}" alt="${escapeHtml(`${shot.id} task still`)}" />`
+                  : `<div class="placeholder">No task still</div>`
+              }
+              <h2>Task Still</h2>
+            </article>
+          </div>
+        </section>
       `;
     })
-    .join("");
-  const referenceCards = references
-    .map(
-      (entry) => `
-        <article class="panel">
-          <img src="${escapeHtml(entry.src)}" alt="${escapeHtml(entry.label)}" />
-          <h2>${escapeHtml(entry.label)}</h2>
-        </article>
-      `,
-    )
     .join("");
   const html = `<!doctype html>
 <html lang="en">
@@ -415,18 +531,42 @@ async function writeReferenceBoard() {
         gap: 16px;
         margin-top: 16px;
       }
+      .shot {
+        margin-top: 18px;
+        border: 1px solid var(--border);
+        background: rgba(8, 12, 18, 0.88);
+        border-radius: 20px;
+        padding: 16px;
+      }
+      .shotMeta {
+        display: grid;
+        gap: 6px;
+      }
+      .shotGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
       .panel {
         border: 1px solid var(--border);
         background: rgba(8, 12, 18, 0.88);
         border-radius: 18px;
         padding: 14px;
       }
-      .panel img, video {
+      .panel img, video, .placeholder {
         display: block;
         width: 100%;
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.08);
         background: #000;
+      }
+      .placeholder {
+        min-height: 180px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 12px;
       }
       .panel h2 {
         font-size: 14px;
@@ -442,16 +582,11 @@ async function writeReferenceBoard() {
   </head>
   <body>
     <h1>ALCHE Cards Reference Board</h1>
-    <p>Current shots, static references, and the source video in one place.</p>
+    <p>Current shots, extracted video references, task stills, and the source video in one place.</p>
 
     <section class="section">
-      <h2>Current Frames</h2>
-      <div class="grid">${currentCards}</div>
-    </section>
-
-    <section class="section">
-      <h2>Reference Stills</h2>
-      <div class="grid">${referenceCards}</div>
+      <h2>Shotbook</h2>
+      ${shotRows}
     </section>
 
     <section class="section">
@@ -519,16 +654,17 @@ async function captureFixedStates(browser, shots) {
       await page.goto(`${baseUrl}/en/${shot.search}`, { waitUntil: "networkidle" });
       await assertTopPageShell(page, shot.name);
       const params = new URLSearchParams(shot.search.slice(1));
-      const sectionId = params.get("alcheSection");
+      const override = shot.override ?? {
+        section: params.get("alcheSection"),
+        progress: Number(params.get("alcheProgress") ?? ((params.get("alcheSection") ?? "loading") === "loading" ? "0" : "1")),
+        intro: Number(params.get("alcheIntro") ?? ((params.get("alcheSection") ?? "loading") === "loading" ? "0.2" : "1")),
+        heroShotId: params.get("alcheHeroShot"),
+      };
+      const sectionId = override.section;
       await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 5000 });
       await page.evaluate((nextOverride) => {
         window.__setAlcheDebugOverride?.(nextOverride);
-      }, {
-        section: sectionId,
-        progress: Number(params.get("alcheProgress") ?? (sectionId === "loading" ? "0" : "1")),
-        intro: Number(params.get("alcheIntro") ?? (sectionId === "loading" ? "0.2" : "1")),
-        heroShotId: params.get("alcheHeroShot"),
-      });
+      }, override);
       if (sectionId && sectionId !== "loading") {
         try {
           await page.waitForFunction(
@@ -575,7 +711,7 @@ async function captureFixedStates(browser, shots) {
         }
       }
       await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
-      await page.waitForTimeout(420);
+      await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
       const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
       layerStates.set(shot.name, layerState);
       assert(layerState, `Missing layer debug state for ${shot.name}`);
@@ -689,7 +825,7 @@ async function captureFixedStates(browser, shots) {
     assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
     assertScreenGap(cardsBQueueState, 40, "cards-b-queue");
     assertScreenGap(cardsHandoffMidState, 40, "cards-handoff-mid");
-    assertScreenGap(cardsSettledState, 70, "cards-settled");
+    assertScreenGap(cardsSettledState, 48, "cards-settled");
     assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
     assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left during handoff.");
     assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
@@ -718,6 +854,8 @@ async function captureFixedStates(browser, shots) {
     assert(approxEqual(stableModelReference.modelWorldZ, cardsACenterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards center.");
     assert(approxEqual(cardsACenterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
   }
+
+  return layerStates;
 }
 
 async function capturePointerInteraction(browser) {
@@ -916,6 +1054,7 @@ async function run() {
 
   try {
     await waitForServer(`${baseUrl}/en/`);
+    generateAlcheReferenceFrames({ root, outputDir: path.join(outputDir, "reference-video") });
     const browser = await chromium.launch({ headless: true });
 
     try {
@@ -946,12 +1085,12 @@ async function run() {
         }
       }
 
-      await captureFixedStates(browser, activeFixedStateShots);
+      const layerStates = await captureFixedStates(browser, activeFixedStateShots);
       if (!cardsOnlyMode) {
         await captureRealWheelHandoff(browser);
         await capturePointerInteraction(browser);
       }
-      await writeReferenceBoard();
+      await writeReferenceBoard(layerStates);
     } finally {
       await browser.close();
     }
