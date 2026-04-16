@@ -149,6 +149,18 @@ const expectedShotStates = {
     card1Visible: false,
     card0Opacity: { min: 0.98, max: 1.01 },
   },
+  "cards-a-hold": {
+    mode: "single-card-state",
+    camera: kvLockedCamera,
+    cameraTolerance: 0.08,
+    worksOpacity: { max: 0.05 },
+    cardsOpacity: { min: 0.98, max: 1.01 },
+    moonflowOpacity: { max: 0.02 },
+    cardsLeadIndex: 0,
+    card0Visible: true,
+    card1Visible: false,
+    card0Opacity: { min: 0.98, max: 1.01 },
+  },
   "cards-b-queue": {
     mode: "dual-card-state",
     camera: kvLockedCamera,
@@ -191,9 +203,9 @@ const expectedShotStates = {
 
 const laneTargets = {
   entryRightLower: {
-    centerX: { min: 1040, max: 1320 },
-    centerY: { min: 600, max: 800 },
-    width: { min: 260, max: 460 },
+    centerX: { min: 980, max: 1260 },
+    centerY: { min: 600, max: 860 },
+    width: { min: 180, max: 380 },
   },
   leadCenter: {
     centerX: { min: 560, max: 840 },
@@ -201,14 +213,14 @@ const laneTargets = {
     width: { min: 620, max: 980 },
   },
   supportLeft: {
-    centerX: { min: 80, max: 280 },
-    centerY: { min: 220, max: 400 },
-    width: { min: 120, max: 320 },
+    centerX: { min: 80, max: 320 },
+    centerY: { min: 180, max: 420 },
+    width: { min: 120, max: 360 },
   },
   queueRight: {
-    centerX: { min: 1080, max: 1340 },
-    centerY: { min: 430, max: 690 },
-    width: { min: 220, max: 420 },
+    centerX: { min: 1040, max: 1320 },
+    centerY: { min: 500, max: 760 },
+    width: { min: 180, max: 360 },
   },
 };
 
@@ -842,6 +854,7 @@ async function captureFixedStates(browser, shots) {
   const outState = layerStates.get("works-out");
   const cardsAEntryState = layerStates.get("cards-a-entry");
   const cardsACenterState = layerStates.get("cards-a-center");
+  const cardsAHoldState = layerStates.get("cards-a-hold");
   const cardsBQueueState = layerStates.get("cards-b-queue");
   const cardsHandoffMidState = layerStates.get("cards-handoff-mid");
   const cardsSettledState = layerStates.get("cards-settled");
@@ -861,7 +874,7 @@ async function captureFixedStates(browser, shots) {
     assert((holdState.worksOpacity ?? 0) > (outState.worksOpacity ?? 0), "Expected WORKS to fade out once.");
   }
 
-  if (outState && cardsAEntryState && cardsACenterState && cardsBQueueState && cardsHandoffMidState && cardsSettledState) {
+  if (outState && cardsAEntryState && cardsACenterState && cardsAHoldState && cardsBQueueState && cardsHandoffMidState && cardsSettledState) {
     if (holdState) {
       assert((holdState.cardsOpacity ?? 0) <= 0.04, "Expected cards to stay hidden during works hold.");
     }
@@ -869,12 +882,19 @@ async function captureFixedStates(browser, shots) {
     assert((cardsAEntryState.cardsOpacity ?? 0) > 0.98, "Expected card A to appear immediately in works_cards.");
     assert(cardsAEntryState.cardsLeadIndex === 0, "Expected card 0 to lead during A entry.");
     assert(cardsACenterState.cardsLeadIndex === 0, "Expected card 0 to still lead at A center.");
+    assert(cardsAHoldState.cardsLeadIndex === 0, "Expected card 0 to keep leading during A hold.");
     assert(cardsBQueueState.cardsLeadIndex === 0, "Expected card 0 to still lead while B queues.");
     assert(cardsSettledState.cardsLeadIndex === 1, "Expected card 1 to take over by settled works_cards.");
-    assert(cardsAEntryState.card1Visible === false && cardsACenterState.card1Visible === false, "Expected card B to remain unloaded through A center.");
+    assert(
+      cardsAEntryState.card1Visible === false &&
+        cardsACenterState.card1Visible === false &&
+        cardsAHoldState.card1Visible === false,
+      "Expected card B to remain unloaded through A hold.",
+    );
     assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
     assertCardInLane(cardsAEntryState, 0, laneTargets.entryRightLower, "cards-a-entry");
     assertCardInLane(cardsACenterState, 0, laneTargets.leadCenter, "cards-a-center");
+    assertCardInLane(cardsAHoldState, 0, laneTargets.leadCenter, "cards-a-hold");
     assertCardInLane(cardsBQueueState, 0, laneTargets.leadCenter, "cards-b-queue");
     assertCardInLane(cardsBQueueState, 1, laneTargets.queueRight, "cards-b-queue");
     assertCardInLane(cardsSettledState, 0, laneTargets.supportLeft, "cards-settled");
@@ -883,7 +903,9 @@ async function captureFixedStates(browser, shots) {
     assertCardSeparation(cardsHandoffMidState, 12, "cards-handoff-mid");
     assertCardSeparation(cardsSettledState, 12, "cards-settled");
     assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
-    assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left during handoff.");
+    assert(Math.abs(getCardScreenCenterX(cardsACenterState, 0) - getCardScreenCenterX(cardsAHoldState, 0)) < 40, "Expected card A to hold nearly still in x between center and hold.");
+    assert(Math.abs(getCardScreenCenterY(cardsACenterState, 0) - getCardScreenCenterY(cardsAHoldState, 0)) < 40, "Expected card A to hold nearly still in y between center and hold.");
+    assert(getCardScreenCenterX(cardsAHoldState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to continue left only after the hold phase.");
     assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
     assert(getCardScreenCenterY(cardsAEntryState, 0) > getCardScreenCenterY(cardsACenterState, 0), "Expected card A to move upward from right-lower into center.");
     assert(getCardScreenCenterY(cardsSettledState, 0) < getCardScreenCenterY(cardsACenterState, 0), "Expected card A to end above center in the left-upper slot.");

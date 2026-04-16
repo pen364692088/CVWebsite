@@ -1,39 +1,39 @@
 {
   "poses": {
     "entry-right-lower": {
-      "angle": 0.98,
-      "xOffset": -0.56,
-      "yOffset": -0.84,
-      "depthOffset": -0.44,
-      "scale": 0.54
+      "angle": 0.96,
+      "xOffset": -0.32,
+      "yOffset": -0.88,
+      "depthOffset": -0.5,
+      "scale": 0.46
     },
     "lead-center": {
       "angle": -0.04,
       "xOffset": 0.02,
       "yOffset": -0.02,
-      "depthOffset": 0.12,
-      "scale": 0.86
+      "depthOffset": 0.08,
+      "scale": 0.82
     },
     "queue-right-lower-offscreen": {
       "angle": 1.02,
-      "xOffset": 0.84,
-      "yOffset": -0.86,
-      "depthOffset": -0.56,
-      "scale": 0.5
+      "xOffset": 1.02,
+      "yOffset": -0.98,
+      "depthOffset": -0.72,
+      "scale": 0.42
     },
     "queue-right-lower": {
-      "angle": 0.78,
-      "xOffset": 0.46,
-      "yOffset": -0.54,
-      "depthOffset": -0.46,
-      "scale": 0.54
+      "angle": 0.74,
+      "xOffset": 0.48,
+      "yOffset": -0.64,
+      "depthOffset": -0.42,
+      "scale": 0.58
     },
     "support-left-upper": {
-      "angle": -0.88,
-      "xOffset": -0.18,
-      "yOffset": 0.32,
-      "depthOffset": -0.54,
-      "scale": 0.29
+      "angle": -0.82,
+      "xOffset": -0.34,
+      "yOffset": 0.22,
+      "depthOffset": -0.42,
+      "scale": 0.44
     }
   },
   "shots": [
@@ -57,7 +57,7 @@
     {
       "id": "cards-a-entry",
       "section": "works_cards",
-      "progress": 0.08,
+      "progress": 0.04,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -75,7 +75,7 @@
     {
       "id": "cards-a-center",
       "section": "works_cards",
-      "progress": 0.32,
+      "progress": 0.28,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -91,9 +91,26 @@
       }
     },
     {
+      "id": "cards-a-hold",
+      "section": "works_cards",
+      "progress": 0.54,
+      "intro": 1,
+      "card0": {
+        "visible": true,
+        "poseId": "lead-center"
+      },
+      "card1": {
+        "visible": false,
+        "poseId": null
+      },
+      "reference": {
+        "videoTime": 9.82
+      }
+    },
+    {
       "id": "cards-b-queue",
       "section": "works_cards",
-      "progress": 0.46,
+      "progress": 0.68,
       "intro": 1,
       "card0": {
         "visible": true,
@@ -111,7 +128,7 @@
     {
       "id": "cards-handoff-mid",
       "section": "works_cards",
-      "progress": 0.78,
+      "progress": 0.84,
       "intro": 1,
       "card0": {
         "visible": true,

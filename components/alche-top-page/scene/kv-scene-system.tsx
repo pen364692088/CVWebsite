@@ -100,10 +100,10 @@ function createIdentityCardTexture(label: "A" | "B", background: string) {
 
   context.fillStyle = background;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = "rgba(255,255,255,0.2)";
+  context.strokeStyle = "rgba(255,255,255,0.68)";
   context.lineWidth = 14;
   context.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
-  context.fillStyle = "#f7f9ff";
+  context.fillStyle = "#ffffff";
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = '700 420px "IBM Plex Mono", "Arial Black", sans-serif';
@@ -491,7 +491,7 @@ function WorksCardPair({
   const texturePaths = useMemo(() => worksCardItems.map((item) => assetPath(item.imageSrc)), [worksCardItems]);
   const posterTextures = useLoader(THREE.TextureLoader, texturePaths);
   const identityTextures = useMemo(
-    () => [createIdentityCardTexture("A", "#0f1d37"), createIdentityCardTexture("B", "#30131d")] as const,
+    () => [createIdentityCardTexture("A", "#242934"), createIdentityCardTexture("B", "#242934")] as const,
     [],
   );
   const card0WorldRef = useRef(new THREE.Vector3());
@@ -536,14 +536,13 @@ function WorksCardPair({
     () =>
       identityTextures.map(
         (texture) =>
-          new THREE.MeshStandardMaterial({
+          new THREE.MeshBasicMaterial({
             map: texture,
             color: "#ffffff",
-            roughness: 0.35,
-            metalness: 0,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0,
+            toneMapped: false,
           }),
       ),
     [identityTextures],
@@ -575,10 +574,10 @@ function WorksCardPair({
     const queueMix = smoothstep(clamp01(segment.phase === "queue" ? segment.mix : segment.phase === "handoff" || segment.phase === "settled" ? 1 : 0));
     const handoffMix = smoothstep(clamp01(segment.phase === "handoff" ? segment.mix : segment.phase === "settled" ? 1 : 0));
     const card0Visible = cardsVisible;
-    const card1Visible = cardsVisible && progress > segment.centerShot.progress;
+    const card1Visible = cardsVisible && (segment.phase === "queue" || segment.phase === "handoff" || segment.phase === "settled");
     const leadIndex = !cardsVisible
       ? null
-      : segment.phase === "entry" || segment.phase === "queue"
+      : segment.phase === "entry" || segment.phase === "hold" || segment.phase === "queue"
         ? 0
         : handoffMix >= 0.5
           ? 1
@@ -587,13 +586,13 @@ function WorksCardPair({
     const card0Pose =
       segment.phase === "entry"
         ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
-        : segment.phase === "queue"
+        : segment.phase === "hold" || segment.phase === "queue"
           ? leadCenterPose
-          : segment.phase === "handoff"
+        : segment.phase === "handoff"
             ? lerpWorksCardPose(leadCenterPose, supportLeftUpperPose, handoffMix)
             : supportLeftUpperPose;
     const card1Pose =
-      segment.phase === "entry"
+      segment.phase === "entry" || segment.phase === "hold"
         ? queueRightLowerOffscreenPose
         : segment.phase === "queue"
           ? lerpWorksCardPose(queueRightLowerOffscreenPose, queueRightLowerPose, queueMix)
