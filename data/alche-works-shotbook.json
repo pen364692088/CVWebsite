@@ -16,17 +16,17 @@
       "angle": 0.94,
       "radiusOffset": 0.72,
       "yOffset": -0.98,
-      "scale": 0.42
+      "scale": 0.82
     },
     "queue-right-lower": {
-      "angle": 0.74,
-      "radiusOffset": 0.44,
+      "angle": 0.7,
+      "radiusOffset": 0.5,
       "yOffset": -0.64,
-      "scale": 0.58
+      "scale": 0.82
     },
     "support-left-upper": {
-      "angle": -0.86,
-      "radiusOffset": 0.42,
+      "angle": -0.74,
+      "radiusOffset": 0.5,
       "yOffset": 0.22,
       "scale": 0.82
     }

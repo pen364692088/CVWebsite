@@ -201,14 +201,16 @@ const laneTargets = {
     width: { min: 620, max: 980 },
   },
   supportLeft: {
-    centerX: { min: 60, max: 320 },
     centerY: { min: 180, max: 420 },
-    width: { min: 120, max: 360 },
+    screenLeft: { min: 0, max: 18 },
+    screenRight: { min: 280, max: 520 },
+    width: { min: 260, max: 460 },
   },
   queueRight: {
-    centerX: { min: 1040, max: 1320 },
     centerY: { min: 500, max: 760 },
-    width: { min: 180, max: 360 },
+    screenLeft: { min: 930, max: 1170 },
+    screenRight: { min: 1422, max: 1440 },
+    width: { min: 260, max: 460 },
   },
 };
 
@@ -386,9 +388,19 @@ function assertCardInLane(layerState, cardIndex, lane, label) {
   const centerX = getCardScreenCenterX(layerState, cardIndex);
   const centerY = getCardScreenCenterY(layerState, cardIndex);
   const width = getCardScreenWidth(layerState, cardIndex);
-  assertRange(centerX, lane.centerX, `${label} card${cardIndex} lane center x`);
+  const left = layerState[`card${cardIndex}ScreenLeft`];
+  const right = layerState[`card${cardIndex}ScreenRight`];
+  if (lane.centerX) {
+    assertRange(centerX, lane.centerX, `${label} card${cardIndex} lane center x`);
+  }
   assertRange(centerY, lane.centerY, `${label} card${cardIndex} lane center y`);
   assertRange(width, lane.width, `${label} card${cardIndex} lane width`);
+  if (lane.screenLeft) {
+    assertRange(left, lane.screenLeft, `${label} card${cardIndex} lane screen left`);
+  }
+  if (lane.screenRight) {
+    assertRange(right, lane.screenRight, `${label} card${cardIndex} lane screen right`);
+  }
 }
 
 function assertCardVisibility(layerState, cardIndex, expectedVisible, label) {
