@@ -25,10 +25,10 @@
       "scale": 0.58
     },
     "support-left-upper": {
-      "angle": -0.78,
-      "radiusOffset": 0.39,
+      "angle": -0.86,
+      "radiusOffset": 0.42,
       "yOffset": 0.22,
-      "scale": 0.44
+      "scale": 0.82
     }
   },
   "shots": [
