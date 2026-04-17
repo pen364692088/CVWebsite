@@ -14,19 +14,19 @@
     },
     "queue-right-lower-offscreen": {
       "angle": 0.94,
-      "radiusOffset": 0.54,
+      "radiusOffset": 0.72,
       "yOffset": -0.98,
       "scale": 0.42
     },
     "queue-right-lower": {
       "angle": 0.74,
-      "radiusOffset": 0.28,
+      "radiusOffset": 0.44,
       "yOffset": -0.64,
       "scale": 0.58
     },
     "support-left-upper": {
       "angle": -0.68,
-      "radiusOffset": 0.2,
+      "radiusOffset": 0.36,
       "yOffset": 0.22,
       "scale": 0.44
     }
