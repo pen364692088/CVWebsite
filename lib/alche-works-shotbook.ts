@@ -16,9 +16,8 @@ export type AlcheWorksCardDebugMode = (typeof ALCHE_WORKS_CARD_DEBUG_MODES)[numb
 
 export interface AlcheWorksCardPoseDefinition {
   angle: number;
-  xOffset: number;
+  radiusOffset: number;
   yOffset: number;
-  depthOffset: number;
   scale: number;
 }
 

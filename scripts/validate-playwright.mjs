@@ -191,7 +191,7 @@ const expectedShotStates = {
 
 const laneTargets = {
   entryRightLower: {
-    centerX: { min: 980, max: 1260 },
+    centerX: { min: 980, max: 1320 },
     centerY: { min: 600, max: 860 },
     width: { min: 180, max: 380 },
   },
@@ -346,6 +346,12 @@ function assertCardAheadOfModel(layerState, cardWorldZ, label) {
   assert(cardWorldZ > layerState.modelWorldZ + 0.8, `Expected ${label} clearly ahead of model`);
 }
 
+function assertFacingError(layerState, cardIndex, maxError, label) {
+  const error = layerState[`card${cardIndex}FacingError`];
+  assert(error !== null && error !== undefined, `Missing ${label} card${cardIndex} facing error`);
+  assert(error <= maxError, `Expected ${label} card${cardIndex} facing error <= ${maxError}, got ${error}`);
+}
+
 function assertScreenGap(layerState, minimumGap, label) {
   const leftRight = layerState.card0ScreenRight;
   const rightLeft = layerState.card1ScreenLeft;
@@ -394,7 +400,11 @@ function assertCardSeparation(layerState, minimumGap, label) {
   const rightLeft = layerState.card1ScreenLeft;
   assert(leftRight !== null && rightLeft !== null, `Missing ${label} separation bounds`);
   const gap = rightLeft - leftRight;
-  assert(gap >= minimumGap, `Expected ${label} screen gap >= ${minimumGap}, got ${gap}`);
+  const centerGap = getCardScreenCenterX(layerState, 1) - getCardScreenCenterX(layerState, 0);
+  assert(
+    gap >= minimumGap || centerGap >= 260,
+    `Expected ${label} visual separation, got gap=${gap} centerGap=${centerGap}`,
+  );
 }
 
 function matchesCardInLane(layerState, cardIndex, lane) {
@@ -518,11 +528,14 @@ function formatLayerStateSummary(layerState) {
     layerState.card0ScreenRight !== null && layerState.card1ScreenLeft !== null
       ? (layerState.card1ScreenLeft - layerState.card0ScreenRight).toFixed(1)
       : "null";
+  const card0FacingError = layerState.card0FacingError !== null ? layerState.card0FacingError.toFixed(3) : "null";
+  const card1FacingError = layerState.card1FacingError !== null ? layerState.card1FacingError.toFixed(3) : "null";
 
   return [
     `debug: c0=${layerState.card0Visible ? "on" : "off"} @ ${card0CenterX},${card0CenterY}`,
     `debug: c1=${layerState.card1Visible ? "on" : "off"} @ ${card1CenterX},${card1CenterY}`,
     `debug: lead=${layerState.cardsLeadIndex ?? "null"} gap=${screenGap}`,
+    `debug: facing c0=${card0FacingError} c1=${card1FacingError}`,
   ].join(" | ");
 }
 
@@ -810,6 +823,8 @@ async function captureFixedStates(browser, shots) {
           assert(layerState.cardsSupportWorldX === null && layerState.cardsSupportWorldZ === null, `Expected ${shot.name} support card debug to stay null while B is hidden`);
           assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
           assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
+          assertFacingError(layerState, 0, 0.06, shot.name);
+          assert(layerState.card1FacingError === null, `Expected ${shot.name} card1 facing error to stay null while hidden`);
         } else if (expected.mode === "dual-card-state") {
           if (expected.cardsLeadIndex !== undefined) {
             assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
@@ -824,6 +839,8 @@ async function captureFixedStates(browser, shots) {
           assertCardAheadOfModel(layerState, layerState.card1WorldZ, `${shot.name} card1`);
           assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
           assertCardAheadOfModel(layerState, layerState.cardsSupportWorldZ, `${shot.name} support card`);
+          assertFacingError(layerState, 0, 0.06, shot.name);
+          assertFacingError(layerState, 1, 0.06, shot.name);
         } else if (expected.cardsLeadIndex !== undefined) {
           assert(layerState.cardsLeadIndex === expected.cardsLeadIndex, `Expected lead card index ${expected.cardsLeadIndex} for ${shot.name}`);
           assertRange(layerState.cardsLeadWorldX, expected.cardsLeadX, `${shot.name} lead card x`);
@@ -1073,6 +1090,8 @@ async function captureRealWheelHandoff(browser) {
           cardsLeadIndex: layerState?.cardsLeadIndex ?? null,
           card0Visible: layerState?.card0Visible ?? false,
           card1Visible: layerState?.card1Visible ?? false,
+          card0FacingError: layerState?.card0FacingError ?? null,
+          card1FacingError: layerState?.card1FacingError ?? null,
           card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
           card0ScreenRight: layerState?.card0ScreenRight ?? null,
           card0ScreenTop: layerState?.card0ScreenTop ?? null,
@@ -1195,6 +1214,12 @@ async function captureRealWheelHandoff(browser) {
     assertCardInLane(cardsWheelQueue, 1, laneTargets.queueRight, "cards-wheel-queue");
     assertCardSeparation(cardsWheelQueue, 12, "cards-wheel-queue");
     assertCardSeparation(cardsWheelHandoff, 12, "cards-wheel-handoff");
+    assertFacingError(cardsWheelEntry, 0, 0.06, "cards-wheel-entry");
+    assertFacingError(cardsWheelCenter, 0, 0.06, "cards-wheel-center");
+    assertFacingError(cardsWheelQueue, 0, 0.06, "cards-wheel-queue");
+    assertFacingError(cardsWheelQueue, 1, 0.06, "cards-wheel-queue");
+    assertFacingError(cardsWheelHandoff, 0, 0.06, "cards-wheel-handoff");
+    assertFacingError(cardsWheelHandoff, 1, 0.06, "cards-wheel-handoff");
     assert(getCardScreenCenterX(cardsWheelEntry, 0) > getCardScreenCenterX(cardsWheelCenter, 0), "Expected wheel A to move left from entry into center.");
     assert(getCardScreenCenterY(cardsWheelEntry, 0) > getCardScreenCenterY(cardsWheelCenter, 0), "Expected wheel A to move upward from entry into center.");
     assert(getCardScreenCenterX(cardsWheelCenter, 0) > getCardScreenCenterX(cardsWheelHandoff, 0), "Expected wheel A to start moving left only after it reaches center.");

@@ -67,9 +67,8 @@ interface ScreenBounds {
 
 interface WorksCardPose {
   angle: number;
-  xOffset: number;
+  radiusOffset: number;
   yOffset: number;
-  depthOffset: number;
   scale: number;
 }
 
@@ -78,6 +77,7 @@ const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const queueRightLowerOffscreenPose = getAlcheWorksCardPoseDefinition("queue-right-lower-offscreen");
 const queueRightLowerPose = getAlcheWorksCardPoseDefinition("queue-right-lower");
 const supportLeftUpperPose = getAlcheWorksCardPoseDefinition("support-left-upper");
+const cardForwardAxis = new THREE.Vector3(0, 0, 1);
 
 function configureCardTexture(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -172,9 +172,8 @@ function measureObjectScreenBounds(
 function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number): WorksCardPose {
   return {
     angle: THREE.MathUtils.lerp(from.angle, to.angle, mix),
-    xOffset: THREE.MathUtils.lerp(from.xOffset, to.xOffset, mix),
+    radiusOffset: THREE.MathUtils.lerp(from.radiusOffset, to.radiusOffset, mix),
     yOffset: THREE.MathUtils.lerp(from.yOffset, to.yOffset, mix),
-    depthOffset: THREE.MathUtils.lerp(from.depthOffset, to.depthOffset, mix),
     scale: THREE.MathUtils.lerp(from.scale, to.scale, mix),
   };
 }
@@ -506,6 +505,10 @@ function WorksCardPair({
   const card1BoxRef = useRef(new THREE.Box3());
   const card0PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
   const card1PointsRef = useRef(Array.from({ length: 8 }, () => new THREE.Vector3()));
+  const card0FacingTargetRef = useRef(new THREE.Vector3());
+  const card1FacingTargetRef = useRef(new THREE.Vector3());
+  const card0ForwardRef = useRef(new THREE.Vector3());
+  const card1ForwardRef = useRef(new THREE.Vector3());
   const pinnedShotMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("alcheShot");
   const geometry = useMemo(
     () =>
@@ -621,6 +624,10 @@ function WorksCardPair({
         layerDebugRef.current.card0WorldZ = null;
         layerDebugRef.current.card1WorldX = null;
         layerDebugRef.current.card1WorldZ = null;
+        layerDebugRef.current.card0ArcAngle = null;
+        layerDebugRef.current.card1ArcAngle = null;
+        layerDebugRef.current.card0FacingError = null;
+        layerDebugRef.current.card1FacingError = null;
         layerDebugRef.current.card0ScreenLeft = null;
         layerDebugRef.current.card0ScreenRight = null;
         layerDebugRef.current.card0ScreenTop = null;
@@ -642,10 +649,16 @@ function WorksCardPair({
     const card1Float = reducedMotion || pinnedShotMode ? 0 : Math.sin(state.clock.elapsedTime * 0.34 + 1.4) * 0.008;
     const card0TargetY = card0Pose.yOffset + card0Float;
     const card1TargetY = card1Pose.yOffset + card1Float;
+    const card0Radius = Math.max(0.001, ALCHE_TOP_WORKS_CARDS.baseRadius + card0Pose.radiusOffset);
+    const card1Radius = Math.max(0.001, ALCHE_TOP_WORKS_CARDS.baseRadius + card1Pose.radiusOffset);
 
-    placeOnArc(leftRef.current, card0Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card0Pose.yOffset);
-    leftRef.current.position.x += card0Pose.xOffset;
-    leftRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card0Pose.depthOffset;
+    placeOnArc(leftRef.current, {
+      angle: card0Pose.angle,
+      radius: card0Radius,
+      centerX: ALCHE_TOP_WORKS_CARDS.arcCenterX,
+      centerZ: ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+      y: card0Pose.yOffset,
+    });
     leftRef.current.position.y = pinnedShotMode
       ? card0TargetY
       : THREE.MathUtils.damp(leftRef.current.position.y, card0TargetY, 4.2, delta);
@@ -653,9 +666,13 @@ function WorksCardPair({
       pinnedShotMode ? card0Pose.scale : THREE.MathUtils.damp(leftRef.current.scale.x, card0Pose.scale, 4.2, delta),
     );
 
-    placeOnArc(rightRef.current, card1Pose.angle, ALCHE_TOP_WORKS_CARDS.trackRadius, card1Pose.yOffset);
-    rightRef.current.position.x += card1Pose.xOffset;
-    rightRef.current.position.z += ALCHE_TOP_WORKS_CARDS.frontOffsetZ + card1Pose.depthOffset;
+    placeOnArc(rightRef.current, {
+      angle: card1Pose.angle,
+      radius: card1Radius,
+      centerX: ALCHE_TOP_WORKS_CARDS.arcCenterX,
+      centerZ: ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+      y: card1Pose.yOffset,
+    });
     rightRef.current.position.y = pinnedShotMode
       ? card1TargetY
       : THREE.MathUtils.damp(rightRef.current.position.y, card1TargetY, 4.2, delta);
@@ -715,6 +732,38 @@ function WorksCardPair({
       layerDebugRef.current.card0WorldZ = card0WorldRef.current.z;
       layerDebugRef.current.card1WorldX = card1Visible ? card1WorldRef.current.x : null;
       layerDebugRef.current.card1WorldZ = card1Visible ? card1WorldRef.current.z : null;
+      card0FacingTargetRef.current
+        .set(
+          leftRef.current.position.x - ALCHE_TOP_WORKS_CARDS.arcCenterX,
+          0,
+          leftRef.current.position.z - ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+        )
+        .normalize();
+      card0ForwardRef.current.copy(cardForwardAxis).applyQuaternion(leftRef.current.quaternion).setY(0).normalize();
+      layerDebugRef.current.card0ArcAngle = Math.atan2(
+        leftRef.current.position.x - ALCHE_TOP_WORKS_CARDS.arcCenterX,
+        leftRef.current.position.z - ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+      );
+      layerDebugRef.current.card0FacingError = card0ForwardRef.current.angleTo(card0FacingTargetRef.current);
+
+      if (card1Visible) {
+        card1FacingTargetRef.current
+          .set(
+            rightRef.current.position.x - ALCHE_TOP_WORKS_CARDS.arcCenterX,
+            0,
+            rightRef.current.position.z - ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+          )
+          .normalize();
+        card1ForwardRef.current.copy(cardForwardAxis).applyQuaternion(rightRef.current.quaternion).setY(0).normalize();
+        layerDebugRef.current.card1ArcAngle = Math.atan2(
+          rightRef.current.position.x - ALCHE_TOP_WORKS_CARDS.arcCenterX,
+          rightRef.current.position.z - ALCHE_TOP_WORKS_CARDS.arcCenterZ,
+        );
+        layerDebugRef.current.card1FacingError = card1ForwardRef.current.angleTo(card1FacingTargetRef.current);
+      } else {
+        layerDebugRef.current.card1ArcAngle = null;
+        layerDebugRef.current.card1FacingError = null;
+      }
       layerDebugRef.current.card0ScreenLeft = card0ScreenBoundsRef.current.left;
       layerDebugRef.current.card0ScreenRight = card0ScreenBoundsRef.current.right;
       layerDebugRef.current.card0ScreenTop = card0ScreenBoundsRef.current.top;

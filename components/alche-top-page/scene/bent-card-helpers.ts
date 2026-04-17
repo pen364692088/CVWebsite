@@ -7,6 +7,15 @@ interface BentCardGeometryOptions {
   segments?: number;
 }
 
+interface ArcPlacementOptions {
+  angle: number;
+  radius: number;
+  centerX?: number;
+  centerZ?: number;
+  y?: number;
+  yawOffset?: number;
+}
+
 export function createBentCardGeometry({
   width = 2.6,
   height = 1.55,
@@ -32,7 +41,19 @@ export function createBentCardGeometry({
   return geometry;
 }
 
-export function placeOnArc(object: THREE.Object3D, angle: number, trackRadius: number, y = 0) {
-  object.position.set(Math.sin(angle) * trackRadius, y, Math.cos(angle) * trackRadius);
-  object.lookAt(0, y, 0);
+export function placeOnArc(
+  object: THREE.Object3D,
+  {
+    angle,
+    radius,
+    centerX = 0,
+    centerZ = 0,
+    y = 0,
+    yawOffset = 0,
+  }: ArcPlacementOptions,
+) {
+  const x = centerX + Math.sin(angle) * radius;
+  const z = centerZ + Math.cos(angle) * radius;
+  object.position.set(x, y, z);
+  object.rotation.set(0, Math.atan2(x - centerX, z - centerZ) + yawOffset, 0);
 }

@@ -1,38 +1,33 @@
 {
   "poses": {
     "entry-right-lower": {
-      "angle": 0.96,
-      "xOffset": -0.32,
+      "angle": 0.66,
+      "radiusOffset": 0.26,
       "yOffset": -0.88,
-      "depthOffset": -0.5,
       "scale": 0.46
     },
     "lead-center": {
       "angle": -0.04,
-      "xOffset": 0.02,
+      "radiusOffset": 0.08,
       "yOffset": -0.02,
-      "depthOffset": 0.08,
       "scale": 0.82
     },
     "queue-right-lower-offscreen": {
-      "angle": 1.02,
-      "xOffset": 1.02,
+      "angle": 0.94,
+      "radiusOffset": 0.54,
       "yOffset": -0.98,
-      "depthOffset": -0.72,
       "scale": 0.42
     },
     "queue-right-lower": {
       "angle": 0.74,
-      "xOffset": 0.48,
+      "radiusOffset": 0.28,
       "yOffset": -0.64,
-      "depthOffset": -0.42,
       "scale": 0.58
     },
     "support-left-upper": {
-      "angle": -0.82,
-      "xOffset": -0.34,
+      "angle": -0.68,
+      "radiusOffset": 0.2,
       "yOffset": 0.22,
-      "depthOffset": -0.42,
       "scale": 0.44
     }
   },

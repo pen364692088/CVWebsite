@@ -136,6 +136,10 @@ export interface AlcheLayerDebugState {
   card0WorldZ: number | null;
   card1WorldX: number | null;
   card1WorldZ: number | null;
+  card0ArcAngle: number | null;
+  card1ArcAngle: number | null;
+  card0FacingError: number | null;
+  card1FacingError: number | null;
   card0ScreenLeft: number | null;
   card0ScreenRight: number | null;
   card0ScreenTop: number | null;
@@ -312,8 +316,9 @@ export const ALCHE_TOP_WORKS_CARDS = {
   segments: 80,
   groupY: 0.22,
   groupZ: -4.15,
-  trackRadius: 2.48,
-  frontOffsetZ: 2.2,
+  arcCenterX: 0,
+  arcCenterZ: 2.2,
+  baseRadius: 2.48,
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
