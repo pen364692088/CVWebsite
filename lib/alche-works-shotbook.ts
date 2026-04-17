@@ -156,24 +156,24 @@ export function getCompensatedAlcheWorksCardPoseDefinition(
   if (poseId === "support-left-upper") {
     return {
       ...pose,
-      angle: pose.angle + lerp(0, -0.12, compensation),
-      radiusOffset: pose.radiusOffset + lerp(0, 0.1, compensation),
+      angle: pose.angle + lerp(0, -0.2, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.16, compensation),
     };
   }
 
   if (poseId === "queue-right-lower") {
     return {
       ...pose,
-      angle: pose.angle + lerp(0, 0.1, compensation),
-      radiusOffset: pose.radiusOffset + lerp(0, 0.08, compensation),
+      angle: pose.angle + lerp(0, 0.12, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.1, compensation),
     };
   }
 
   if (poseId === "queue-right-lower-offscreen") {
     return {
       ...pose,
-      angle: pose.angle + lerp(0, 0.12, compensation),
-      radiusOffset: pose.radiusOffset + lerp(0, 0.08, compensation),
+      angle: pose.angle + lerp(0, 0.14, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.1, compensation),
     };
   }
 
