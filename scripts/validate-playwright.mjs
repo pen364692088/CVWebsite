@@ -201,7 +201,7 @@ const laneTargets = {
     width: { min: 620, max: 980 },
   },
   supportLeft: {
-    centerX: { min: 80, max: 320 },
+    centerX: { min: 60, max: 320 },
     centerY: { min: 180, max: 420 },
     width: { min: 120, max: 360 },
   },
