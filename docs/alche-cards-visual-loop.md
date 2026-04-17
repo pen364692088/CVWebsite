@@ -1,83 +1,136 @@
 # ALCHE Cards Visual Loop
 
-Use this loop when iterating on the `works -> works_cards` handoff. The authority source is `Task/参考视频.mp4`, not raw wheel feel and not `alche.studio`.
+Use this loop for the active `works -> works_cards` program.
+Authority is:
+
+1. `Task/参考视频.mp4`
+2. the current shotbook
+3. fresh local and remote screenshots
+
+Do not let raw wheel feel or old parity docs outrank those.
 
 ## Fast Path
 
-1. `npm run build`
-2. `npm run validate:alche-cards`
-
-If you want a single command that also rebuilds the static export first, run:
+Focused cards loop:
 
 1. `npm run verify:alche-cards`
 
-If you only want to refresh the extracted video references, run:
+If you only need full page validation after a card change:
+
+1. `npm run build`
+2. `npm run typecheck`
+3. `npm run verify:static`
+4. `npm run validate:playwright`
+
+If you only want to refresh extracted video references:
 
 1. `npm run reference:alche-cards`
 
-## Shotbook Entry
+Important:
 
-The preferred debug entry is `alcheShot`, not raw `alcheProgress`.
+- do not run `typecheck` in parallel with `build` and interpret missing `.next/types` as a real regression
 
-Card identity debug defaults to `identity` for `alcheShot` / `alcheCapture` flows, for local `localhost` / `127.0.0.1` debugging, and on the GitHub Pages host. Use `alcheCardDebug=poster` to switch a debug shot back to poster art, or `alcheCardDebug=identity` to force A/B mode explicitly.
+## Preferred Debug Entry
+
+Use `alcheShot`, not raw `alcheProgress`.
 
 Examples:
 
 - `/en/?alcheShot=cards-a-entry`
-- `/en/?alcheShot=cards-a-entry&alcheCardDebug=poster`
 - `/en/?alcheShot=cards-a-center`
 - `/en/?alcheShot=cards-b-queue`
 - `/en/?alcheShot=cards-handoff-mid`
 - `/en/?alcheShot=cards-settled`
 
-Each shot resolves to a named section/progress pair from `data/alche-works-shotbook.json`.
+Use `alcheCardDebug=identity` when order or ownership is in doubt.
 
-## What It Checks
+Debug mode defaults to identity for:
 
-- `works-out`: `WORKS` is gone and cards are still hidden
-- `cards-a-entry`: only `A` is visible in the right-lower quadrant
-- `cards-a-center`: only `A` is visible and centered
-- `cards-b-queue`: `A` holds center while `B` appears from the right-lower queue lane
-- `cards-handoff-mid`: both cards stay visible while `A` moves toward left-upper and `B` moves toward center
-- `cards-settled`: `A` remains visible in the left-upper support slot and `B` holds center
-- all cards stay ahead of the center model
-- the center model stays stable through the handoff
+- `alcheShot`
+- `alcheCapture`
+- local `localhost` / `127.0.0.1`
+- GitHub Pages host
+
+Use `alcheCardDebug=poster` only when you specifically need poster art back.
+
+## What Must Be Proven
+
+Named-shot checks:
+
+- `works-out`: `WORKS` is gone and cards are hidden
+- `cards-a-entry`: only `A` is visible in the right-lower entry lane
+- `cards-a-center`: only `A` is visible in the center lead lane
+- `cards-b-queue`: `A` holds center while `B` appears in the right queue lane
+- `cards-handoff-mid`: `A` moves left while `B` moves toward center
+- `cards-settled`: `A` sits in the left support lane while `B` holds center
+
+Free-scroll checks:
+
+- cards do not appear before `WORKS` clears
+- `A` appears before `B`
+- queue and handoff happen in the right order
+
+Geometry checks:
+
+- cards stay ahead of the center model
+- facing error remains near `0`
+- side-lane framing remains correct on both desktop baselines
+
+## Desktop Validation Baselines
+
+Current desktop validation is not single-viewport anymore.
+
+Required local baselines:
+
+- `1440×1080`
+- `2560×1600`
+
+For side lanes, validator uses normalized screen-space ratios instead of only fixed pixels:
+
+- `screenLeftRatio`
+- `screenRightRatio`
+- `widthRatio`
+- `centerYRatio`
+
+This is the current durable rule for desktop adaptation.
 
 ## Artifacts
 
-The focused loop refreshes these artifacts under `.playwright-artifacts/alche-top-page/`:
+Primary local artifacts under `.playwright-artifacts/alche-top-page/`:
 
-- `works-out.png`
-- `cards-a-entry.png`
-- `cards-a-center.png`
 - `cards-b-queue.png`
 - `cards-handoff-mid.png`
 - `cards-settled.png`
-- `cards-wheel-entry.png`
-- `cards-wheel-center.png`
+- `cards-b-queue-desktop-16x10.png`
+- `cards-handoff-mid-desktop-16x10.png`
+- `cards-settled-desktop-16x10.png`
 - `cards-wheel-queue.png`
 - `cards-wheel-handoff.png`
+- `cards-wheel-queue-desktop-16x10.png`
+- `cards-wheel-handoff-desktop-16x10.png`
 - `reference-video/*.png`
 - `reference-board.html`
 
-`reference-board.html` is the primary manual review surface. Each shot row shows:
+`reference-board.html` is still the main manual review surface.
 
-- current local capture
-- extracted reference frame from `Task/参考视频.mp4`
-- optional still from `Task/滚动效果/首页滚动至work`
-- debug summary with visibility, centers, and screen gap
+## Remote Validation
 
-When the current capture is in identity mode:
+If the user is looking at GitHub Pages, local proof is not enough.
 
-- `card0` is always rendered as `A`
-- `card1` is always rendered as `B`
-- the letters represent fixed identity, not the current lead/support role
+Minimum remote checks:
 
-## When To Use Full Validation
+- `/CVWebsite/en/?alcheShot=cards-b-queue`
+- `/CVWebsite/en/?alcheShot=cards-settled`
+- one real free-scroll capture on the production URL
 
-Run `npm run validate:playwright` instead when you need confidence in:
+For the current desktop adaptation loop, remote validation should use `2560×1600`.
 
-- locale routing
-- mobile/tablet shell regressions
-- pointer behavior
-- real wheel-driven section handoff
+## Current Best Tuning Lever
+
+If the side panels still feel too close on desktop:
+
+1. adjust side-lane desktop aspect compensation
+2. then side-lane pose angle/radius offsets
+3. only after that consider deeper geometry changes
+
+Do **not** start with global `baseRadius` as the first lever.
