@@ -110,6 +110,8 @@ export interface AlchePointerDebugState {
 }
 
 export interface AlcheLayerDebugState {
+  viewportWidth: number | null;
+  viewportHeight: number | null;
   cameraPosition: readonly [number, number, number];
   cameraTarget: readonly [number, number, number];
   wallWorldZ: number | null;

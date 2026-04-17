@@ -43,7 +43,7 @@ export function AlcheTopPageScene({
   pointerDebugRef,
   layerDebugRef,
 }: AlcheTopPageSceneProps) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
   const targetRef = useRef(new THREE.Vector3(...sceneState.camera.target));
   const positionRef = useRef(new THREE.Vector3(...sceneState.camera.position));
@@ -70,6 +70,8 @@ export function AlcheTopPageScene({
     perspectiveCamera.fov = pinnedShotMode ? cameraState.fov : THREE.MathUtils.damp(perspectiveCamera.fov, cameraState.fov, 4, delta);
     perspectiveCamera.updateProjectionMatrix();
     perspectiveCamera.lookAt(targetRef.current);
+    layerDebugRef.current.viewportWidth = size.width;
+    layerDebugRef.current.viewportHeight = size.height;
     layerDebugRef.current.cameraPosition = [
       perspectiveCamera.position.x,
       perspectiveCamera.position.y,

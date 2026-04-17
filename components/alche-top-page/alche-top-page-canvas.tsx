@@ -99,6 +99,8 @@ export function AlcheTopPageCanvas({
     modelRotationZ: null,
   });
   const layerDebugRef = useRef<AlcheLayerDebugState>({
+    viewportWidth: null,
+    viewportHeight: null,
     cameraPosition: [0, 0, 0],
     cameraTarget: [0, 0, 0],
     wallWorldZ: null,

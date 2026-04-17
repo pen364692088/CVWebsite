@@ -9,6 +9,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
   type AlcheWorksCardDebugMode,
+  getCompensatedAlcheWorksCardPoseDefinition,
   getAlcheWorksCardPoseDefinition,
   getAlcheWorksCardsSegment,
 } from "@/lib/alche-works-shotbook";
@@ -74,9 +75,6 @@ interface WorksCardPose {
 
 const entryRightLowerPose = getAlcheWorksCardPoseDefinition("entry-right-lower");
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
-const queueRightLowerOffscreenPose = getAlcheWorksCardPoseDefinition("queue-right-lower-offscreen");
-const queueRightLowerPose = getAlcheWorksCardPoseDefinition("queue-right-lower");
-const supportLeftUpperPose = getAlcheWorksCardPoseDefinition("support-left-upper");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
 
 function configureCardTexture(texture: THREE.Texture) {
@@ -589,21 +587,36 @@ function WorksCardPair({
           ? 1
           : 0;
     const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
+    const compensatedQueueRightLowerOffscreenPose = getCompensatedAlcheWorksCardPoseDefinition(
+      "queue-right-lower-offscreen",
+      state.size.width,
+      state.size.height,
+    );
+    const compensatedQueueRightLowerPose = getCompensatedAlcheWorksCardPoseDefinition(
+      "queue-right-lower",
+      state.size.width,
+      state.size.height,
+    );
+    const compensatedSupportLeftUpperPose = getCompensatedAlcheWorksCardPoseDefinition(
+      "support-left-upper",
+      state.size.width,
+      state.size.height,
+    );
     const card0Pose =
       segment.phase === "entry"
         ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
         : segment.phase === "queue"
           ? leadCenterPose
         : segment.phase === "handoff"
-            ? lerpWorksCardPose(leadCenterPose, supportLeftUpperPose, handoffMix)
-            : supportLeftUpperPose;
+            ? lerpWorksCardPose(leadCenterPose, compensatedSupportLeftUpperPose, handoffMix)
+            : compensatedSupportLeftUpperPose;
     const card1Pose =
       segment.phase === "entry"
-        ? queueRightLowerOffscreenPose
+        ? compensatedQueueRightLowerOffscreenPose
         : segment.phase === "queue"
-          ? lerpWorksCardPose(queueRightLowerOffscreenPose, queueRightLowerPose, queueMix)
+          ? lerpWorksCardPose(compensatedQueueRightLowerOffscreenPose, compensatedQueueRightLowerPose, queueMix)
           : segment.phase === "handoff"
-            ? lerpWorksCardPose(queueRightLowerPose, leadCenterPose, handoffMix)
+            ? lerpWorksCardPose(compensatedQueueRightLowerPose, leadCenterPose, handoffMix)
             : leadCenterPose;
 
     groupRef.current.visible = cardsVisible && (card0Visible || card1Visible);

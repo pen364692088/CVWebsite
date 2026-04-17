@@ -21,6 +21,11 @@ export interface AlcheWorksCardPoseDefinition {
   scale: number;
 }
 
+const ALCHE_WORKS_DESKTOP_ASPECT_BASE = 1440 / 1080;
+const ALCHE_WORKS_DESKTOP_ASPECT_TARGET = 2560 / 1600;
+const ALCHE_WORKS_DESKTOP_MIN_WIDTH = 1200;
+const ALCHE_WORKS_DESKTOP_MIN_HEIGHT = 700;
+
 export const ALCHE_WORKS_SHOT_IDS = [
   "works-out",
   "cards-a-entry",
@@ -117,6 +122,62 @@ export function getAlcheWorksShotDefinition(shotId: AlcheWorksShotId) {
 
 export function getAlcheWorksCardPoseDefinition(poseId: AlcheWorksCardPoseId) {
   return ALCHE_WORKS_CARD_POSES[poseId];
+}
+
+function clamp01(value: number) {
+  return Math.min(Math.max(value, 0), 1);
+}
+
+function lerp(start: number, end: number, mix: number) {
+  return start + (end - start) * mix;
+}
+
+export function getAlcheWorksDesktopAspectCompensation(viewportWidth: number, viewportHeight: number) {
+  if (viewportWidth < ALCHE_WORKS_DESKTOP_MIN_WIDTH || viewportHeight < ALCHE_WORKS_DESKTOP_MIN_HEIGHT) {
+    return 0;
+  }
+
+  const aspect = viewportWidth / Math.max(viewportHeight, 1);
+  return clamp01(
+    (aspect - ALCHE_WORKS_DESKTOP_ASPECT_BASE) /
+      Math.max(ALCHE_WORKS_DESKTOP_ASPECT_TARGET - ALCHE_WORKS_DESKTOP_ASPECT_BASE, 0.0001),
+  );
+}
+
+export function getCompensatedAlcheWorksCardPoseDefinition(
+  poseId: AlcheWorksCardPoseId,
+  viewportWidth: number,
+  viewportHeight: number,
+): AlcheWorksCardPoseDefinition {
+  const pose = getAlcheWorksCardPoseDefinition(poseId);
+  const compensation = getAlcheWorksDesktopAspectCompensation(viewportWidth, viewportHeight);
+  if (compensation <= 0) return pose;
+
+  if (poseId === "support-left-upper") {
+    return {
+      ...pose,
+      angle: pose.angle + lerp(0, -0.12, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.1, compensation),
+    };
+  }
+
+  if (poseId === "queue-right-lower") {
+    return {
+      ...pose,
+      angle: pose.angle + lerp(0, 0.1, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.08, compensation),
+    };
+  }
+
+  if (poseId === "queue-right-lower-offscreen") {
+    return {
+      ...pose,
+      angle: pose.angle + lerp(0, 0.12, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.08, compensation),
+    };
+  }
+
+  return pose;
 }
 
 export function getAdjacentAlcheWorksShotId(shotId: AlcheWorksShotId, direction: -1 | 1) {

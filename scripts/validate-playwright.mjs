@@ -191,26 +191,26 @@ const expectedShotStates = {
 
 const laneTargets = {
   entryRightLower: {
-    centerX: { min: 980, max: 1320 },
-    centerY: { min: 600, max: 860 },
-    width: { min: 180, max: 380 },
+    centerXRatio: { min: 0.68, max: 0.92 },
+    centerYRatio: { min: 0.56, max: 0.8 },
+    widthRatio: { min: 0.12, max: 0.28 },
   },
   leadCenter: {
-    centerX: { min: 520, max: 860 },
-    centerY: { min: 280, max: 520 },
-    width: { min: 620, max: 980 },
+    centerXRatio: { min: 0.36, max: 0.6 },
+    centerYRatio: { min: 0.26, max: 0.48 },
+    widthRatio: { min: 0.43, max: 0.7 },
   },
   supportLeft: {
-    centerY: { min: 180, max: 420 },
-    screenLeft: { min: 0, max: 18 },
-    screenRight: { min: 280, max: 520 },
-    width: { min: 260, max: 460 },
+    centerYRatio: { min: 0.17, max: 0.4 },
+    screenLeftRatio: { min: 0, max: 0.02 },
+    screenRightRatio: { min: 0.2, max: 0.36 },
+    widthRatio: { min: 0.18, max: 0.28 },
   },
   queueRight: {
-    centerY: { min: 500, max: 760 },
-    screenLeft: { min: 930, max: 1170 },
-    screenRight: { min: 1422, max: 1440 },
-    width: { min: 260, max: 460 },
+    centerYRatio: { min: 0.46, max: 0.72 },
+    screenLeftRatio: { min: 0.73, max: 0.9 },
+    screenRightRatio: { min: 0.98, max: 1 },
+    widthRatio: { min: 0.18, max: 0.3 },
   },
 };
 
@@ -384,22 +384,53 @@ function getCardScreenWidth(layerState, cardIndex) {
   return right - left;
 }
 
+function getViewportWidth(layerState) {
+  assert(layerState.viewportWidth !== null && layerState.viewportWidth !== undefined, "Missing viewport width");
+  return layerState.viewportWidth;
+}
+
+function getViewportHeight(layerState) {
+  assert(layerState.viewportHeight !== null && layerState.viewportHeight !== undefined, "Missing viewport height");
+  return layerState.viewportHeight;
+}
+
 function assertCardInLane(layerState, cardIndex, lane, label) {
   const centerX = getCardScreenCenterX(layerState, cardIndex);
   const centerY = getCardScreenCenterY(layerState, cardIndex);
   const width = getCardScreenWidth(layerState, cardIndex);
   const left = layerState[`card${cardIndex}ScreenLeft`];
   const right = layerState[`card${cardIndex}ScreenRight`];
+  const viewportWidth = getViewportWidth(layerState);
+  const viewportHeight = getViewportHeight(layerState);
   if (lane.centerX) {
     assertRange(centerX, lane.centerX, `${label} card${cardIndex} lane center x`);
   }
-  assertRange(centerY, lane.centerY, `${label} card${cardIndex} lane center y`);
-  assertRange(width, lane.width, `${label} card${cardIndex} lane width`);
+  if (lane.centerXRatio) {
+    assertRange(centerX / viewportWidth, lane.centerXRatio, `${label} card${cardIndex} lane center x ratio`);
+  }
+  if (lane.centerY) {
+    assertRange(centerY, lane.centerY, `${label} card${cardIndex} lane center y`);
+  }
+  if (lane.centerYRatio) {
+    assertRange(centerY / viewportHeight, lane.centerYRatio, `${label} card${cardIndex} lane center y ratio`);
+  }
+  if (lane.width) {
+    assertRange(width, lane.width, `${label} card${cardIndex} lane width`);
+  }
+  if (lane.widthRatio) {
+    assertRange(width / viewportWidth, lane.widthRatio, `${label} card${cardIndex} lane width ratio`);
+  }
   if (lane.screenLeft) {
     assertRange(left, lane.screenLeft, `${label} card${cardIndex} lane screen left`);
   }
+  if (lane.screenLeftRatio) {
+    assertRange(left / viewportWidth, lane.screenLeftRatio, `${label} card${cardIndex} lane screen left ratio`);
+  }
   if (lane.screenRight) {
     assertRange(right, lane.screenRight, `${label} card${cardIndex} lane screen right`);
+  }
+  if (lane.screenRightRatio) {
+    assertRange(right / viewportWidth, lane.screenRightRatio, `${label} card${cardIndex} lane screen right ratio`);
   }
 }
 
@@ -718,7 +749,7 @@ async function runScenario(browser, scenario) {
     await page.waitForFunction(
       () => document.querySelectorAll("canvas").length === 1 && document.querySelector("[data-active-section]") !== null,
       undefined,
-      { timeout: 8000 },
+      { timeout: 12000 },
     );
 
     await assertTopPageShell(page, scenario.name);
@@ -733,12 +764,14 @@ async function runScenario(browser, scenario) {
   }
 }
 
-async function captureFixedStates(browser, shots) {
+async function captureFixedStates(browser, shots, options = {}) {
+  const viewport = options.viewport ?? { width: 1440, height: 1080 };
+  const fileSuffix = options.fileSuffix ?? "";
   const layerStates = new Map();
   for (const shot of shots) {
     console.log(`Capturing ${shot.name}...`);
     const context = await browser.newContext({
-      viewport: { width: 1440, height: 1080 },
+      viewport,
       locale: "en-US",
       reducedMotion: "reduce",
     });
@@ -875,7 +908,7 @@ async function captureFixedStates(browser, shots) {
         assert(layerState.worksTransparent === true, `Expected WORKS transparent material for ${shot.name}`);
       }
       await page.screenshot({
-        path: path.join(outputDir, `${shot.name}.png`),
+        path: path.join(outputDir, `${shot.name}${fileSuffix}.png`),
         fullPage: false,
       });
       await page.close();
@@ -1055,9 +1088,11 @@ async function capturePointerInteraction(browser) {
   }
 }
 
-async function captureRealWheelHandoff(browser) {
+async function captureRealWheelHandoff(browser, options = {}) {
+  const viewport = options.viewport ?? { width: 1440, height: 1080 };
+  const fileSuffix = options.fileSuffix ?? "";
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 1080 },
+    viewport,
     locale: "en-US",
     reducedMotion: "no-preference",
   });
@@ -1071,17 +1106,17 @@ async function captureRealWheelHandoff(browser) {
         document.querySelector("[data-active-section]")?.getAttribute("data-intro-ready") === "true" &&
         typeof window.__getAlcheLayerDebugState === "function",
       undefined,
-      { timeout: 8000 },
+      { timeout: 12000 },
     );
-    await page.mouse.move(720, 540);
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
 
     const samples = [];
     const capturedShots = new Set();
     const capturedStates = new Map();
 
-    for (let step = 0; step < 44; step += 1) {
-      await page.mouse.wheel(0, 420);
-      await page.waitForTimeout(520);
+    for (let step = 0; step < 68; step += 1) {
+      await page.mouse.wheel(0, 260);
+      await page.waitForTimeout(420);
       const snapshot = await page.evaluate((stepLabel) => {
         const root = document.querySelector("[data-active-section]");
         const layerState = window.__getAlcheLayerDebugState?.() ?? null;
@@ -1104,6 +1139,8 @@ async function captureRealWheelHandoff(browser) {
           card1Visible: layerState?.card1Visible ?? false,
           card0FacingError: layerState?.card0FacingError ?? null,
           card1FacingError: layerState?.card1FacingError ?? null,
+          viewportWidth: layerState?.viewportWidth ?? null,
+          viewportHeight: layerState?.viewportHeight ?? null,
           card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
           card0ScreenRight: layerState?.card0ScreenRight ?? null,
           card0ScreenTop: layerState?.card0ScreenTop ?? null,
@@ -1125,7 +1162,7 @@ async function captureRealWheelHandoff(browser) {
         matchesCardInLane(snapshot, 0, laneTargets.entryRightLower)
       ) {
         await page.screenshot({
-          path: path.join(outputDir, "cards-wheel-entry.png"),
+          path: path.join(outputDir, `cards-wheel-entry${fileSuffix}.png`),
           fullPage: false,
         });
         capturedShots.add("cards-wheel-entry");
@@ -1141,7 +1178,7 @@ async function captureRealWheelHandoff(browser) {
         matchesCardInLane(snapshot, 0, laneTargets.leadCenter)
       ) {
         await page.screenshot({
-          path: path.join(outputDir, "cards-wheel-center.png"),
+          path: path.join(outputDir, `cards-wheel-center${fileSuffix}.png`),
           fullPage: false,
         });
         capturedShots.add("cards-wheel-center");
@@ -1160,7 +1197,7 @@ async function captureRealWheelHandoff(browser) {
         matchesCardSeparation(snapshot, 12)
       ) {
         await page.screenshot({
-          path: path.join(outputDir, "cards-wheel-queue.png"),
+          path: path.join(outputDir, `cards-wheel-queue${fileSuffix}.png`),
           fullPage: false,
         });
         capturedShots.add("cards-wheel-queue");
@@ -1182,7 +1219,7 @@ async function captureRealWheelHandoff(browser) {
         getCardScreenCenterY(snapshot, 1) < getCardScreenCenterY(queueState, 1) - 30
       ) {
         await page.screenshot({
-          path: path.join(outputDir, "cards-wheel-handoff.png"),
+          path: path.join(outputDir, `cards-wheel-handoff${fileSuffix}.png`),
           fullPage: false,
         });
         capturedShots.add("cards-wheel-handoff");
@@ -1266,6 +1303,12 @@ async function run() {
             viewport: { width: 1440, height: 1080 },
           },
           {
+            name: "desktop-16x10-en",
+            locale: "en-US",
+            expectedPath: "/en/",
+            viewport: { width: 2560, height: 1600 },
+          },
+          {
             name: "tablet-ja",
             locale: "ja-JP",
             expectedPath: "/ja/",
@@ -1285,8 +1328,19 @@ async function run() {
       }
 
       const layerStates = await captureFixedStates(browser, activeFixedStateShots);
+      const desktopWideShots = activeFixedStateShots.filter((shot) =>
+        ["cards-b-queue", "cards-handoff-mid", "cards-settled"].includes(shot.name),
+      );
+      await captureFixedStates(browser, desktopWideShots, {
+        viewport: { width: 2560, height: 1600 },
+        fileSuffix: "-desktop-16x10",
+      });
       if (!cardsOnlyMode) {
         await captureRealWheelHandoff(browser);
+        await captureRealWheelHandoff(browser, {
+          viewport: { width: 2560, height: 1600 },
+          fileSuffix: "-desktop-16x10",
+        });
         await capturePointerInteraction(browser);
       }
       await writeReferenceBoard(layerStates);
