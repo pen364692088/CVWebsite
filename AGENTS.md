@@ -2,12 +2,12 @@
 
 ## 项目概览
 
-- 项目类型：Next.js App Router 单页作品站
-- 站点名称：`Ashen Archive`
-- 目标人设：`Zhouyu Liao`
+- 项目类型：Next.js App Router 静态导出站点壳 + `ALCHE` 视觉复刻程序
+- 当前主目标：`ALCHE visual reproduction`
+- 当前活跃程序：`kv -> works_intro -> works -> works_cards`
 - 部署目标：GitHub Pages，子路径 `/CVWebsite/`
-- 当前视觉方向：`Dark Fantasy + Modern Minimal`
-- 当前首页方向：`Abyss Museum / Scene-led Hero`
+- 当前运行模式：`kv-works`
+- 参考 authority：`Task/参考视频.mp4` -> `data/alche-works-shotbook.json` -> 新鲜本地/远端截图
 - 支持语言：`en`、`zh-CN`、`ja`、`ko`
 
 ## 技术栈
@@ -25,19 +25,19 @@
 ## 目录地图
 
 - `app/`
-  App Router 路由入口。`app/page.tsx` 是语言网关，`app/[locale]/page.tsx` 是主站单页。
+  App Router 路由入口。`app/page.tsx` 是语言网关，`app/[locale]/page.tsx` 当前直接进入 `AlcheTopPageShell`。
 
 - `components/`
-  可复用组件与交互组件，包括语言切换、作品详情弹层、sigil 阅读控制器等。
+  当前活跃入口集中在 `components/alche-top-page/*`。这是单一 Three/R3F Canvas 的真实渲染链。
 
 - `sections/`
-  单页各区块实现：Hero、About、Disciplines、Artifacts、Game、Contact。
+  旧的 portfolio 区块实现仍在仓库中，但不是当前主路由的活跃首页路径。
 
 - `data/`
-  所有易变内容源，包括多语言字典、作品数据、联系信息与简历数据。
+  当前最重要的是 `data/alche-works-shotbook.json`。旧的 portfolio 内容数据仍保留，但不是当前主线 authority。
 
 - `lib/`
-  站点常量、`basePath` 相关工具、语言判定逻辑。
+  包含 `basePath` 工具、语言逻辑，以及当前 `ALCHE` runtime/shotbook helper。
 
 - `styles/`
   全局 theme token。
@@ -110,9 +110,14 @@ http://localhost:3000/CVWebsite
 
 优先编辑：
 
-- [`data/dictionaries.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/dictionaries.ts)
-- [`data/artifacts.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/artifacts.ts)
-- [`data/profile.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/profile.ts)
+- 当前 `ALCHE` 主线优先：
+  - [`data/alche-works-shotbook.json`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/alche-works-shotbook.json)
+  - [`lib/alche-works-shotbook.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/alche-works-shotbook.ts)
+  - [`data/alche-top-page.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/alche-top-page.ts)
+- 旧的 portfolio 内容数据次之：
+  - [`data/dictionaries.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/dictionaries.ts)
+  - [`data/artifacts.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/artifacts.ts)
+  - [`data/profile.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/profile.ts)
 
 ### 4. 多语言结构必须保持完整
 
@@ -125,33 +130,33 @@ http://localhost:3000/CVWebsite
 
 新增或修改区块文案时，4 个语言必须一起补齐，不允许只改英文。
 
-### 5. 动效边界
+### 5. 当前视觉程序边界
+
+当前不要再把首页当成传统 DOM hero 或旧 portfolio 首屏来改。
 
 允许：
 
 - reveal
-- slight upward motion
-- slow glow
-- subtle parallax
-- modal enter/exit
+- shotbook 驱动的 section choreography
+- 单一 Canvas 内的圆弧轨迹、径向朝向、桌面宽高比补偿
+- named shot 与 free-scroll 双验证
 
 不允许默认引入：
 
-- 多个 Canvas 场景
-- 自由相机 / 3D 漫游
-- 高频闪烁
-- 全屏粒子背景
-- 大面积实时 blur
-- 依赖大量 JS 计算的滚动特效
+- 把当前问题误诊成 portfolio 内容层问题
+- 重新打开 `full-chain` parity
+- 把 side-lane 距离问题优先归因到全局 `baseRadius`
+- 只用 `alcheShot` 成功就宣称 free-scroll 正确
+- 缺远端截图证据就宣称 GitHub Pages 已对齐
 
-首页当前采用 2D / 2.5D 场景层方案：
+当前首页是单一 Three/R3F Canvas：
 
-- 远景城堡 / 月轮
-- 中景冷雾
-- 前景灰烬 / 火星 / 烟层
-- 三张 ritual relic 卡
+- 墙体
+- 中心模型
+- works cards
+- DOM shell 只负责语言、header、section 与 debug UI
 
-继续沿着这个方向迭代，不要默认把首页重新改回 realtime relic hero。
+继续沿着这个方向迭代，不要默认把首页重新改回旧的 `Ashen Archive` 首页结构。
 
 ### 6. 无障碍要求
 
@@ -164,6 +169,19 @@ http://localhost:3000/CVWebsite
 - 可聚焦 CTA
 
 ## 内容维护指引
+
+当前主线不是“补 portfolio 内容”，而是“提高 `ALCHE visual reproduction` 的 shot parity”。
+
+高优先级入口：
+
+- handoff：
+  [`docs/handoff/alche-top-page-handoff-2026-04-17.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-17.md)
+- visual loop：
+  [`docs/alche-cards-visual-loop.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/alche-cards-visual-loop.md)
+- skill：
+  [`.codex/skills/alche-works-visual-loop/SKILL.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/.codex/skills/alche-works-visual-loop/SKILL.md)
+- experience：
+  [`docs/experience/alche-works-maintenance-lessons.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/experience/alche-works-maintenance-lessons.md)
 
 最常替换的位置：
 
@@ -186,17 +204,22 @@ http://localhost:3000/CVWebsite
 - 场景图层与粒子参数：
   [`data/atmosphere.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/data/atmosphere.ts)
 
-如果用户要求“补全真实内容”，优先从这些位置下手，而不是直接改组件。
+如果用户要求“补全真实内容”，先确认他要的是：
+
+- `ALCHE reproduction` 主线
+- 还是旧 portfolio 内容
+
+不要在两套目标之间来回混改。
 
 ## 验证建议
 
-改视觉或交互后至少执行：
+当前 `ALCHE` 主线推荐验证顺序：
 
 ```bash
-npm run lint
-npm run typecheck
 npm run build
+npm run typecheck
 npm run verify:static
+npm run validate:playwright
 ```
 
 改资源路径或 basePath 相关逻辑后，额外执行：
@@ -208,8 +231,9 @@ npm run verify:links
 ## 当前已知事实
 
 - 根路径 `/CVWebsite/` 会先读本地语言记忆，再读浏览器语言
-- LinkedIn 当前仍是预留位，未接入已验证公开链接
-- 首页现在采用 `Abyss` 场景首屏，而不是 realtime relic 主视觉
-- 首页三张 ritual 卡固定是 `EgoCore`、`Ashen Archive`、`OpenEmotion`
-- 阅读控制器是轻量 DOM 交互，驱动作品排序与高亮
-- 素材来源与生成说明统一记录在 [`docs/assets-manifest.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/assets-manifest.md)
+- 主路由 `/{locale}/` 当前进入 [`AlcheTopPageShell`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/alche-top-page-shell.tsx)
+- 当前运行模式是 `kv-works`
+- 当前 authority 不是旧 portfolio 文案，而是参考视频、shotbook 与新鲜截图
+- `worksCardsProgress` 已独立于 `activeSection`
+- `alcheShot` 是命名状态诊断入口，`alcheCardDebug=identity|poster` 已接入
+- 当前主线的目标是 `ALCHE visual reproduction`，不是旧的 `Ashen Archive` 首页优化

@@ -4,6 +4,12 @@ Date: `2026-04-17`
 Scope: active `kv -> works -> works_cards` program on the ALCHE top page  
 Current runtime mode: `kv-works`
 
+## Program Goal
+
+Treat this repo as `ALCHE visual reproduction` first.
+
+Do not frame the current homepage work as a generic portfolio-homepage iteration unless the user explicitly broadens scope back to the archived portfolio layer.
+
 ## Current Status
 
 - Main route `/{locale}/` is on the active `alche-top-page` runtime.

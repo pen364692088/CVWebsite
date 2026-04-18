@@ -1,6 +1,6 @@
 # Handoff Index
 
-Current authoritative handoff for the ALCHE top-page / works program:
+Current authoritative handoff for the active `ALCHE visual reproduction` program:
 
 - [`alche-top-page-handoff-2026-04-17.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-17.md)
 
