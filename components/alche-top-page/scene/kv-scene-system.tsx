@@ -569,24 +569,16 @@ function WorksCardPair({
   useFrame((state, delta) => {
     if (!groupRef.current || !leftRef.current || !rightRef.current || materials.length < 2) return;
 
-    const cardsVisible = worksWordHandoff >= 0.985;
+    const inWorksCards = sceneState.activeSection === "works_cards";
+    const inWorksOutro = sceneState.activeSection === "works_outro";
+    const outroMix = inWorksOutro ? smoothstep(clamp01(sceneState.worksOutro.clearMix)) : sceneState.activeSection === "mission_in" ? 1 : 0;
+    const cardsVisible = worksWordHandoff >= 0.985 && (inWorksCards || inWorksOutro) && outroMix < 0.999;
     const progress = sceneState.worksCardsProgress;
     const segment = getAlcheWorksCardsSegment(progress);
     const entryMix = smoothstep(clamp01(segment.phase === "entry" ? segment.mix : 1));
     const queueMix = smoothstep(clamp01(segment.phase === "queue" ? segment.mix : segment.phase === "handoff" || segment.phase === "settled" ? 1 : 0));
     const handoffMix = smoothstep(clamp01(segment.phase === "handoff" ? segment.mix : segment.phase === "settled" ? 1 : 0));
-    const card0Visible = cardsVisible;
-    const card1Visible =
-      cardsVisible &&
-      (segment.phase === "handoff" || segment.phase === "settled" || (segment.phase === "queue" && queueMix >= 0.18));
-    const leadIndex = !cardsVisible
-      ? null
-      : segment.phase === "entry" || segment.phase === "queue"
-        ? 0
-        : handoffMix >= 0.5
-          ? 1
-          : 0;
-    const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
+    const cardsSequenceVisible = cardsVisible && inWorksCards;
     const compensatedQueueRightLowerOffscreenPose = getCompensatedAlcheWorksCardPoseDefinition(
       "queue-right-lower-offscreen",
       state.size.width,
@@ -602,22 +594,34 @@ function WorksCardPair({
       state.size.width,
       state.size.height,
     );
+    const card0Visible = cardsVisible;
+    const card1Visible =
+      inWorksOutro
+        ? cardsVisible && outroMix < 0.985
+        : cardsSequenceVisible &&
+          (segment.phase === "handoff" || segment.phase === "settled" || (segment.phase === "queue" && queueMix >= 0.18));
+    const leadIndex = !cardsVisible ? null : inWorksOutro ? 1 : segment.phase === "entry" || segment.phase === "queue" ? 0 : handoffMix >= 0.5 ? 1 : 0;
+    const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
     const card0Pose =
-      segment.phase === "entry"
-        ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
-        : segment.phase === "queue"
-          ? leadCenterPose
-        : segment.phase === "handoff"
-            ? lerpWorksCardPose(leadCenterPose, compensatedSupportLeftUpperPose, handoffMix)
-            : compensatedSupportLeftUpperPose;
-    const card1Pose =
-      segment.phase === "entry"
-        ? compensatedQueueRightLowerOffscreenPose
-        : segment.phase === "queue"
-          ? lerpWorksCardPose(compensatedQueueRightLowerOffscreenPose, compensatedQueueRightLowerPose, queueMix)
+      inWorksOutro
+        ? compensatedSupportLeftUpperPose
+        : segment.phase === "entry"
+          ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
+          : segment.phase === "queue"
+            ? leadCenterPose
           : segment.phase === "handoff"
-            ? lerpWorksCardPose(compensatedQueueRightLowerPose, leadCenterPose, handoffMix)
-            : leadCenterPose;
+              ? lerpWorksCardPose(leadCenterPose, compensatedSupportLeftUpperPose, handoffMix)
+              : compensatedSupportLeftUpperPose;
+    const card1Pose =
+      inWorksOutro
+        ? lerpWorksCardPose(leadCenterPose, compensatedQueueRightLowerOffscreenPose, outroMix)
+        : segment.phase === "entry"
+          ? compensatedQueueRightLowerOffscreenPose
+          : segment.phase === "queue"
+            ? lerpWorksCardPose(compensatedQueueRightLowerOffscreenPose, compensatedQueueRightLowerPose, queueMix)
+            : segment.phase === "handoff"
+              ? lerpWorksCardPose(compensatedQueueRightLowerPose, leadCenterPose, handoffMix)
+              : leadCenterPose;
 
     groupRef.current.visible = cardsVisible && (card0Visible || card1Visible);
     leftRef.current.visible = card0Visible;
@@ -693,8 +697,10 @@ function WorksCardPair({
       pinnedShotMode ? card1Pose.scale : THREE.MathUtils.damp(rightRef.current.scale.x, card1Pose.scale, 4.2, delta),
     );
 
-    materials[0].opacity = card0Visible ? 1 : 0;
-    materials[1].opacity = card1Visible ? 1 : 0;
+    const card0TargetOpacity = card0Visible ? (inWorksOutro ? 1 - outroMix * 0.72 : 1) : 0;
+    const card1TargetOpacity = card1Visible ? (inWorksOutro ? 1 - outroMix : 1) : 0;
+    materials[0].opacity = card0TargetOpacity;
+    materials[1].opacity = card1TargetOpacity;
 
     if (layerDebugRef) {
       leftRef.current.getWorldPosition(card0WorldRef.current);

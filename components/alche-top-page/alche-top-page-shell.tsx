@@ -14,6 +14,8 @@ import {
   ALCHE_TOP_RUNTIME_MODE,
   ALCHE_TOP_SECTION_IDS,
   ALCHE_TOP_SECTIONS,
+  deriveMissionInSceneState,
+  deriveWorksOutroState,
   normalizeTopRuntimeSection,
   type AlcheScrollableSectionId,
   type AlcheTopSectionId,
@@ -213,6 +215,29 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentShotId = debugOverride?.shotId ?? null;
   const showShotSelector = !captureMode && currentShotId !== null;
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
+  const worksOutroState =
+    currentActiveSection === "works_outro"
+      ? deriveWorksOutroState(currentSectionProgress)
+      : currentActiveSection === "mission_in"
+        ? deriveWorksOutroState(1)
+        : { clearMix: 0, residualMix: 0 };
+  const missionInState =
+    currentActiveSection === "mission_in"
+      ? deriveMissionInSceneState(currentSectionProgress)
+      : { visible: 0, flattenMix: 0, whiteMix: 0, emblemMix: 0 };
+  const missionPanelProgress =
+    currentActiveSection === "works_outro"
+      ? worksOutroState.clearMix * 0.42
+      : currentActiveSection === "mission_in"
+        ? 0.42 + missionInState.flattenMix * 0.58
+        : 0;
+  const missionOutlineOpacity =
+    currentActiveSection === "works_outro"
+      ? Math.max(0, (worksOutroState.clearMix - 0.34) / 0.56) * 0.68
+      : currentActiveSection === "mission_in"
+        ? 0.68 + missionInState.emblemMix * 0.32
+        : 0;
+  const missionPanelVisible = missionPanelProgress > 0.001;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -342,8 +367,10 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     () =>
       ({
         "--alche-intro": currentIntroProgress.toFixed(3),
+        "--alche-mission-panel-progress": missionPanelProgress.toFixed(3),
+        "--alche-mission-outline-opacity": missionOutlineOpacity.toFixed(3),
       }) as CSSProperties,
-    [currentIntroProgress],
+    [currentIntroProgress, missionOutlineOpacity, missionPanelProgress],
   );
 
   return (
@@ -359,6 +386,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-render-intro-ready={introSettled ? "true" : "false"}
       data-render-debug-version={debugOverrideVersion}
       data-pointer-debug={pointerDebugEnabled ? "true" : "false"}
+      data-mission-panel-visible={missionPanelVisible ? "true" : "false"}
+      data-mission-panel-progress={missionPanelProgress.toFixed(3)}
+      data-mission-outline-opacity={missionOutlineOpacity.toFixed(3)}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -392,6 +422,25 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             <div className={styles.loadingRule}>
               <span style={{ transform: `scaleX(${Math.max(currentIntroProgress, 0.02)})` }} />
             </div>
+          </div>
+
+          <div
+            className={styles.missionTransition}
+            data-mission-transition
+            data-visible={missionPanelVisible ? "true" : "false"}
+            aria-hidden={missionPanelVisible ? "false" : "true"}
+          >
+            <div className={styles.missionTransitionPanel} data-mission-panel />
+            <svg
+              className={styles.missionTransitionOutline}
+              data-mission-outline
+              viewBox="0 0 1000 1000"
+              role="img"
+              aria-label="Mission transition emblem"
+            >
+              <path d="M236 842 L500 128 L764 842" />
+              <path d="M352 598 L648 598" />
+            </svg>
           </div>
 
           <header className={styles.header}>

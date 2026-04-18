@@ -137,6 +137,74 @@
         "videoTime": 10.58,
         "taskStillPath": "Task/滚动效果/首页滚动至work/滚动stage8.png"
       }
+    },
+    {
+      "id": "works-outro-entry",
+      "section": "works_outro",
+      "progress": 0.18,
+      "intro": 1,
+      "card0": {
+        "visible": true,
+        "poseId": "support-left-upper"
+      },
+      "card1": {
+        "visible": true,
+        "poseId": "lead-center"
+      },
+      "reference": {
+        "videoTime": 10.92
+      }
+    },
+    {
+      "id": "works-outro-flatten",
+      "section": "works_outro",
+      "progress": 0.62,
+      "intro": 1,
+      "card0": {
+        "visible": true,
+        "poseId": "support-left-upper"
+      },
+      "card1": {
+        "visible": true,
+        "poseId": "queue-right-lower-offscreen"
+      },
+      "reference": {
+        "videoTime": 11.24
+      }
+    },
+    {
+      "id": "mission-in-panel",
+      "section": "mission_in",
+      "progress": 0.48,
+      "intro": 1,
+      "card0": {
+        "visible": false,
+        "poseId": null
+      },
+      "card1": {
+        "visible": false,
+        "poseId": null
+      },
+      "reference": {
+        "videoTime": 11.62
+      }
+    },
+    {
+      "id": "mission-in-settled",
+      "section": "mission_in",
+      "progress": 0.92,
+      "intro": 1,
+      "card0": {
+        "visible": false,
+        "poseId": null
+      },
+      "card1": {
+        "visible": false,
+        "poseId": null
+      },
+      "reference": {
+        "videoTime": 11.96
+      }
     }
   ]
 }

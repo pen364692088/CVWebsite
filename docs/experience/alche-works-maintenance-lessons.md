@@ -55,3 +55,17 @@ Correct order:
 2. `npm run typecheck`
 3. `npm run verify:static`
 4. `npm run validate:playwright`
+
+## `alche-exp-0006` Scroll-Owned Section State Must Not Be Deferred
+
+For the ALCHE top-page program, `activeSection / trackedSection / sectionProgress` are not cosmetic UI state.
+They directly control the Three scene, card visibility, and free-scroll validation.
+
+Do not wrap the scroll-owned section sync path in deferred transitions.
+If these updates are delayed, the visual chain can drift into a wrong section even while the DOM scroll position is already correct.
+
+Rule for this program:
+
+- write the scroll-owned refs immediately
+- update section state synchronously
+- treat validator failures around skipped sections as possible ownership latency before changing pose math

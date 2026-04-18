@@ -35,7 +35,7 @@ export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] 
   ALCHE_TOP_RUNTIME_MODE === "kv-only"
     ? ["kv"]
     : ALCHE_TOP_RUNTIME_MODE === "kv-works"
-      ? ["kv", "works_intro", "works", "works_cards"]
+      ? ["kv", "works_intro", "works", "works_cards", "works_outro", "mission_in"]
       : ALCHE_SCROLLABLE_SECTION_IDS;
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
@@ -156,6 +156,12 @@ export interface AlcheLayerDebugState {
   cardsLeadWorldZ: number | null;
   cardsSupportWorldX: number | null;
   cardsSupportWorldZ: number | null;
+  worksOutroClearMix: number | null;
+  missionFlattenMix: number | null;
+  missionWhiteMix: number | null;
+  missionEmblemMix: number | null;
+  missionPanelProgress: number | null;
+  missionOutlineOpacity: number | null;
 }
 
 export interface AlcheWorksIntroSceneState {
@@ -505,12 +511,14 @@ export function normalizeTopRuntimeSection(sectionId: AlcheTopSectionId): AlcheT
       sectionId === "kv" ||
       sectionId === "works_intro" ||
       sectionId === "works" ||
-      sectionId === "works_cards"
+      sectionId === "works_cards" ||
+      sectionId === "works_outro" ||
+      sectionId === "mission_in"
     ) {
       return sectionId;
     }
 
-    return "works_cards";
+    return "mission_in";
   }
 
   return sectionId;
@@ -863,7 +871,7 @@ export function deriveTopSceneState(
     kv.wallVisibility = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
     kv.wordVisibility = 0;
     kv.prismVisibility = runtimeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : runtimeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
-    kv.wallFlatten = runtimeSection === "mission_in" ? missionIn.flattenMix : 0;
+    kv.wallFlatten = runtimeSection === "works_outro" ? worksOutro.clearMix * 0.78 : runtimeSection === "mission_in" ? missionIn.flattenMix : 0;
     kv.wallWhiteMix = runtimeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
     kv.visible = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;
   }

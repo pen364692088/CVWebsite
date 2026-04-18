@@ -2,7 +2,7 @@
 
 import Lenis from "lenis";
 import { useReducedMotion } from "motion/react";
-import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -78,12 +78,13 @@ function getAbsoluteTop(node: HTMLElement | null) {
 
 function getWorksCardsProgress(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const worksCards = sectionRefs.works_cards;
+  const worksOutro = sectionRefs.works_outro;
   if (!worksCards) return 0;
 
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
   const start = getAbsoluteTop(worksCards) - viewportLine;
-  const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
-  return clamp01((window.scrollY - start) / Math.max(maxScroll - start, 1));
+  const end = worksOutro ? getAbsoluteTop(worksOutro) - viewportLine : Math.max(document.documentElement.scrollHeight - window.innerHeight, start + 1);
+  return clamp01((window.scrollY - start) / Math.max(end - start, 1));
 }
 
 function getWorksWordHandoff(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
@@ -111,15 +112,18 @@ function getWorksWordHandoff(sectionRefs: Record<AlcheScrollableSectionId, HTMLE
 
 function findSectionAtViewport(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
+  let matchedSection: AlcheScrollableSectionId = "kv";
 
   for (const sectionId of ALCHE_TOP_RENDERABLE_SECTIONS) {
     const node = sectionRefs[sectionId];
     if (!node) continue;
     const rect = node.getBoundingClientRect();
-    if (rect.top <= viewportLine && rect.bottom >= viewportLine) return sectionId;
+    if (rect.top <= viewportLine && rect.bottom >= viewportLine) {
+      matchedSection = sectionId;
+    }
   }
 
-  return "kv" as const;
+  return matchedSection;
 }
 
 export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
@@ -197,17 +201,30 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
 
     const syncDisplaySection = (sectionId: AlcheScrollableSectionId, progress: number) => {
       const displaySection: AlcheTopSectionId = intro.value < 0.98 ? "loading" : sectionId;
-      startTransition(() => {
-        setTrackedSection(sectionId);
-        setActiveSection(displaySection);
-        setSectionProgress(progress);
-      });
+      trackedSectionRef.current = sectionId;
+      progressRef.current[sectionId] = progress;
+      setTrackedSection(sectionId);
+      setActiveSection(displaySection);
+      setSectionProgress(progress);
+    };
+
+    const syncDisplayFromViewport = () => {
+      const nextSection = findSectionAtViewport(sectionRefs.current);
+      const nextProgress = getSectionProgress(sectionRefs.current[nextSection]);
+      progressRef.current[nextSection] = nextProgress;
+      syncDisplaySection(nextSection, nextProgress);
     };
 
     const syncWorksCardsProgress = () => {
       const nextProgress = getWorksCardsProgress(sectionRefs.current);
       worksCardsProgressRef.current = nextProgress;
       setWorksCardsProgress(nextProgress);
+    };
+
+    const handleViewportScroll = () => {
+      setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
+      syncWorksCardsProgress();
+      syncDisplayFromViewport();
     };
 
     if (!reducedMotion) {
@@ -223,6 +240,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         ScrollTrigger.update();
         setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
         syncWorksCardsProgress();
+        syncDisplayFromViewport();
       });
 
       const raf = (time: number) => {
@@ -257,8 +275,16 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         trigger: section,
         start: ALCHE_TOP_SCROLL_TUNING.activeTriggerStart,
         end: ALCHE_TOP_SCROLL_TUNING.activeTriggerEnd,
-        onEnter: () => syncDisplaySection(sectionId, progressRef.current[sectionId] ?? 0),
-        onEnterBack: () => syncDisplaySection(sectionId, progressRef.current[sectionId] ?? 0),
+        onEnter: () => {
+          const nextProgress = getSectionProgress(sectionRefs.current[sectionId]);
+          progressRef.current[sectionId] = nextProgress;
+          syncDisplaySection(sectionId, nextProgress);
+        },
+        onEnterBack: () => {
+          const nextProgress = getSectionProgress(sectionRefs.current[sectionId]);
+          progressRef.current[sectionId] = nextProgress;
+          syncDisplaySection(sectionId, nextProgress);
+        },
       });
     });
 
@@ -304,14 +330,18 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       };
     }
 
+    window.addEventListener("scroll", handleViewportScroll, { passive: true });
+    window.addEventListener("resize", handleViewportScroll);
+
     ScrollTrigger.refresh();
-    syncWorksCardsProgress();
-    setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
+    handleViewportScroll();
 
     return () => {
       introTween.kill();
       activeTriggers.forEach((trigger) => trigger?.kill());
       progressTriggers.forEach((trigger) => trigger?.kill());
+      window.removeEventListener("scroll", handleViewportScroll);
+      window.removeEventListener("resize", handleViewportScroll);
       if (frame) window.cancelAnimationFrame(frame);
       lenis?.destroy();
       lenisRef.current = null;

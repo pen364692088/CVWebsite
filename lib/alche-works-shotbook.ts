@@ -33,6 +33,10 @@ export const ALCHE_WORKS_SHOT_IDS = [
   "cards-b-queue",
   "cards-handoff-mid",
   "cards-settled",
+  "works-outro-entry",
+  "works-outro-flatten",
+  "mission-in-panel",
+  "mission-in-settled",
 ] as const;
 
 export type AlcheWorksShotId = (typeof ALCHE_WORKS_SHOT_IDS)[number];
@@ -49,7 +53,7 @@ export interface AlcheWorksShotReference {
 
 export interface AlcheWorksShotDefinition {
   id: AlcheWorksShotId;
-  section: "works" | "works_cards";
+  section: "works" | "works_cards" | "works_outro" | "mission_in";
   progress: number;
   intro: number;
   card0: AlcheWorksShotCardDefinition;

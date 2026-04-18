@@ -42,6 +42,53 @@
   pointer-events: none;
 }
 
+.missionTransition {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+}
+
+.missionTransitionPanel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 54vh;
+  bottom: -4vh;
+  background:
+    linear-gradient(180deg, rgba(241, 245, 246, 0.94), rgba(222, 229, 229, 0.98) 38%, #dfe5e5),
+    #dfe5e5;
+  transform: translateY(calc((1 - var(--alche-mission-panel-progress, 0)) * 62vh));
+  box-shadow:
+    0 -20px 60px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.missionTransitionOutline {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: min(84vw, 1080px);
+  height: min(88vh, 980px);
+  overflow: visible;
+  transform: translate(-50%, calc((1 - var(--alche-mission-panel-progress, 0)) * 12vh - 8vh));
+  opacity: var(--alche-mission-outline-opacity, 0);
+
+  path {
+    fill: none;
+    stroke: rgba(24, 29, 34, 0.78);
+    stroke-width: 34;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+  }
+}
+
 .loadingOverlay {
   position: absolute;
   inset: 0;

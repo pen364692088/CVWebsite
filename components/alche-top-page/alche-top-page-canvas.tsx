@@ -84,6 +84,18 @@ export function AlcheTopPageCanvas({
       ),
     [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, resolvedWorksCardsProgress, serviceCount, workCount],
   );
+  const missionPanelProgress =
+    sceneState.activeSection === "works_outro"
+      ? sceneState.worksOutro.clearMix * 0.42
+      : sceneState.activeSection === "mission_in"
+        ? 0.42 + sceneState.missionIn.flattenMix * 0.58
+        : 0;
+  const missionOutlineOpacity =
+    sceneState.activeSection === "works_outro"
+      ? Math.max(0, (sceneState.worksOutro.clearMix - 0.34) / 0.56) * 0.68
+      : sceneState.activeSection === "mission_in"
+        ? 0.68 + sceneState.missionIn.emblemMix * 0.32
+        : 0;
   const sceneReducedMotion = reducedMotion || captureMode;
   const pointerDebugRef = useRef<AlchePointerDebugState>({
     enabled: pointerDebugEnabled,
@@ -145,10 +157,22 @@ export function AlcheTopPageCanvas({
     cardsLeadWorldZ: null,
     cardsSupportWorldX: null,
     cardsSupportWorldZ: null,
+    worksOutroClearMix: null,
+    missionFlattenMix: null,
+    missionWhiteMix: null,
+    missionEmblemMix: null,
+    missionPanelProgress: null,
+    missionOutlineOpacity: null,
   });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;
   pointerDebugRef.current.reducedMotion = sceneReducedMotion;
+  layerDebugRef.current.worksOutroClearMix = sceneState.worksOutro.clearMix;
+  layerDebugRef.current.missionFlattenMix = sceneState.missionIn.flattenMix;
+  layerDebugRef.current.missionWhiteMix = sceneState.missionIn.whiteMix;
+  layerDebugRef.current.missionEmblemMix = sceneState.missionIn.emblemMix;
+  layerDebugRef.current.missionPanelProgress = missionPanelProgress;
+  layerDebugRef.current.missionOutlineOpacity = missionOutlineOpacity;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

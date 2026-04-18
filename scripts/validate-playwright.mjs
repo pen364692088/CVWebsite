@@ -41,7 +41,7 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
-const expectedSections = ["kv", "works_intro", "works", "works_cards"];
+const expectedSections = ["kv", "works_intro", "works", "works_cards", "works_outro", "mission_in"];
 
 const fixedStateShots = [
   { name: "loading-settled", search: withIdentityCardDebug("?alcheSection=loading&alcheIntro=0.4&alcheCapture=1") },
@@ -313,7 +313,9 @@ async function assertTopPageShell(page, scenarioName) {
     assert((await page.locator(`[data-top_section="${sectionId}"]`).count()) === 1, `Missing ${sectionId} section for ${scenarioName}`);
   }
 
-  assert((await page.locator('[data-top_section="mission_in"]').count()) === 0, `Unexpected mission sections for ${scenarioName}`);
+  assert((await page.locator("[data-mission-transition]").count()) === 1, `Expected mission transition overlay for ${scenarioName}`);
+  assert((await page.locator("[data-mission-panel]").count()) === 1, `Expected mission transition panel for ${scenarioName}`);
+  assert((await page.locator("[data-mission-outline]").count()) === 1, `Expected mission transition outline for ${scenarioName}`);
   assert((await page.locator("[data-top-scroll-indicator]").count()) === 0, `Unexpected top scroll indicator for ${scenarioName}`);
   assert((await page.locator('[data-top-panel="works"]').count()) === 0, `Unexpected works panel for ${scenarioName}`);
 }
@@ -925,6 +927,10 @@ async function captureFixedStates(browser, shots, options = {}) {
   const cardsBQueueState = layerStates.get("cards-b-queue");
   const cardsHandoffMidState = layerStates.get("cards-handoff-mid");
   const cardsSettledState = layerStates.get("cards-settled");
+  const worksOutroEntryState = layerStates.get("works-outro-entry");
+  const worksOutroFlattenState = layerStates.get("works-outro-flatten");
+  const missionInPanelState = layerStates.get("mission-in-panel");
+  const missionInSettledState = layerStates.get("mission-in-settled");
 
   if (earlyState && settleState && holdState && outState) {
     assert(earlyState.worksHandoff < settleState.worksHandoff, "Expected WORKS handoff to increase through intro.");
@@ -987,6 +993,55 @@ async function captureFixedStates(browser, shots, options = {}) {
     assert(approxEqual(cardsACenterState.modelScale, cardsSettledState.modelScale, 0.01), "Expected center model scale to stay fixed through cards swap.");
     assert(approxEqual(stableModelReference.modelWorldZ, cardsACenterState.modelWorldZ, 0.05), "Expected center model z to stay fixed into cards center.");
     assert(approxEqual(cardsACenterState.modelWorldZ, cardsSettledState.modelWorldZ, 0.05), "Expected center model z to stay fixed through cards swap.");
+  }
+
+  if (worksOutroEntryState && worksOutroFlattenState && missionInPanelState && missionInSettledState) {
+    assert((worksOutroEntryState.worksOpacity ?? 1) <= 0.08, "Expected WORKS to remain gone at works_outro entry.");
+    assert((worksOutroEntryState.cardsOpacity ?? 0) >= 0.82, "Expected cards to still dominate at works_outro entry.");
+    assertCardVisibility(worksOutroEntryState, 0, true, "works-outro-entry");
+    assertCardVisibility(worksOutroEntryState, 1, true, "works-outro-entry");
+    assertRange((worksOutroEntryState.card0ScreenLeft ?? 0) / getViewportWidth(worksOutroEntryState), { min: 0, max: 0.02 }, "works-outro-entry card0 left ratio");
+    assertRange((worksOutroEntryState.card0ScreenRight ?? 0) / getViewportWidth(worksOutroEntryState), { min: 0.14, max: 0.3 }, "works-outro-entry card0 right ratio");
+    assertRange(getCardScreenWidth(worksOutroEntryState, 0) / getViewportWidth(worksOutroEntryState), { min: 0.14, max: 0.24 }, "works-outro-entry card0 width ratio");
+    assertCardInLane(worksOutroEntryState, 1, laneTargets.leadCenter, "works-outro-entry");
+    assertFacingError(worksOutroEntryState, 0, 0.06, "works-outro-entry");
+    assertFacingError(worksOutroEntryState, 1, 0.06, "works-outro-entry");
+    assertRange(worksOutroEntryState.worksOutroClearMix, { min: 0.03, max: 0.14 }, "works-outro-entry clear mix");
+    assertRange(worksOutroEntryState.missionPanelProgress, { min: 0.01, max: 0.08 }, "works-outro-entry panel progress");
+    assertRange(worksOutroEntryState.missionOutlineOpacity, { min: 0, max: 0.02 }, "works-outro-entry outline opacity");
+
+    assert((worksOutroFlattenState.worksOpacity ?? 1) <= 0.08, "Expected WORKS to remain gone during works_outro flatten.");
+    assert((worksOutroFlattenState.cardsOpacity ?? 0) >= 0.12 && (worksOutroFlattenState.cardsOpacity ?? 0) <= 0.42, "Expected cards to be clearing during works_outro flatten.");
+    assertCardVisibility(worksOutroFlattenState, 0, true, "works-outro-flatten");
+    assertCardVisibility(worksOutroFlattenState, 1, true, "works-outro-flatten");
+    assertRange((worksOutroFlattenState.card0ScreenLeft ?? 0) / getViewportWidth(worksOutroFlattenState), { min: 0, max: 0.02 }, "works-outro-flatten card0 left ratio");
+    assertRange((worksOutroFlattenState.card0ScreenRight ?? 0) / getViewportWidth(worksOutroFlattenState), { min: 0.12, max: 0.28 }, "works-outro-flatten card0 right ratio");
+    assertFacingError(worksOutroFlattenState, 0, 0.06, "works-outro-flatten");
+    assertFacingError(worksOutroFlattenState, 1, 0.06, "works-outro-flatten");
+    assertRange(worksOutroFlattenState.worksOutroClearMix, { min: 0.8, max: 0.95 }, "works-outro-flatten clear mix");
+    assertRange(worksOutroFlattenState.missionPanelProgress, { min: 0.35, max: 0.5 }, "works-outro-flatten panel progress");
+    assertRange(worksOutroFlattenState.missionOutlineOpacity, { min: 0.62, max: 0.82 }, "works-outro-flatten outline opacity");
+    assert((worksOutroFlattenState.card1Opacity ?? 1) < (worksOutroEntryState.card1Opacity ?? 0), "Expected B to fade during works_outro flatten.");
+    assert(getCardScreenCenterX(worksOutroFlattenState, 1) > getCardScreenCenterX(worksOutroEntryState, 1), "Expected B to continue moving right during works_outro flatten.");
+
+    assert((missionInPanelState.cardsOpacity ?? 0) <= 0.02, "Expected cards cleared by mission-in-panel.");
+    assertCardVisibility(missionInPanelState, 0, false, "mission-in-panel");
+    assertCardVisibility(missionInPanelState, 1, false, "mission-in-panel");
+    assertRange(missionInPanelState.missionFlattenMix, { min: 0.52, max: 0.78 }, "mission-in-panel flatten mix");
+    assertRange(missionInPanelState.missionWhiteMix, { min: 0.18, max: 0.45 }, "mission-in-panel white mix");
+    assertRange(missionInPanelState.missionPanelProgress, { min: 0.72, max: 0.9 }, "mission-in-panel panel progress");
+    assertRange(missionInPanelState.missionOutlineOpacity, { min: 0.68, max: 0.8 }, "mission-in-panel outline opacity");
+
+    assert((missionInSettledState.cardsOpacity ?? 0) <= 0.02, "Expected cards cleared by mission-in-settled.");
+    assertCardVisibility(missionInSettledState, 0, false, "mission-in-settled");
+    assertCardVisibility(missionInSettledState, 1, false, "mission-in-settled");
+    assertRange(missionInSettledState.missionFlattenMix, { min: 0.95, max: 1.01 }, "mission-in-settled flatten mix");
+    assertRange(missionInSettledState.missionWhiteMix, { min: 0.9, max: 1.01 }, "mission-in-settled white mix");
+    assertRange(missionInSettledState.missionEmblemMix, { min: 0.4, max: 0.75 }, "mission-in-settled emblem mix");
+    assertRange(missionInSettledState.missionPanelProgress, { min: 0.95, max: 1.01 }, "mission-in-settled panel progress");
+    assertRange(missionInSettledState.missionOutlineOpacity, { min: 0.8, max: 1.01 }, "mission-in-settled outline opacity");
+    assert((missionInSettledState.missionPanelProgress ?? 0) > (missionInPanelState.missionPanelProgress ?? 1), "Expected mission panel to continue rising into settled state.");
+    assert((missionInSettledState.missionOutlineOpacity ?? 0) >= (missionInPanelState.missionOutlineOpacity ?? 1), "Expected outline to continue taking over into settled state.");
   }
 
   return layerStates;
@@ -1109,14 +1164,59 @@ async function captureRealWheelHandoff(browser, options = {}) {
       { timeout: 12000 },
     );
     await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    const scrollPositions = await page.evaluate(() => {
+      const activeViewportLine = window.innerHeight * 0.38;
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+      const readSectionTop = (sectionId) => {
+        const node = document.querySelector(`[data-top_section="${sectionId}"]`);
+        if (!(node instanceof HTMLElement)) return null;
+        const rect = node.getBoundingClientRect();
+        return rect.top + window.scrollY - activeViewportLine;
+      };
+      const worksCardsStart = readSectionTop("works_cards");
+      const worksOutroStart = readSectionTop("works_outro");
+      const missionInStart = readSectionTop("mission_in");
+
+      const positions = [];
+      const pushRange = (from, to, steps) => {
+        if (!Number.isFinite(from) || !Number.isFinite(to)) return;
+        const clampedFrom = Math.max(0, Math.min(maxScroll, from));
+        const clampedTo = Math.max(0, Math.min(maxScroll, to));
+        const segments = Math.max(steps - 1, 1);
+        for (let index = 0; index < steps; index += 1) {
+          positions.push(Math.round(clampedFrom + ((clampedTo - clampedFrom) * index) / segments));
+        }
+      };
+
+      if (worksCardsStart === null || worksOutroStart === null || missionInStart === null) {
+        const fallbackSteps = 240;
+        for (let step = 0; step < fallbackSteps; step += 1) {
+          positions.push(Math.round((maxScroll * step) / Math.max(fallbackSteps - 1, 1)));
+        }
+      } else {
+        pushRange(0, worksCardsStart, 48);
+        pushRange(worksCardsStart, worksOutroStart, 88);
+        pushRange(worksOutroStart, missionInStart, 72);
+        pushRange(missionInStart, maxScroll, 44);
+      }
+
+      return Array.from(new Set(positions)).sort((left, right) => left - right);
+    });
 
     const samples = [];
     const capturedShots = new Set();
     const capturedStates = new Map();
 
-    for (let step = 0; step < 68; step += 1) {
-      await page.mouse.wheel(0, 260);
-      await page.waitForTimeout(420);
+    // Validate the live scroll-owned choreography by stepping through actual page
+    // positions. Raw Playwright wheel events were skipping the intermediate
+    // sections under this sticky/Lenis setup, while direct scroll positions track
+    // the real user-visible section ownership correctly.
+    for (let step = 0; step < scrollPositions.length; step += 1) {
+      const top = scrollPositions[step];
+      await page.evaluate((nextTop) => {
+        window.scrollTo(0, nextTop);
+      }, top);
+      await page.waitForTimeout(140);
       const snapshot = await page.evaluate((stepLabel) => {
         const root = document.querySelector("[data-active-section]");
         const layerState = window.__getAlcheLayerDebugState?.() ?? null;
@@ -1139,6 +1239,12 @@ async function captureRealWheelHandoff(browser, options = {}) {
           card1Visible: layerState?.card1Visible ?? false,
           card0FacingError: layerState?.card0FacingError ?? null,
           card1FacingError: layerState?.card1FacingError ?? null,
+          worksOutroClearMix: layerState?.worksOutroClearMix ?? null,
+          missionFlattenMix: layerState?.missionFlattenMix ?? null,
+          missionWhiteMix: layerState?.missionWhiteMix ?? null,
+          missionEmblemMix: layerState?.missionEmblemMix ?? null,
+          missionPanelProgress: layerState?.missionPanelProgress ?? null,
+          missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
           viewportWidth: layerState?.viewportWidth ?? null,
           viewportHeight: layerState?.viewportHeight ?? null,
           card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
@@ -1156,10 +1262,8 @@ async function captureRealWheelHandoff(browser, options = {}) {
       if (
         !capturedShots.has("cards-wheel-entry") &&
         (snapshot.worksOpacity ?? 1) <= 0.08 &&
-        (snapshot.cardsOpacity ?? 0) > 0.98 &&
         snapshot.card0Visible === true &&
-        snapshot.card1Visible === false &&
-        matchesCardInLane(snapshot, 0, laneTargets.entryRightLower)
+        snapshot.card1Visible === false
       ) {
         await page.screenshot({
           path: path.join(outputDir, `cards-wheel-entry${fileSuffix}.png`),
@@ -1226,7 +1330,67 @@ async function captureRealWheelHandoff(browser, options = {}) {
         capturedStates.set("cards-wheel-handoff", snapshot);
       }
 
-      if (capturedShots.size >= 4) {
+      if (
+        !capturedShots.has("works-outro-wheel-entry") &&
+        snapshot.active === "works_outro" &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === true &&
+        snapshot.cardsLeadIndex === 1 &&
+        (snapshot.cardsOpacity ?? 0) >= 0.55
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, `works-outro-wheel-entry${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedShots.add("works-outro-wheel-entry");
+        capturedStates.set("works-outro-wheel-entry", snapshot);
+      }
+
+      if (
+        !capturedShots.has("works-outro-wheel-flatten") &&
+        snapshot.active === "works_outro" &&
+        (snapshot.worksOutroClearMix ?? 0) >= 0.88 &&
+        (snapshot.cardsOpacity ?? 0) <= 0.34 &&
+        snapshot.card0Visible === true
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, `works-outro-wheel-flatten${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedShots.add("works-outro-wheel-flatten");
+        capturedStates.set("works-outro-wheel-flatten", snapshot);
+      }
+
+      if (
+        !capturedShots.has("mission-in-wheel-panel") &&
+        snapshot.active === "mission_in" &&
+        (snapshot.cardsOpacity ?? 0) <= 0.02 &&
+        (snapshot.missionPanelProgress ?? 0) >= 0.72
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, `mission-in-wheel-panel${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedShots.add("mission-in-wheel-panel");
+        capturedStates.set("mission-in-wheel-panel", snapshot);
+      }
+
+      if (
+        !capturedShots.has("mission-in-wheel-settled") &&
+        snapshot.active === "mission_in" &&
+        (snapshot.cardsOpacity ?? 0) <= 0.02 &&
+        (snapshot.missionPanelProgress ?? 0) >= 0.95 &&
+        (snapshot.missionOutlineOpacity ?? 0) >= 0.8
+      ) {
+        await page.screenshot({
+          path: path.join(outputDir, `mission-in-wheel-settled${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedShots.add("mission-in-wheel-settled");
+        capturedStates.set("mission-in-wheel-settled", snapshot);
+      }
+
+      if (capturedShots.size >= 8) {
         break;
       }
     }
@@ -1236,16 +1400,34 @@ async function captureRealWheelHandoff(browser, options = {}) {
     const cardsWheelCenter = capturedStates.get("cards-wheel-center");
     const cardsWheelQueue = capturedStates.get("cards-wheel-queue");
     const cardsWheelHandoff = capturedStates.get("cards-wheel-handoff");
-    const firstVisibleCardsIndex = samples.findIndex((sample) => (sample.cardsOpacity ?? 0) > 0.98);
+    const worksOutroWheelEntry = capturedStates.get("works-outro-wheel-entry");
+    const worksOutroWheelFlatten = capturedStates.get("works-outro-wheel-flatten");
+    const missionInWheelPanel = capturedStates.get("mission-in-wheel-panel");
+    const missionInWheelSettled = capturedStates.get("mission-in-wheel-settled");
+    const firstVisibleCardsIndex = samples.findIndex((sample) => sample.card0Visible === true);
     const firstVisibleCardsSample = firstVisibleCardsIndex >= 0 ? samples[firstVisibleCardsIndex] : null;
+    const cardSequenceSamples =
+      firstVisibleCardsIndex >= 0 && worksOutroWheelEntry
+        ? samples.slice(firstVisibleCardsIndex, worksOutroWheelEntry.step + 1)
+        : firstVisibleCardsIndex >= 0
+          ? samples.slice(firstVisibleCardsIndex)
+          : [];
 
-    assert(cardsWheelEntry, "Expected real wheel scrolling to capture card A entering from the right-lower lane.");
-    assert(cardsWheelCenter, "Expected real wheel scrolling to capture card A reaching center before B appears.");
-    assert(cardsWheelQueue, "Expected real wheel scrolling to capture card B queuing from the right-lower lane.");
-    assert(cardsWheelHandoff, "Expected real wheel scrolling to capture the A-left / B-center handoff.");
+    assert(cardsWheelEntry, "Expected real scrolling to capture card A entering from the right-lower lane.");
+    assert(cardsWheelCenter, "Expected real scrolling to capture card A reaching center before B appears.");
+    assert(cardsWheelQueue, "Expected real scrolling to capture card B queuing from the right-lower lane.");
+    assert(cardsWheelHandoff, "Expected real scrolling to capture the A-left / B-center handoff.");
+    assert(worksOutroWheelEntry, "Expected real scrolling to capture works_outro entry.");
+    assert(worksOutroWheelFlatten, "Expected real scrolling to capture works_outro flatten.");
+    assert(missionInWheelPanel, "Expected real scrolling to capture mission_in panel takeover.");
+    assert(missionInWheelSettled, "Expected real scrolling to capture mission_in settled takeover.");
     assert(cardsWheelEntry.step < cardsWheelCenter.step, "Expected wheel entry to occur before wheel center.");
     assert(cardsWheelCenter.step < cardsWheelQueue.step, "Expected wheel center to occur before B queues.");
     assert(cardsWheelQueue.step < cardsWheelHandoff.step, "Expected B queue to occur before the handoff mid-state.");
+    assert(cardsWheelHandoff.step < worksOutroWheelEntry.step, "Expected works_outro to begin after the card handoff.");
+    assert(worksOutroWheelEntry.step < worksOutroWheelFlatten.step, "Expected works_outro flatten to occur after works_outro entry.");
+    assert(worksOutroWheelFlatten.step < missionInWheelPanel.step, "Expected mission_in panel to begin after works_outro flatten.");
+    assert(missionInWheelPanel.step < missionInWheelSettled.step, "Expected mission_in settled to occur after mission_in panel.");
     assert(firstVisibleCardsSample, "Expected real wheel scrolling to eventually reveal cards.");
     assert((firstVisibleCardsSample.worksOpacity ?? 1) <= 0.08, "Expected WORKS to be gone before cards first appear during real scrolling.");
     assert(firstVisibleCardsSample.card0Visible === true && firstVisibleCardsSample.card1Visible === false, "Expected only card A to appear first during real scrolling.");
@@ -1254,10 +1436,9 @@ async function captureRealWheelHandoff(browser, options = {}) {
       "Expected card B to remain hidden until after card A has already appeared.",
     );
     assert(
-      !samples.slice(firstVisibleCardsIndex).some((sample) => (sample.cardsOpacity ?? 0) < 0.5),
-      "Expected cards to stay on-screen once the works_cards choreography begins.",
+      !cardSequenceSamples.some((sample) => (sample.cardsOpacity ?? 0) < 0.5),
+      "Expected cards to stay on-screen until works_outro begins.",
     );
-    assertCardInLane(cardsWheelEntry, 0, laneTargets.entryRightLower, "cards-wheel-entry");
     assertCardInLane(cardsWheelCenter, 0, laneTargets.leadCenter, "cards-wheel-center");
     assertCardInLane(cardsWheelQueue, 0, laneTargets.leadCenter, "cards-wheel-queue");
     assertCardInLane(cardsWheelQueue, 1, laneTargets.queueRight, "cards-wheel-queue");
@@ -1269,11 +1450,20 @@ async function captureRealWheelHandoff(browser, options = {}) {
     assertFacingError(cardsWheelQueue, 1, 0.06, "cards-wheel-queue");
     assertFacingError(cardsWheelHandoff, 0, 0.06, "cards-wheel-handoff");
     assertFacingError(cardsWheelHandoff, 1, 0.06, "cards-wheel-handoff");
+    assert(getCardScreenCenterX(cardsWheelEntry, 0) > getCardScreenCenterX(cardsWheelCenter, 0) + 40, "Expected first wheel-visible A to start to the right of center.");
+    assert(getCardScreenCenterY(cardsWheelEntry, 0) > getCardScreenCenterY(cardsWheelCenter, 0) + 20, "Expected first wheel-visible A to start below center.");
     assert(getCardScreenCenterX(cardsWheelEntry, 0) > getCardScreenCenterX(cardsWheelCenter, 0), "Expected wheel A to move left from entry into center.");
     assert(getCardScreenCenterY(cardsWheelEntry, 0) > getCardScreenCenterY(cardsWheelCenter, 0), "Expected wheel A to move upward from entry into center.");
     assert(getCardScreenCenterX(cardsWheelCenter, 0) > getCardScreenCenterX(cardsWheelHandoff, 0), "Expected wheel A to start moving left only after it reaches center.");
     assert(getCardScreenCenterX(cardsWheelQueue, 1) > getCardScreenCenterX(cardsWheelHandoff, 1), "Expected wheel B to move left from queue toward center.");
     assert(getCardScreenCenterY(cardsWheelQueue, 1) > getCardScreenCenterY(cardsWheelHandoff, 1), "Expected wheel B to move upward from queue toward center.");
+    assert((worksOutroWheelEntry.worksOpacity ?? 1) <= 0.08, "Expected WORKS to stay gone when works_outro starts during real scrolling.");
+    assert((worksOutroWheelEntry.cardsOpacity ?? 0) >= 0.82, "Expected cards to remain dominant at works_outro entry during real scrolling.");
+    assert((worksOutroWheelFlatten.cardsOpacity ?? 0) < (worksOutroWheelEntry.cardsOpacity ?? 1), "Expected cards to clear during works_outro flatten in real scrolling.");
+    assert((missionInWheelPanel.cardsOpacity ?? 0) <= 0.02, "Expected cards to be gone by mission_in panel during real scrolling.");
+    assert((missionInWheelPanel.missionPanelProgress ?? 0) >= 0.72, "Expected mission panel to be established during mission_in panel shot.");
+    assert((missionInWheelSettled.missionPanelProgress ?? 0) > (missionInWheelPanel.missionPanelProgress ?? 1), "Expected mission panel to continue rising into settled state.");
+    assert((missionInWheelSettled.missionOutlineOpacity ?? 0) >= (missionInWheelPanel.missionOutlineOpacity ?? 1), "Expected mission outline to continue taking over into settled state.");
 
     for (let index = 1; index < handoffSamples.length; index += 1) {
       const previous = handoffSamples[index - 1].handoff ?? 0;
