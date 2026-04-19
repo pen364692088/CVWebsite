@@ -1020,7 +1020,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertFacingError(worksOutroFlattenState, 1, 0.06, "works-outro-flatten");
     assertRange(worksOutroFlattenState.worksOutroClearMix, { min: 0.8, max: 0.95 }, "works-outro-flatten clear mix");
     assertRange(worksOutroFlattenState.missionPanelProgress, { min: 0.35, max: 0.5 }, "works-outro-flatten panel progress");
-    assertRange(worksOutroFlattenState.missionOutlineOpacity, { min: 0.62, max: 0.82 }, "works-outro-flatten outline opacity");
+    assertRange(worksOutroFlattenState.missionOutlineOpacity, { min: 0.14, max: 0.28 }, "works-outro-flatten outline opacity");
     assert((worksOutroFlattenState.card1Opacity ?? 1) < (worksOutroEntryState.card1Opacity ?? 0), "Expected B to fade during works_outro flatten.");
     assert(getCardScreenCenterX(worksOutroFlattenState, 1) < getCardScreenCenterX(worksOutroEntryState, 1), "Expected B to continue moving left during works_outro flatten.");
     assert((worksOutroEntryState.kvWallFlatten ?? 0) < (worksOutroFlattenState.kvWallFlatten ?? 0), "Expected wall flatten to keep increasing through works_outro.");
@@ -1031,7 +1031,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertRange(missionInPanelState.missionFlattenMix, { min: 0.52, max: 0.78 }, "mission-in-panel flatten mix");
     assertRange(missionInPanelState.missionWhiteMix, { min: 0.18, max: 0.45 }, "mission-in-panel white mix");
     assertRange(missionInPanelState.missionPanelProgress, { min: 0.72, max: 0.9 }, "mission-in-panel panel progress");
-    assertRange(missionInPanelState.missionOutlineOpacity, { min: 0.68, max: 0.8 }, "mission-in-panel outline opacity");
+    assertRange(missionInPanelState.missionOutlineOpacity, { min: 0.18, max: 0.24 }, "mission-in-panel outline opacity");
 
     assert((missionInSettledState.cardsOpacity ?? 0) <= 0.02, "Expected cards cleared by mission-in-settled.");
     assertCardVisibility(missionInSettledState, 0, false, "mission-in-settled");
@@ -1040,7 +1040,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertRange(missionInSettledState.missionWhiteMix, { min: 0.9, max: 1.01 }, "mission-in-settled white mix");
     assertRange(missionInSettledState.missionEmblemMix, { min: 0.4, max: 0.75 }, "mission-in-settled emblem mix");
     assertRange(missionInSettledState.missionPanelProgress, { min: 0.95, max: 1.01 }, "mission-in-settled panel progress");
-    assertRange(missionInSettledState.missionOutlineOpacity, { min: 0.8, max: 1.01 }, "mission-in-settled outline opacity");
+    assertRange(missionInSettledState.missionOutlineOpacity, { min: 0.68, max: 0.76 }, "mission-in-settled outline opacity");
     assert((worksOutroFlattenState.kvWallFlatten ?? 0) <= (missionInPanelState.kvWallFlatten ?? 0), "Expected mission_in wall flatten to inherit works_outro end state without rollback.");
     assert((missionInPanelState.kvWallFlatten ?? 0) <= (missionInSettledState.kvWallFlatten ?? 0), "Expected wall flatten to remain monotonic into mission_in settled.");
     assert((missionInSettledState.missionPanelProgress ?? 0) > (missionInPanelState.missionPanelProgress ?? 1), "Expected mission panel to continue rising into settled state.");
@@ -1384,7 +1384,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
         snapshot.active === "mission_in" &&
         (snapshot.cardsOpacity ?? 0) <= 0.02 &&
         (snapshot.missionPanelProgress ?? 0) >= 0.95 &&
-        (snapshot.missionOutlineOpacity ?? 0) >= 0.8
+        (snapshot.missionOutlineOpacity ?? 0) >= 0.68
       ) {
         await page.screenshot({
           path: path.join(outputDir, `mission-in-wheel-settled${fileSuffix}.png`),

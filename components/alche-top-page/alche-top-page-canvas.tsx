@@ -9,6 +9,7 @@ import type { AlcheHeroShotId } from "@/lib/alche-hero-lock";
 import { ALCHE_HERO_LOCK } from "@/lib/alche-hero-lock";
 import type { AlcheWorksCardDebugMode } from "@/lib/alche-works-shotbook";
 import {
+  deriveMissionTransitionOverlayState,
   deriveTopSceneState,
   deriveWorksWordHandoff,
   type AlcheLayerDebugState,
@@ -25,7 +26,6 @@ interface AlcheTopPageCanvasProps {
   cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
   reducedMotion: boolean;
-  minimalScene: boolean;
   kvWallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
   workCount: number;
@@ -55,7 +55,6 @@ export function AlcheTopPageCanvas({
   cardDebugMode,
   worksWordHandoff,
   reducedMotion,
-  minimalScene,
   kvWallTexturePath,
   worksCardItems,
   workCount,
@@ -84,18 +83,10 @@ export function AlcheTopPageCanvas({
       ),
     [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, resolvedWorksCardsProgress, serviceCount, workCount],
   );
-  const missionPanelProgress =
-    sceneState.activeSection === "works_outro"
-      ? sceneState.worksOutro.clearMix * 0.42
-      : sceneState.activeSection === "mission_in"
-        ? 0.42 + sceneState.missionIn.flattenMix * 0.58
-        : 0;
-  const missionOutlineOpacity =
-    sceneState.activeSection === "works_outro"
-      ? Math.max(0, (sceneState.worksOutro.clearMix - 0.34) / 0.56) * 0.68
-      : sceneState.activeSection === "mission_in"
-        ? 0.68 + sceneState.missionIn.emblemMix * 0.32
-        : 0;
+  const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(
+    sceneState.activeSection,
+    sceneState.sectionProgress,
+  );
   const sceneReducedMotion = reducedMotion || captureMode;
   const pointerDebugRef = useRef<AlchePointerDebugState>({
     enabled: pointerDebugEnabled,
@@ -270,11 +261,9 @@ export function AlcheTopPageCanvas({
       <AlcheTopPageScene
         sceneState={sceneState}
         reducedMotion={sceneReducedMotion}
-        minimalScene={minimalScene}
         kvWallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
         cardDebugMode={cardDebugMode}
-        workCount={workCount}
         captureMode={captureMode}
         worksWordHandoff={captureOverride ? deriveWorksWordHandoff(captureOverride.section, captureOverride.progress) : worksWordHandoff}
         pointerOverride={pointerOverride}

@@ -1,27 +1,20 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef, type ComponentProps } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { AlcheTopPagePostProcessing } from "@/components/alche-top-page/scene/alche-top-page-postprocessing";
-import { ConceptFieldSceneSystem } from "@/components/alche-top-page/scene/concept-field-scene-system";
 import { KvSceneSystem } from "@/components/alche-top-page/scene/kv-scene-system";
-import { OutroSceneSystem } from "@/components/alche-top-page/scene/outro-scene-system";
-import { ServiceSceneSystem } from "@/components/alche-top-page/scene/service-scene-system";
-import { StelllaSceneSystem } from "@/components/alche-top-page/scene/stellla-scene-system";
-import { WorksSceneSystem } from "@/components/alche-top-page/scene/works-scene-system";
 import type { AlcheWorksCardDebugMode } from "@/lib/alche-works-shotbook";
 import type { AlcheLayerDebugState, AlchePointerDebugState, AlcheTopSceneState } from "@/lib/alche-top-page";
 
 interface AlcheTopPageSceneProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
-  minimalScene: boolean;
   kvWallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
   cardDebugMode: AlcheWorksCardDebugMode;
-  workCount: number;
   captureMode: boolean;
   worksWordHandoff: number;
   pointerOverride: { x: number; y: number } | null;
@@ -32,11 +25,9 @@ interface AlcheTopPageSceneProps {
 export function AlcheTopPageScene({
   sceneState,
   reducedMotion,
-  minimalScene,
   kvWallTexturePath,
   worksCardItems,
   cardDebugMode,
-  workCount,
   captureMode,
   worksWordHandoff,
   pointerOverride,
@@ -82,33 +73,31 @@ export function AlcheTopPageScene({
 
   const ambientIntensity =
     sceneState.activeSection === "mission" || sceneState.activeSection === "vision" || sceneState.activeSection === "vision_out" ? 0.24 : 0.08;
-  const worksSceneProps = { sceneState, reducedMotion, workCount } as unknown as ComponentProps<typeof WorksSceneSystem>;
 
   return (
     <>
       <color attach="background" args={["#000000"]} />
       <fog attach="fog" args={[fogColor, 5.8, 20.6]} />
-      <ambientLight intensity={minimalScene ? 0.1 : ambientIntensity} color="#d9e4f6" />
+      <ambientLight intensity={Math.max(0.1, ambientIntensity)} color="#d9e4f6" />
       <spotLight
         position={[0, 5.4, 3]}
         angle={0.54}
         penumbra={0.92}
-        intensity={minimalScene ? 18 : 32}
+        intensity={18}
         decay={1.7}
         distance={18}
-        color={minimalScene ? "#7e67ff" : "#f2f5ff"}
+        color="#7e67ff"
       />
       <pointLight
         position={[0, -1.2, 2.4]}
-        intensity={minimalScene ? 0.8 : 1.6}
-        color={minimalScene ? "#5f62ff" : "#a7c9ff"}
+        intensity={0.8}
+        color="#5f62ff"
         distance={10}
       />
 
       <KvSceneSystem
         sceneState={sceneState}
         reducedMotion={reducedMotion}
-        backgroundOnly={minimalScene}
         wallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
         cardDebugMode={cardDebugMode}
@@ -117,15 +106,6 @@ export function AlcheTopPageScene({
         pointerDebugRef={pointerDebugRef}
         layerDebugRef={layerDebugRef}
       />
-      {minimalScene ? null : (
-        <>
-          <WorksSceneSystem {...worksSceneProps} />
-          <ConceptFieldSceneSystem sceneState={sceneState} />
-          <ServiceSceneSystem sceneState={sceneState} />
-          <StelllaSceneSystem sceneState={sceneState} />
-          <OutroSceneSystem sceneState={sceneState} />
-        </>
-      )}
       {captureMode ? null : <AlcheTopPagePostProcessing sceneState={sceneState} />}
     </>
   );

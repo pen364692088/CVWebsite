@@ -9,7 +9,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-import { ALCHE_TOP_MINIMAL_SCENE, ALCHE_TOP_POST, type AlcheTopSceneState } from "@/lib/alche-top-page";
+import { ALCHE_TOP_POST, type AlcheTopSceneState } from "@/lib/alche-top-page";
 
 interface AlcheTopPagePostProcessingProps {
   sceneState: AlcheTopSceneState;
@@ -121,40 +121,17 @@ export function AlcheTopPagePostProcessing({ sceneState }: AlcheTopPagePostProce
     const bloomPass = bloomRef.current;
     if (!composer || !finalPass || !bloomPass) return;
 
-    const section = sceneState.activeSection;
-    const minimalScene = ALCHE_TOP_MINIMAL_SCENE;
     resolution.set(size.width, size.height);
 
     const whiteMix = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.whiteMix, sceneState.vision.densityMix * 0.42);
-    const bloomStrength =
-      minimalScene
-        ? 0.02
-        : section === "kv" || section === "loading"
-          ? ALCHE_TOP_POST.bloomStrength
-        : section === "works" || section === "works_intro"
-          ? 0.18
-          : section === "outro"
-            ? 0.12
-            : 0.14;
-
-    bloomPass.strength = bloomStrength * Math.max(sceneState.introProgress, 0.15);
-    bloomPass.radius = minimalScene ? 0.12 : section === "works" || section === "works_outro" ? 0.42 : ALCHE_TOP_POST.bloomRadius;
-    bloomPass.threshold = minimalScene ? 0.99 : whiteMix > 0.4 ? 0.78 : ALCHE_TOP_POST.bloomThreshold;
+    bloomPass.strength = 0.02 * Math.max(sceneState.introProgress, 0.15);
+    bloomPass.radius = 0.12;
+    bloomPass.threshold = 0.99;
 
     finalPass.uniforms.uTime.value = state.clock.elapsedTime;
-    finalPass.uniforms.uChromatic.value = minimalScene
-      ? 0.0
-      : section === "works" || section === "works_intro"
-        ? 0.0014
-        : ALCHE_TOP_POST.chromaticOffset;
-    finalPass.uniforms.uNoise.value = minimalScene ? 0.002 : section === "outro" ? 0.01 : section === "works" ? 0.024 : ALCHE_TOP_POST.filmNoise;
-    finalPass.uniforms.uVignette.value = minimalScene
-      ? 0.04
-      : section === "kv" || section === "loading"
-        ? ALCHE_TOP_POST.vignette
-        : section === "outro"
-          ? 0.12
-          : 0.18;
+    finalPass.uniforms.uChromatic.value = 0.0;
+    finalPass.uniforms.uNoise.value = 0.002;
+    finalPass.uniforms.uVignette.value = 0.04;
     finalPass.uniforms.uWhiteMix.value = whiteMix;
 
     composer.render();

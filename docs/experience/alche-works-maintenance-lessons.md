@@ -80,3 +80,20 @@ For this transition:
 - keep prism residual visibility alive through early `mission_in`
 - let late fade be driven by mission panel occlusion progress
 - verify both `mission-in-panel` and real `mission-in-wheel-panel`
+
+## `alche-exp-0008` Active Homepage Should Have One Real Render Path
+
+When the active homepage is supposed to be `kv-works`, do not keep a second "minimal/background-only"
+render tree that silently changes which scene systems mount.
+
+That kind of fork makes screenshot debugging misleading:
+
+- opacity or pose tweaks can look correct in code but never reach the real viewport
+- DOM overlay timing can appear to be the bug while the actual 3D layer is not mounted
+- shell/canvas can drift if transition state is recomputed in two places
+
+Default rule for this program:
+
+- keep one active scene tree for the real homepage
+- centralize shared transition state such as mission panel/outline progress
+- if a visual bug "doesn't move" after reasonable tuning, verify the layer is actually mounted on the active path before changing more math

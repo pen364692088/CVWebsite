@@ -9,13 +9,10 @@ import { alcheTopPageCopy } from "@/data/alche-top-page";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
   type AlchePointerDebugState,
-  ALCHE_TOP_MINIMAL_SCENE,
   ALCHE_TOP_RENDERABLE_SECTIONS,
-  ALCHE_TOP_RUNTIME_MODE,
   ALCHE_TOP_SECTION_IDS,
   ALCHE_TOP_SECTIONS,
-  deriveMissionInSceneState,
-  deriveWorksOutroState,
+  deriveMissionTransitionOverlayState,
   normalizeTopRuntimeSection,
   type AlcheScrollableSectionId,
   type AlcheTopSectionId,
@@ -154,8 +151,6 @@ function writeAlcheCardDebugModeToLocation(nextMode: AlcheWorksCardDebugMode) {
 export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const copy = alcheTopPageCopy[locale];
   const router = useRouter();
-  const singleSectionMode = ALCHE_TOP_RUNTIME_MODE === "kv-only";
-  const minimalScene = ALCHE_TOP_MINIMAL_SCENE;
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [canvasEventSource, setCanvasEventSource] = useState<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<AlcheScrollableSectionId, HTMLElement | null>>({
@@ -215,28 +210,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentShotId = debugOverride?.shotId ?? null;
   const showShotSelector = !captureMode && currentShotId !== null;
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
-  const worksOutroState =
-    currentActiveSection === "works_outro"
-      ? deriveWorksOutroState(currentSectionProgress)
-      : currentActiveSection === "mission_in"
-        ? deriveWorksOutroState(1)
-        : { clearMix: 0, residualMix: 0 };
-  const missionInState =
-    currentActiveSection === "mission_in"
-      ? deriveMissionInSceneState(currentSectionProgress)
-      : { visible: 0, flattenMix: 0, whiteMix: 0, emblemMix: 0 };
-  const missionPanelProgress =
-    currentActiveSection === "works_outro"
-      ? worksOutroState.clearMix * 0.42
-      : currentActiveSection === "mission_in"
-        ? 0.42 + missionInState.flattenMix * 0.58
-        : 0;
-  const missionOutlineOpacity =
-    currentActiveSection === "works_outro"
-      ? Math.max(0, (worksOutroState.clearMix - 0.34) / 0.56) * 0.68
-      : currentActiveSection === "mission_in"
-        ? 0.68 + missionInState.emblemMix * 0.32
-        : 0;
+  const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
@@ -401,7 +375,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               heroShotId={currentHeroShotId}
               cardDebugMode={currentCardDebugMode}
               reducedMotion={reducedMotion}
-              minimalScene={minimalScene}
               kvWallTexturePath={kvWallTexturePath}
               worksCardItems={worksCardItems}
               workCount={worksCardItems.length}
@@ -632,7 +605,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             id={section.id}
             ref={(node) => setSectionRef(section.id, node)}
             className={`${styles.section} ${styles[`section${section.id[0].toUpperCase()}${section.id.slice(1)}`] ?? ""}`}
-            style={{ minHeight: singleSectionMode ? "100svh" : section.minHeight }}
+            style={{ minHeight: section.minHeight }}
             data-top_section={section.id}
             data-snap-ratio={section.snapRatio}
             aria-label={section.label}

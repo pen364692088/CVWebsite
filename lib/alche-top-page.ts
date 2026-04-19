@@ -19,11 +19,7 @@ export const ALCHE_TOP_SECTION_IDS = [
 
 export type AlcheTopSectionId = (typeof ALCHE_TOP_SECTION_IDS)[number];
 
-export type AlcheTopRuntimeMode = "kv-only" | "kv-works" | "full-chain";
-
-export const ALCHE_TOP_RUNTIME_MODE = "kv-works" as AlcheTopRuntimeMode;
-export const ALCHE_TOP_MINIMAL_SCENE =
-  ALCHE_TOP_RUNTIME_MODE === "kv-only" || ALCHE_TOP_RUNTIME_MODE === "kv-works";
+export const ALCHE_TOP_RUNTIME_MODE = "kv-works" as const;
 
 export const ALCHE_SCROLLABLE_SECTION_IDS = ALCHE_TOP_SECTION_IDS.filter(
   (sectionId): sectionId is Exclude<AlcheTopSectionId, "loading"> => sectionId !== "loading",
@@ -31,12 +27,14 @@ export const ALCHE_SCROLLABLE_SECTION_IDS = ALCHE_TOP_SECTION_IDS.filter(
 
 export type AlcheScrollableSectionId = (typeof ALCHE_SCROLLABLE_SECTION_IDS)[number];
 
-export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] =
-  ALCHE_TOP_RUNTIME_MODE === "kv-only"
-    ? ["kv"]
-    : ALCHE_TOP_RUNTIME_MODE === "kv-works"
-      ? ["kv", "works_intro", "works", "works_cards", "works_outro", "mission_in"]
-      : ALCHE_SCROLLABLE_SECTION_IDS;
+export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] = [
+  "kv",
+  "works_intro",
+  "works",
+  "works_cards",
+  "works_outro",
+  "mission_in",
+];
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
 
@@ -502,27 +500,19 @@ export function getTopGroupForSection(sectionId: AlcheTopSectionId): AlcheTopGro
 }
 
 export function normalizeTopRuntimeSection(sectionId: AlcheTopSectionId): AlcheTopSectionId {
-  if (ALCHE_TOP_RUNTIME_MODE === "kv-only") {
-    return sectionId === "loading" ? "loading" : "kv";
+  if (
+    sectionId === "loading" ||
+    sectionId === "kv" ||
+    sectionId === "works_intro" ||
+    sectionId === "works" ||
+    sectionId === "works_cards" ||
+    sectionId === "works_outro" ||
+    sectionId === "mission_in"
+  ) {
+    return sectionId;
   }
 
-  if (ALCHE_TOP_RUNTIME_MODE === "kv-works") {
-    if (
-      sectionId === "loading" ||
-      sectionId === "kv" ||
-      sectionId === "works_intro" ||
-      sectionId === "works" ||
-      sectionId === "works_cards" ||
-      sectionId === "works_outro" ||
-      sectionId === "mission_in"
-    ) {
-      return sectionId;
-    }
-
-    return "mission_in";
-  }
-
-  return sectionId;
+  return "mission_in";
 }
 
 export function deriveKvState(introProgress: number) {
@@ -664,6 +654,32 @@ export function deriveMissionInSceneState(progress: number): AlcheMissionInScene
     flattenMix: state.flattenMix,
     whiteMix: state.whiteMix,
     emblemMix: state.emblemMix * 0.78,
+  };
+}
+
+export function deriveMissionTransitionOverlayState(activeSection: AlcheTopSectionId, sectionProgress: number) {
+  const runtimeSection = normalizeTopRuntimeSection(activeSection);
+
+  if (runtimeSection === "works_outro") {
+    const worksOutro = deriveWorksOutroState(sectionProgress);
+    return {
+      missionPanelProgress: worksOutro.clearMix * 0.42,
+      missionOutlineOpacity: smoothstep(remapRange(worksOutro.clearMix, 0.62, 0.96)) * 0.24,
+    };
+  }
+
+  if (runtimeSection === "mission_in") {
+    const missionIn = deriveMissionInSceneState(sectionProgress);
+    const missionPanelProgress = 0.42 + missionIn.flattenMix * 0.58;
+    return {
+      missionPanelProgress,
+      missionOutlineOpacity: 0.18 + smoothstep(remapRange(missionPanelProgress, 0.86, 1.0)) * 0.54,
+    };
+  }
+
+  return {
+    missionPanelProgress: 0,
+    missionOutlineOpacity: 0,
   };
 }
 
@@ -822,12 +838,11 @@ export function deriveTopSceneState(
   let camera = ALCHE_TOP_CAMERA_STATES[runtimeSection];
 
   if (
-    ALCHE_TOP_RUNTIME_MODE === "kv-works" &&
-    (runtimeSection === "works_intro" ||
-      runtimeSection === "works" ||
-      runtimeSection === "works_cards" ||
-      runtimeSection === "works_outro" ||
-      runtimeSection === "mission_in")
+    runtimeSection === "works_intro" ||
+    runtimeSection === "works" ||
+    runtimeSection === "works_cards" ||
+    runtimeSection === "works_outro" ||
+    runtimeSection === "mission_in"
   ) {
     camera = ALCHE_TOP_CAMERA_STATES.kv;
   } else {
@@ -838,15 +853,6 @@ export function deriveTopSceneState(
           ALCHE_TOP_CAMERA_STATES.kv,
           smoothstep(remapRange(introProgress, 0.08, 0.48)),
         );
-        break;
-      case "works_intro":
-        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.kv, ALCHE_TOP_CAMERA_STATES.works, worksIntro.handoffMix);
-        break;
-      case "works_outro":
-        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works, ALCHE_TOP_CAMERA_STATES.mission_in, worksOutro.clearMix);
-        break;
-      case "mission_in":
-        camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.works_outro, ALCHE_TOP_CAMERA_STATES.mission, missionIn.flattenMix);
         break;
       case "vision_out":
         camera = lerpCameraState(ALCHE_TOP_CAMERA_STATES.vision, ALCHE_TOP_CAMERA_STATES.service_in, visionOut.drainMix);
@@ -874,11 +880,17 @@ export function deriveTopSceneState(
 
   const worksOutroWallFlatten = worksOutro.clearMix * 0.78;
   const missionInWallFlatten = 0.78 + missionIn.flattenMix * 0.22;
+  const missionInPanelProgress = 0.42 + missionIn.flattenMix * 0.58;
 
   if (runtimeSection === "works" || runtimeSection === "works_outro" || runtimeSection === "mission_in") {
     kv.wallVisibility = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
     kv.wordVisibility = 0;
-    kv.prismVisibility = runtimeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : runtimeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
+    kv.prismVisibility =
+      runtimeSection === "works"
+        ? 0.28 * (1 - works.cardMix * 0.68)
+        : runtimeSection === "works_outro"
+          ? 0.14 * worksOutro.residualMix
+          : 0.24 * (1 - missionIn.emblemMix * 0.42) * (1 - smoothstep(remapRange(missionInPanelProgress, 0.82, 0.98)) * 0.14);
     kv.wallFlatten = runtimeSection === "works_outro" ? worksOutroWallFlatten : runtimeSection === "mission_in" ? missionInWallFlatten : 0;
     kv.wallWhiteMix = runtimeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
     kv.visible = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;

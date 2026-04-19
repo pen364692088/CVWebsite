@@ -43,7 +43,6 @@ configureTextBuilder({ useWorker: false });
 interface KvSceneSystemProps {
   sceneState: AlcheTopSceneState;
   reducedMotion: boolean;
-  backgroundOnly?: boolean;
   wallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
   cardDebugMode: AlcheWorksCardDebugMode;
@@ -978,7 +977,7 @@ function CenterHeroModel({
   return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;
 }
 
-function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
+function HeroPrism({ sceneState, reducedMotion }: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion">) {
   const { size } = useThree();
   const prismRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
   const shellRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
@@ -1032,6 +1031,10 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
       sceneState.activeSection === "mission_in"
         ? smoothstep(remapRange(missionPanelProgress, 0.8, 0.98))
         : 0;
+    const missionPoseMix =
+      sceneState.activeSection === "mission_in"
+        ? smoothstep(remapRange(missionPanelProgress, 0.84, 0.99))
+        : 0;
     const residualVisibility = sceneState.kv.prismVisibility * sceneState.kv.visible;
     const worksIntroResidualFade =
       sceneState.activeSection === "works_intro" ? 1 - THREE.MathUtils.smoothstep(introHandoff, 0.12, 0.78) * 0.82 : 1;
@@ -1048,11 +1051,28 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
         lockRotation[2] + (heroShot?.prismEmphasis.rotationOffset[2] ?? 0),
       );
     } else if (sceneState.activeSection === "works" || sceneState.activeSection === "works_outro") {
-      targetPosition.set(0.54, -0.06 + floatY, -1.46);
-      targetRotation.set(0.1, 0.18, 0);
+      const outroTravel = sceneState.activeSection === "works_outro" ? smoothstep(clamp01(sceneState.worksOutro.clearMix)) : 0;
+      targetPosition.set(
+        THREE.MathUtils.lerp(0.54, 0.12, outroTravel),
+        THREE.MathUtils.lerp(-0.06, -0.18, outroTravel) + floatY,
+        THREE.MathUtils.lerp(-1.46, -1.18, outroTravel),
+      );
+      targetRotation.set(
+        THREE.MathUtils.lerp(0.1, 0.08, outroTravel),
+        THREE.MathUtils.lerp(0.18, 0.08, outroTravel),
+        0,
+      );
     } else if (sceneState.activeSection === "mission_in") {
-      targetPosition.set(0.06, 0.02, -1.14);
-      targetRotation.set(0.02, 0.0, 0.0);
+      targetPosition.set(
+        THREE.MathUtils.lerp(0.12, 0.04, missionPoseMix),
+        THREE.MathUtils.lerp(-0.18, 0.01, missionPoseMix),
+        THREE.MathUtils.lerp(-1.18, -1.1, missionPoseMix),
+      );
+      targetRotation.set(
+        THREE.MathUtils.lerp(0.08, 0.02, missionPoseMix),
+        THREE.MathUtils.lerp(0.08, 0.0, missionPoseMix),
+        0.0,
+      );
     } else {
       targetPosition.set(0.08, 0.02, -1.42);
       targetRotation.set(0, -1.08, 0);
@@ -1066,10 +1086,14 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
           : sceneState.activeSection === "works"
             ? 0.28 - sceneState.works.cardMix * 0.08
             : sceneState.activeSection === "works_outro"
-              ? 0.14 - sceneState.worksOutro.clearMix * 0.08
-              : 0.3 - missionFade * 0.18;
+              ? 0.28 - sceneState.worksOutro.clearMix * 0.04
+              : THREE.MathUtils.lerp(0.36, 0.3 - missionFade * 0.18, missionPoseMix);
 
     const whiteMix = clamp01(sceneState.missionIn.whiteMix + sceneState.mission.whiteMix * 0.86 + sceneState.vision.lineMix * 0.4);
+    const prismWhiteMix =
+      sceneState.activeSection === "mission_in"
+        ? clamp01(sceneState.missionIn.whiteMix * (0.22 + missionOcclusionFade * 0.78))
+        : whiteMix;
     const coreOpacityTarget =
       residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionOcclusionFade : worksIntroResidualFade);
     const shellOpacityTarget = coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.24 : 0.34);
@@ -1081,7 +1105,7 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
     coreMaterial.uniforms.uTime.value = state.clock.elapsedTime;
     coreMaterial.uniforms.uIntro.value = sceneState.introProgress;
     coreMaterial.uniforms.uResolution.value.set(size.width, size.height);
-    coreMaterial.uniforms.uWhiteMix.value = THREE.MathUtils.damp(coreMaterial.uniforms.uWhiteMix.value, whiteMix, 3.8, delta);
+    coreMaterial.uniforms.uWhiteMix.value = THREE.MathUtils.damp(coreMaterial.uniforms.uWhiteMix.value, prismWhiteMix, 3.8, delta);
     coreMaterial.uniforms.uIntensity.value = THREE.MathUtils.damp(coreMaterial.uniforms.uIntensity.value, sceneState.activeSection === "kv" ? 1.18 : 0.96, 4, delta);
     coreMaterial.uniforms.uOpacity.value = THREE.MathUtils.damp(coreMaterial.uniforms.uOpacity.value, coreOpacityTarget * 0.76, 4, delta);
 
@@ -1134,7 +1158,7 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
   );
 }
 
-export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSystemProps) {
+export function KvSceneSystem(props: KvSceneSystemProps) {
   return (
     <>
       <CurvedMediaWall
@@ -1142,21 +1166,19 @@ export function KvSceneSystem({ backgroundOnly = false, ...props }: KvSceneSyste
         wallTexturePath={props.wallTexturePath}
         layerDebugRef={props.layerDebugRef}
       />
-      {backgroundOnly ? <WallWordSweep {...props} /> : null}
-      {backgroundOnly ? (
-        <WorksCardPair
-          sceneState={props.sceneState}
-          worksCardItems={props.worksCardItems}
-          cardDebugMode={props.cardDebugMode}
-          reducedMotion={props.reducedMotion}
-          worksWordHandoff={props.worksWordHandoff}
-          layerDebugRef={props.layerDebugRef}
-        />
-      ) : null}
-      {backgroundOnly ? <MoonflowTitle {...props} /> : null}
-      {backgroundOnly ? <CenterHeroModel {...props} /> : null}
-      {backgroundOnly ? null : <FloatingAlcheWordmark {...props} />}
-      {backgroundOnly ? null : <HeroPrism {...props} />}
+      <WallWordSweep {...props} />
+      <WorksCardPair
+        sceneState={props.sceneState}
+        worksCardItems={props.worksCardItems}
+        cardDebugMode={props.cardDebugMode}
+        reducedMotion={props.reducedMotion}
+        worksWordHandoff={props.worksWordHandoff}
+        layerDebugRef={props.layerDebugRef}
+      />
+      <MoonflowTitle {...props} />
+      <CenterHeroModel {...props} />
+      <FloatingAlcheWordmark {...props} />
+      <HeroPrism {...props} />
     </>
   );
 }
