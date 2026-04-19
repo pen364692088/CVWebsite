@@ -1022,7 +1022,8 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertRange(worksOutroFlattenState.missionPanelProgress, { min: 0.35, max: 0.5 }, "works-outro-flatten panel progress");
     assertRange(worksOutroFlattenState.missionOutlineOpacity, { min: 0.62, max: 0.82 }, "works-outro-flatten outline opacity");
     assert((worksOutroFlattenState.card1Opacity ?? 1) < (worksOutroEntryState.card1Opacity ?? 0), "Expected B to fade during works_outro flatten.");
-    assert(getCardScreenCenterX(worksOutroFlattenState, 1) > getCardScreenCenterX(worksOutroEntryState, 1), "Expected B to continue moving right during works_outro flatten.");
+    assert(getCardScreenCenterX(worksOutroFlattenState, 1) < getCardScreenCenterX(worksOutroEntryState, 1), "Expected B to continue moving left during works_outro flatten.");
+    assert((worksOutroEntryState.kvWallFlatten ?? 0) < (worksOutroFlattenState.kvWallFlatten ?? 0), "Expected wall flatten to keep increasing through works_outro.");
 
     assert((missionInPanelState.cardsOpacity ?? 0) <= 0.02, "Expected cards cleared by mission-in-panel.");
     assertCardVisibility(missionInPanelState, 0, false, "mission-in-panel");
@@ -1040,6 +1041,8 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertRange(missionInSettledState.missionEmblemMix, { min: 0.4, max: 0.75 }, "mission-in-settled emblem mix");
     assertRange(missionInSettledState.missionPanelProgress, { min: 0.95, max: 1.01 }, "mission-in-settled panel progress");
     assertRange(missionInSettledState.missionOutlineOpacity, { min: 0.8, max: 1.01 }, "mission-in-settled outline opacity");
+    assert((worksOutroFlattenState.kvWallFlatten ?? 0) <= (missionInPanelState.kvWallFlatten ?? 0), "Expected mission_in wall flatten to inherit works_outro end state without rollback.");
+    assert((missionInPanelState.kvWallFlatten ?? 0) <= (missionInSettledState.kvWallFlatten ?? 0), "Expected wall flatten to remain monotonic into mission_in settled.");
     assert((missionInSettledState.missionPanelProgress ?? 0) > (missionInPanelState.missionPanelProgress ?? 1), "Expected mission panel to continue rising into settled state.");
     assert((missionInSettledState.missionOutlineOpacity ?? 0) >= (missionInPanelState.missionOutlineOpacity ?? 1), "Expected outline to continue taking over into settled state.");
   }
@@ -1245,6 +1248,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
           missionEmblemMix: layerState?.missionEmblemMix ?? null,
           missionPanelProgress: layerState?.missionPanelProgress ?? null,
           missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
+          kvWallFlatten: layerState?.kvWallFlatten ?? null,
           viewportWidth: layerState?.viewportWidth ?? null,
           viewportHeight: layerState?.viewportHeight ?? null,
           card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
@@ -1460,8 +1464,12 @@ async function captureRealWheelHandoff(browser, options = {}) {
     assert((worksOutroWheelEntry.worksOpacity ?? 1) <= 0.08, "Expected WORKS to stay gone when works_outro starts during real scrolling.");
     assert((worksOutroWheelEntry.cardsOpacity ?? 0) >= 0.82, "Expected cards to remain dominant at works_outro entry during real scrolling.");
     assert((worksOutroWheelFlatten.cardsOpacity ?? 0) < (worksOutroWheelEntry.cardsOpacity ?? 1), "Expected cards to clear during works_outro flatten in real scrolling.");
+    assert(getCardScreenCenterX(worksOutroWheelFlatten, 1) < getCardScreenCenterX(worksOutroWheelEntry, 1), "Expected B to move left during real-scroll works_outro clearing.");
+    assert((worksOutroWheelEntry.kvWallFlatten ?? 0) < (worksOutroWheelFlatten.kvWallFlatten ?? 0), "Expected wall flatten to keep increasing through real-scroll works_outro.");
     assert((missionInWheelPanel.cardsOpacity ?? 0) <= 0.02, "Expected cards to be gone by mission_in panel during real scrolling.");
     assert((missionInWheelPanel.missionPanelProgress ?? 0) >= 0.72, "Expected mission panel to be established during mission_in panel shot.");
+    assert((worksOutroWheelFlatten.kvWallFlatten ?? 0) <= (missionInWheelPanel.kvWallFlatten ?? 0), "Expected mission_in flatten to inherit works_outro progress during real scrolling.");
+    assert((missionInWheelPanel.kvWallFlatten ?? 0) <= (missionInWheelSettled.kvWallFlatten ?? 0), "Expected wall flatten to remain monotonic into mission_in settled during real scrolling.");
     assert((missionInWheelSettled.missionPanelProgress ?? 0) > (missionInWheelPanel.missionPanelProgress ?? 1), "Expected mission panel to continue rising into settled state.");
     assert((missionInWheelSettled.missionOutlineOpacity ?? 0) >= (missionInWheelPanel.missionOutlineOpacity ?? 1), "Expected mission outline to continue taking over into settled state.");
 

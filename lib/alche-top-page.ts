@@ -162,6 +162,7 @@ export interface AlcheLayerDebugState {
   missionEmblemMix: number | null;
   missionPanelProgress: number | null;
   missionOutlineOpacity: number | null;
+  kvWallFlatten: number | null;
 }
 
 export interface AlcheWorksIntroSceneState {
@@ -822,7 +823,11 @@ export function deriveTopSceneState(
 
   if (
     ALCHE_TOP_RUNTIME_MODE === "kv-works" &&
-    (runtimeSection === "works_intro" || runtimeSection === "works" || runtimeSection === "works_cards")
+    (runtimeSection === "works_intro" ||
+      runtimeSection === "works" ||
+      runtimeSection === "works_cards" ||
+      runtimeSection === "works_outro" ||
+      runtimeSection === "mission_in")
   ) {
     camera = ALCHE_TOP_CAMERA_STATES.kv;
   } else {
@@ -867,11 +872,14 @@ export function deriveTopSceneState(
     kv.wordVisibility *= 1 - worksIntro.alcheFade;
   }
 
+  const worksOutroWallFlatten = worksOutro.clearMix * 0.78;
+  const missionInWallFlatten = 0.78 + missionIn.flattenMix * 0.22;
+
   if (runtimeSection === "works" || runtimeSection === "works_outro" || runtimeSection === "mission_in") {
     kv.wallVisibility = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix : 1;
     kv.wordVisibility = 0;
     kv.prismVisibility = runtimeSection === "works" ? 0.28 * (1 - works.cardMix * 0.68) : runtimeSection === "works_outro" ? 0.14 * worksOutro.residualMix : 0.08 * (1 - missionIn.emblemMix);
-    kv.wallFlatten = runtimeSection === "works_outro" ? worksOutro.clearMix * 0.78 : runtimeSection === "mission_in" ? missionIn.flattenMix : 0;
+    kv.wallFlatten = runtimeSection === "works_outro" ? worksOutroWallFlatten : runtimeSection === "mission_in" ? missionInWallFlatten : 0;
     kv.wallWhiteMix = runtimeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
     kv.visible = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;
   }

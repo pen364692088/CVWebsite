@@ -594,6 +594,12 @@ function WorksCardPair({
       state.size.width,
       state.size.height,
     );
+    const compensatedWorksOutroLeftClearPose = {
+      ...compensatedSupportLeftUpperPose,
+      angle: compensatedSupportLeftUpperPose.angle - 0.18,
+      radiusOffset: compensatedSupportLeftUpperPose.radiusOffset + 0.18,
+      yOffset: compensatedSupportLeftUpperPose.yOffset + 0.04,
+    };
     const card0Visible = cardsVisible;
     const card1Visible =
       inWorksOutro
@@ -614,7 +620,7 @@ function WorksCardPair({
               : compensatedSupportLeftUpperPose;
     const card1Pose =
       inWorksOutro
-        ? lerpWorksCardPose(leadCenterPose, compensatedQueueRightLowerOffscreenPose, outroMix)
+        ? lerpWorksCardPose(leadCenterPose, compensatedWorksOutroLeftClearPose, outroMix)
         : segment.phase === "entry"
           ? compensatedQueueRightLowerOffscreenPose
           : segment.phase === "queue"

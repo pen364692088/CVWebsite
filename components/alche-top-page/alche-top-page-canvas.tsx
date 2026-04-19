@@ -163,6 +163,7 @@ export function AlcheTopPageCanvas({
     missionEmblemMix: null,
     missionPanelProgress: null,
     missionOutlineOpacity: null,
+    kvWallFlatten: null,
   });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;
@@ -173,6 +174,7 @@ export function AlcheTopPageCanvas({
   layerDebugRef.current.missionEmblemMix = sceneState.missionIn.emblemMix;
   layerDebugRef.current.missionPanelProgress = missionPanelProgress;
   layerDebugRef.current.missionOutlineOpacity = missionOutlineOpacity;
+  layerDebugRef.current.kvWallFlatten = sceneState.kv.wallFlatten;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
