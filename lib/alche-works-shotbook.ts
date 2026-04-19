@@ -160,8 +160,8 @@ export function getCompensatedAlcheWorksCardPoseDefinition(
   if (poseId === "support-left-upper") {
     return {
       ...pose,
-      angle: pose.angle + lerp(0, -0.2, compensation),
-      radiusOffset: pose.radiusOffset + lerp(0, 0.16, compensation),
+      angle: pose.angle + lerp(0, -0.3, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.24, compensation),
     };
   }
 
