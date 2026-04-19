@@ -1022,6 +1022,16 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
 
     const introHandoff = sceneState.worksIntro.handoffMix;
     const missionFade = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.emblemMix);
+    const missionPanelProgress =
+      sceneState.activeSection === "works_outro"
+        ? sceneState.worksOutro.clearMix * 0.42
+        : sceneState.activeSection === "mission_in"
+          ? 0.42 + sceneState.missionIn.flattenMix * 0.58
+          : 0;
+    const missionOcclusionFade =
+      sceneState.activeSection === "mission_in"
+        ? smoothstep(remapRange(missionPanelProgress, 0.8, 0.98))
+        : 0;
     const residualVisibility = sceneState.kv.prismVisibility * sceneState.kv.visible;
     const worksIntroResidualFade =
       sceneState.activeSection === "works_intro" ? 1 - THREE.MathUtils.smoothstep(introHandoff, 0.12, 0.78) * 0.82 : 1;
@@ -1060,11 +1070,12 @@ function HeroPrism({ sceneState, reducedMotion }: KvSceneSystemProps) {
               : 0.3 - missionFade * 0.18;
 
     const whiteMix = clamp01(sceneState.missionIn.whiteMix + sceneState.mission.whiteMix * 0.86 + sceneState.vision.lineMix * 0.4);
-    const coreOpacityTarget = residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionFade : worksIntroResidualFade);
+    const coreOpacityTarget =
+      residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionOcclusionFade : worksIntroResidualFade);
     const shellOpacityTarget = coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.24 : 0.34);
     const edgeOpacityTarget =
       sceneState.activeSection === "mission_in"
-        ? 0.42 * (1 - sceneState.missionIn.emblemMix)
+        ? 0.42 * (1 - Math.max(missionOcclusionFade, sceneState.missionIn.emblemMix * 0.56))
         : coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.28 : 0.54);
 
     coreMaterial.uniforms.uTime.value = state.clock.elapsedTime;

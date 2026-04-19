@@ -69,3 +69,14 @@ Rule for this program:
 - write the scroll-owned refs immediately
 - update section state synchronously
 - treat validator failures around skipped sections as possible ownership latency before changing pose math
+
+## `alche-exp-0007` Mission Prism Fade Should Follow Mask Coverage
+
+In `works_outro -> mission_in`, fading the center prism directly from `missionIn.whiteMix` or `emblemMix`
+can make it disappear before the mission mask visually reaches it.
+
+For this transition:
+
+- keep prism residual visibility alive through early `mission_in`
+- let late fade be driven by mission panel occlusion progress
+- verify both `mission-in-panel` and real `mission-in-wheel-panel`
