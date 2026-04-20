@@ -1,12 +1,11 @@
 "use client";
 
 import { useFrame, useLoader, useThree } from "@react-three/fiber";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Text, configureTextBuilder } from "troika-three-text";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { Text, configureTextBuilder } from "troika-three-text";
 
-import { ALCHE_HERO_LOCK, ALCHE_HERO_SHOTS } from "@/lib/alche-hero-lock";
 import {
   type AlcheWorksCardDebugMode,
   getCompensatedAlcheWorksCardPoseDefinition,
@@ -28,14 +27,8 @@ import {
   type AlchePointerDebugState,
   type AlcheTopSceneState,
 } from "@/lib/alche-top-page";
-import {
-  createCurvedGridMaterial,
-  createEmissiveWordMaterial,
-  createPrismEdgeColor,
-  createPrismMaterial,
-} from "@/components/alche-top-page/scene/alche-top-page-materials";
+import { createCurvedGridMaterial } from "@/components/alche-top-page/scene/alche-top-page-materials";
 import { createBentCardGeometry, placeOnArc } from "@/components/alche-top-page/scene/bent-card-helpers";
-import { WordSegments, createPrismAShape, warpPrismGeometry } from "@/components/alche-top-page/scene/scene-helpers";
 import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
@@ -238,54 +231,6 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
     <mesh ref={roomRef} geometry={geometry} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]}>
       <primitive object={material} attach="material" />
     </mesh>
-  );
-}
-
-function FloatingAlcheWordmark({ sceneState, reducedMotion }: KvSceneSystemProps) {
-  const groupRef = useRef<THREE.Group>(null);
-  const material = useMemo(() => {
-    const created = createEmissiveWordMaterial("#ffffff");
-    created.opacity = 0;
-    created.emissiveIntensity = 0;
-    return created;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      material.dispose();
-    };
-  }, [material]);
-
-  useFrame((state, delta) => {
-    if (!groupRef.current) return;
-
-    const visibility = sceneState.kv.wordVisibility * sceneState.kv.visible;
-    const pointer = reducedMotion ? 0 : state.pointer.x * 0.08;
-
-    groupRef.current.visible = visibility > 0.001;
-    if (!groupRef.current.visible) {
-      material.opacity = 0;
-      material.emissiveIntensity = 0;
-      return;
-    }
-
-    groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, pointer, 2.8, delta);
-    groupRef.current.position.y = THREE.MathUtils.damp(
-      groupRef.current.position.y,
-      -0.12 + (reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.22) * 0.03) * visibility,
-      2.8,
-      delta,
-    );
-    groupRef.current.position.z = THREE.MathUtils.damp(groupRef.current.position.z, -3.06, 3, delta);
-    groupRef.current.scale.setScalar(THREE.MathUtils.damp(groupRef.current.scale.x, 1.32 + visibility * 0.05, 3, delta));
-    material.opacity = THREE.MathUtils.damp(material.opacity, visibility, 4, delta);
-    material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 2.2 + visibility * 5.2, 4, delta);
-  });
-
-  return (
-    <group ref={groupRef} position={[0, -0.12, -3.06]} scale={1.32} visible={false}>
-      <WordSegments word="ALCHE" material={material} scale={1.18} depth={0.045} />
-    </group>
   );
 }
 
@@ -832,6 +777,7 @@ function CenterHeroModel({
   const texturedScene = useMemo(() => {
     const cloned = gltf.scene.clone(true);
     const map = baseTexture.clone();
+    const materials: THREE.MeshStandardMaterial[] = [];
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -847,15 +793,19 @@ function CenterHeroModel({
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.renderOrder = 4;
-      mesh.material = new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshStandardMaterial({
         color: "#fff8f8",
         emissive: "#8f1228",
-        emissiveIntensity: 0.28,
+        emissiveIntensity: 0,
         roughness: 0.68,
         metalness: 0.04,
         map,
         side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
       });
+      mesh.material = material;
+      materials.push(material);
     });
 
     const bounds = new THREE.Box3().setFromObject(cloned);
@@ -868,7 +818,7 @@ function CenterHeroModel({
     const center = bounds.getCenter(new THREE.Vector3());
     cloned.position.sub(center);
 
-    return { scene: cloned, map };
+    return { scene: cloned, map, materials };
   }, [baseTexture, gltf.scene]);
 
   useEffect(() => {
@@ -906,22 +856,41 @@ function CenterHeroModel({
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
+    const missionPanelProgress =
+      sceneState.activeSection === "works_outro"
+        ? sceneState.worksOutro.clearMix * 0.42
+        : sceneState.activeSection === "mission_in"
+          ? 0.42 + sceneState.missionIn.flattenMix * 0.58
+          : 0;
+    const missionOcclusionFade =
+      sceneState.activeSection === "mission_in" ? smoothstep(remapRange(missionPanelProgress, 0.8, 0.98)) : 0;
     const visibility =
-      sceneState.activeSection === "works_intro" || sceneState.activeSection === "works"
+      sceneState.activeSection === "works_intro" || sceneState.activeSection === "works" || sceneState.activeSection === "works_outro"
         ? sceneState.kv.visible
-        : sceneState.kv.wordVisibility * sceneState.kv.visible;
-    const pointerYaw = 0;
-    const pointerPitch = 0;
+        : sceneState.activeSection === "mission_in"
+          ? sceneState.kv.prismVisibility * sceneState.kv.visible * (1 - missionOcclusionFade)
+          : sceneState.kv.prismVisibility * sceneState.kv.visible;
+
     if (pointerDebugRef) {
       pointerDebugRef.current.r3fPointerX = state.pointer.x;
       pointerDebugRef.current.r3fPointerY = state.pointer.y;
     }
-    groupRef.current.visible = visibility > 0.001;
+
+    texturedScene.materials.forEach((material) => {
+      material.opacity = THREE.MathUtils.damp(material.opacity, visibility, 4, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 0.28 * visibility, 4, delta);
+    });
+
+    groupRef.current.visible = visibility > 0.001 || texturedScene.materials.some((material) => material.opacity > 0.001);
     if (!groupRef.current.visible) {
       if (pointerDebugRef) {
         pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
         pointerDebugRef.current.modelRotationY = groupRef.current.rotation.y;
         pointerDebugRef.current.modelRotationZ = groupRef.current.rotation.z;
+      }
+      if (layerDebugRef) {
+        layerDebugRef.current.modelWorldZ = null;
+        layerDebugRef.current.modelScale = null;
       }
       return;
     }
@@ -946,13 +915,13 @@ function CenterHeroModel({
     );
     groupRef.current.rotation.x = THREE.MathUtils.damp(
       groupRef.current.rotation.x,
-      ALCHE_TOP_CENTER_MODEL.baseRotationX + pointerPitch,
+      ALCHE_TOP_CENTER_MODEL.baseRotationX,
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
     groupRef.current.rotation.y = THREE.MathUtils.damp(
       groupRef.current.rotation.y,
-      ALCHE_TOP_CENTER_MODEL.baseRotationY + pointerYaw,
+      ALCHE_TOP_CENTER_MODEL.baseRotationY,
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
@@ -977,187 +946,6 @@ function CenterHeroModel({
   return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;
 }
 
-function HeroPrism({ sceneState, reducedMotion }: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion">) {
-  const { size } = useThree();
-  const prismRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
-  const shellRef = useRef<THREE.Mesh<THREE.ExtrudeGeometry, THREE.ShaderMaterial>>(null);
-  const edgeRef = useRef<THREE.LineSegments<THREE.EdgesGeometry, THREE.LineBasicMaterial>>(null);
-  const geometry = useMemo(() => {
-    const created = new THREE.ExtrudeGeometry(createPrismAShape(1.18), {
-      depth: 0.72,
-      bevelEnabled: true,
-      bevelSegments: 5,
-      bevelSize: 0.072,
-      bevelThickness: 0.1,
-      curveSegments: 26,
-    });
-    created.center();
-    warpPrismGeometry(created);
-    return created;
-  }, []);
-  const edgesGeometry = useMemo(() => new THREE.EdgesGeometry(geometry, 18), [geometry]);
-  const coreMaterial = useMemo(() => createPrismMaterial("core"), []);
-  const shellMaterial = useMemo(() => createPrismMaterial("shell"), []);
-  const targetPosition = useMemo(() => new THREE.Vector3(), []);
-  const targetRotation = useMemo(() => new THREE.Euler(), []);
-
-  useEffect(() => {
-    return () => {
-      geometry.dispose();
-      edgesGeometry.dispose();
-      coreMaterial.dispose();
-      shellMaterial.dispose();
-    };
-  }, [coreMaterial, edgesGeometry, geometry, shellMaterial]);
-
-  useFrame((state, delta) => {
-    const heroShot = sceneState.heroShotId ? ALCHE_HERO_SHOTS[sceneState.heroShotId] : null;
-    const pointerYaw = reducedMotion || sceneState.heroShotId ? 0 : state.pointer.x * 0.22;
-    const pointerPitch = reducedMotion || sceneState.heroShotId ? 0 : state.pointer.y * 0.08;
-    const floatY = reducedMotion || sceneState.heroShotId ? 0 : Math.sin(state.clock.elapsedTime * 0.62) * 0.04;
-
-    const lockPosition = ALCHE_HERO_LOCK.prism.position;
-    const lockRotation = ALCHE_HERO_LOCK.prism.rotation;
-
-    const introHandoff = sceneState.worksIntro.handoffMix;
-    const missionFade = Math.max(sceneState.missionIn.whiteMix, sceneState.mission.emblemMix);
-    const missionPanelProgress =
-      sceneState.activeSection === "works_outro"
-        ? sceneState.worksOutro.clearMix * 0.42
-        : sceneState.activeSection === "mission_in"
-          ? 0.42 + sceneState.missionIn.flattenMix * 0.58
-          : 0;
-    const missionOcclusionFade =
-      sceneState.activeSection === "mission_in"
-        ? smoothstep(remapRange(missionPanelProgress, 0.8, 0.98))
-        : 0;
-    const missionPoseMix =
-      sceneState.activeSection === "mission_in"
-        ? smoothstep(remapRange(missionPanelProgress, 0.84, 0.99))
-        : 0;
-    const residualVisibility = sceneState.kv.prismVisibility * sceneState.kv.visible;
-    const worksIntroResidualFade =
-      sceneState.activeSection === "works_intro" ? 1 - THREE.MathUtils.smoothstep(introHandoff, 0.12, 0.78) * 0.82 : 1;
-
-    if (sceneState.activeSection === "kv" || sceneState.activeSection === "loading" || sceneState.activeSection === "works_intro") {
-      targetPosition.set(
-        lockPosition[0] + (heroShot?.prismEmphasis.positionOffset[0] ?? 0) + introHandoff * 0.54,
-        lockPosition[1] + floatY + (heroShot?.prismEmphasis.positionOffset[1] ?? 0) - introHandoff * 0.06,
-        lockPosition[2] + (heroShot?.prismEmphasis.positionOffset[2] ?? 0) - introHandoff * 1.02,
-      );
-      targetRotation.set(
-        lockRotation[0] + pointerPitch + (heroShot?.prismEmphasis.rotationOffset[0] ?? 0),
-        lockRotation[1] + pointerYaw + (heroShot?.prismEmphasis.rotationOffset[1] ?? 0) - introHandoff * 0.5,
-        lockRotation[2] + (heroShot?.prismEmphasis.rotationOffset[2] ?? 0),
-      );
-    } else if (sceneState.activeSection === "works" || sceneState.activeSection === "works_outro") {
-      const outroTravel = sceneState.activeSection === "works_outro" ? smoothstep(clamp01(sceneState.worksOutro.clearMix)) : 0;
-      targetPosition.set(
-        THREE.MathUtils.lerp(0.54, 0.12, outroTravel),
-        THREE.MathUtils.lerp(-0.06, -0.18, outroTravel) + floatY,
-        THREE.MathUtils.lerp(-1.46, -1.18, outroTravel),
-      );
-      targetRotation.set(
-        THREE.MathUtils.lerp(0.1, 0.08, outroTravel),
-        THREE.MathUtils.lerp(0.18, 0.08, outroTravel),
-        0,
-      );
-    } else if (sceneState.activeSection === "mission_in") {
-      targetPosition.set(
-        THREE.MathUtils.lerp(0.12, 0.04, missionPoseMix),
-        THREE.MathUtils.lerp(-0.18, 0.01, missionPoseMix),
-        THREE.MathUtils.lerp(-1.18, -1.1, missionPoseMix),
-      );
-      targetRotation.set(
-        THREE.MathUtils.lerp(0.08, 0.02, missionPoseMix),
-        THREE.MathUtils.lerp(0.08, 0.0, missionPoseMix),
-        0.0,
-      );
-    } else {
-      targetPosition.set(0.08, 0.02, -1.42);
-      targetRotation.set(0, -1.08, 0);
-    }
-
-    const targetScale =
-      sceneState.activeSection === "kv" || sceneState.activeSection === "loading"
-        ? sceneState.kv.prismScale
-        : sceneState.activeSection === "works_intro"
-          ? THREE.MathUtils.lerp(sceneState.kv.prismScale, 0.22, THREE.MathUtils.smoothstep(introHandoff, 0.16, 0.86))
-          : sceneState.activeSection === "works"
-            ? 0.28 - sceneState.works.cardMix * 0.08
-            : sceneState.activeSection === "works_outro"
-              ? 0.28 - sceneState.worksOutro.clearMix * 0.04
-              : THREE.MathUtils.lerp(0.36, 0.3 - missionFade * 0.18, missionPoseMix);
-
-    const whiteMix = clamp01(sceneState.missionIn.whiteMix + sceneState.mission.whiteMix * 0.86 + sceneState.vision.lineMix * 0.4);
-    const prismWhiteMix =
-      sceneState.activeSection === "mission_in"
-        ? clamp01(sceneState.missionIn.whiteMix * (0.22 + missionOcclusionFade * 0.78))
-        : whiteMix;
-    const coreOpacityTarget =
-      residualVisibility * (sceneState.activeSection === "mission_in" ? 1 - missionOcclusionFade : worksIntroResidualFade);
-    const shellOpacityTarget = coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.24 : 0.34);
-    const edgeOpacityTarget =
-      sceneState.activeSection === "mission_in"
-        ? 0.42 * (1 - Math.max(missionOcclusionFade, sceneState.missionIn.emblemMix * 0.56))
-        : coreOpacityTarget * (sceneState.activeSection === "works_intro" ? 0.28 : 0.54);
-
-    coreMaterial.uniforms.uTime.value = state.clock.elapsedTime;
-    coreMaterial.uniforms.uIntro.value = sceneState.introProgress;
-    coreMaterial.uniforms.uResolution.value.set(size.width, size.height);
-    coreMaterial.uniforms.uWhiteMix.value = THREE.MathUtils.damp(coreMaterial.uniforms.uWhiteMix.value, prismWhiteMix, 3.8, delta);
-    coreMaterial.uniforms.uIntensity.value = THREE.MathUtils.damp(coreMaterial.uniforms.uIntensity.value, sceneState.activeSection === "kv" ? 1.18 : 0.96, 4, delta);
-    coreMaterial.uniforms.uOpacity.value = THREE.MathUtils.damp(coreMaterial.uniforms.uOpacity.value, coreOpacityTarget * 0.76, 4, delta);
-
-    shellMaterial.uniforms.uTime.value = state.clock.elapsedTime + 0.72;
-    shellMaterial.uniforms.uIntro.value = sceneState.introProgress * 0.96;
-    shellMaterial.uniforms.uResolution.value.set(size.width, size.height);
-    shellMaterial.uniforms.uWhiteMix.value = coreMaterial.uniforms.uWhiteMix.value;
-    shellMaterial.uniforms.uIntensity.value = THREE.MathUtils.damp(shellMaterial.uniforms.uIntensity.value, 0.48, 4, delta);
-    shellMaterial.uniforms.uOpacity.value = THREE.MathUtils.damp(shellMaterial.uniforms.uOpacity.value, shellOpacityTarget, 4, delta);
-
-    if (prismRef.current) {
-      prismRef.current.position.x = THREE.MathUtils.damp(prismRef.current.position.x, targetPosition.x, 4, delta);
-      prismRef.current.position.y = THREE.MathUtils.damp(prismRef.current.position.y, targetPosition.y, 4, delta);
-      prismRef.current.position.z = THREE.MathUtils.damp(prismRef.current.position.z, targetPosition.z, 4, delta);
-      prismRef.current.rotation.x = THREE.MathUtils.damp(prismRef.current.rotation.x, targetRotation.x, 4, delta);
-      prismRef.current.rotation.y = THREE.MathUtils.damp(prismRef.current.rotation.y, targetRotation.y, 4, delta);
-      prismRef.current.rotation.z = THREE.MathUtils.damp(prismRef.current.rotation.z, targetRotation.z, 4, delta);
-      prismRef.current.scale.setScalar(THREE.MathUtils.damp(prismRef.current.scale.x, targetScale, 4.2, delta));
-    }
-
-    if (shellRef.current && prismRef.current) {
-      shellRef.current.position.copy(prismRef.current.position);
-      shellRef.current.rotation.copy(prismRef.current.rotation);
-      shellRef.current.scale.setScalar(prismRef.current.scale.x * 1.026);
-    }
-
-    if (edgeRef.current && prismRef.current) {
-      edgeRef.current.position.copy(prismRef.current.position);
-      edgeRef.current.rotation.copy(prismRef.current.rotation);
-      edgeRef.current.scale.setScalar(prismRef.current.scale.x * 1.003);
-      edgeRef.current.material.color.copy(createPrismEdgeColor(state.clock.elapsedTime * 0.06, coreMaterial.uniforms.uWhiteMix.value));
-      edgeRef.current.material.opacity = THREE.MathUtils.damp(edgeRef.current.material.opacity, edgeOpacityTarget * 0.82, 4, delta);
-    }
-  });
-
-  return (
-    <>
-      <mesh ref={shellRef} geometry={geometry}>
-        <primitive object={shellMaterial} attach="material" />
-      </mesh>
-
-      <mesh ref={prismRef} geometry={geometry}>
-        <primitive object={coreMaterial} attach="material" />
-      </mesh>
-
-      <lineSegments ref={edgeRef} geometry={edgesGeometry}>
-        <lineBasicMaterial color="#d8e4ff" transparent opacity={0.68} />
-      </lineSegments>
-    </>
-  );
-}
-
 export function KvSceneSystem(props: KvSceneSystemProps) {
   return (
     <>
@@ -1177,8 +965,6 @@ export function KvSceneSystem(props: KvSceneSystemProps) {
       />
       <MoonflowTitle {...props} />
       <CenterHeroModel {...props} />
-      <FloatingAlcheWordmark {...props} />
-      <HeroPrism {...props} />
     </>
   );
 }

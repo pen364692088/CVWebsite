@@ -97,3 +97,15 @@ Default rule for this program:
 - keep one active scene tree for the real homepage
 - centralize shared transition state such as mission panel/outline progress
 - if a visual bug "doesn't move" after reasonable tuning, verify the layer is actually mounted on the active path before changing more math
+
+## `alche-exp-0009` Verify Visual Ownership From Fresh Frames, Not Component Names
+
+On the ALCHE top-page, the user-facing identity of a visual layer can diverge from how the code is named.
+In this bug, the large transparent A-shaped object came from `HeroPrism`, while the purple triangle the user wanted
+to keep was `CenterHeroModel`.
+
+Default rule for this program:
+
+- when the user says "delete X, keep Y", verify the mapping against fresh local screenshots before deleting components
+- do not assume `HeroPrism` is the desired prism just because of the name
+- if local issue screenshots exist in `test/`, use them as the fastest authority for layer ownership before changing mounts or validators
