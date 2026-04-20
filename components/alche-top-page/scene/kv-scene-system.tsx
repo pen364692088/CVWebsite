@@ -184,6 +184,8 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
         ALCHE_TOP_MEDIA_WALL.radialSegments,
         ALCHE_TOP_MEDIA_WALL.heightSegments,
         true,
+        Math.PI,
+        Math.PI * 2,
       ),
     [effectiveRadius],
   );
@@ -248,7 +250,7 @@ function MoonflowTitle({ sceneState, worksWordHandoff, layerDebugRef }: KvSceneS
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const fontPath = useMemo(() => assetPath(ALCHE_TOP_MOONFLOW.fontPath), []);
   const targetPosition = useMemo(
-    () => new THREE.Vector3(0, ALCHE_TOP_MOONFLOW.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix),
+    () => new THREE.Vector3(0, ALCHE_TOP_MOONFLOW.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix + ALCHE_TOP_MOONFLOW.zOffset),
     [effectiveRadius],
   );
   const measuredWidthRef = useRef(1);
@@ -779,7 +781,12 @@ function CenterHeroModel({
   const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const targetPosition = useMemo(
-    () => new THREE.Vector3(0, ALCHE_TOP_CENTER_MODEL.y, -effectiveRadius * ALCHE_TOP_MOONFLOW.depthMix + ALCHE_TOP_CENTER_MODEL.depthOffset),
+    () =>
+      new THREE.Vector3(
+        0,
+        ALCHE_TOP_CENTER_MODEL.y,
+        -effectiveRadius * ALCHE_TOP_CENTER_MODEL.depthMix + ALCHE_TOP_CENTER_MODEL.depthOffset,
+      ),
     [effectiveRadius],
   );
   const texturedScene = useMemo(() => {

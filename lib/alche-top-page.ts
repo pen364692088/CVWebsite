@@ -291,6 +291,7 @@ export const ALCHE_TOP_KV_WALL_ARC_STRENGTH = 1.95 as const;
 export const ALCHE_TOP_MOONFLOW = {
   y: 0.18,
   depthMix: 0.5,
+  zOffset: -0.48,
   widthRatio: 0.46,
   fontPath: "/fonts/space-grotesk-500.woff",
   letterSpacing: -0.035,
@@ -331,6 +332,7 @@ export const ALCHE_TOP_WORKS_CARDS = {
 export const ALCHE_TOP_CENTER_MODEL = {
   path: "/alche-top-page/kv/tetrahedron-cutout-standard-uv-grid.glb",
   y: 0.08,
+  depthMix: 0.5,
   depthOffset: 0.38,
   targetHeight: 1.84,
   baseRotationX: -0.22,
