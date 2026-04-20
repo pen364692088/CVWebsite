@@ -109,3 +109,20 @@ Default rule for this program:
 - when the user says "delete X, keep Y", verify the mapping against fresh local screenshots before deleting components
 - do not assume `HeroPrism` is the desired prism just because of the name
 - if local issue screenshots exist in `test/`, use them as the fastest authority for layer ownership before changing mounts or validators
+
+## `alche-exp-0010` Flatten Curved Walls Without Sacrificing Edge Coverage
+
+When a full-width curved wall is flattened by mixing the whole cylinder uniformly toward a plane,
+the outer seam can expose the scene clear color on wide screens even if the flattened wall is theoretically wide enough.
+
+On this project, the dangerous combination is:
+
+- a black scene background / clear color
+- a wall material rendered on `BackSide`
+- `works_outro -> mission_in` flattening that pushes the entire cylinder toward one plane
+
+Default rule for this program:
+
+- keep the center flatten effect, but preserve curvature near the outer arc
+- prefer edge-preserving flatten in the wall vertex transform over changing the background color
+- only use `DoubleSide` as a fallback if edge coverage still leaks after the geometry mapping is fixed

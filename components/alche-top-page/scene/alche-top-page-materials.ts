@@ -4,6 +4,9 @@ import * as THREE from "three";
 
 import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
+const ALCHE_TOP_WALL_EDGE_FLATTEN_START = 0.82;
+const ALCHE_TOP_WALL_EDGE_FLATTEN_END = 0.88;
+
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
   const b = new THREE.Color("#f8fbff");
@@ -44,8 +47,14 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
 
         vec3 transformed = position;
         float planarX = angle * ${effectiveRadius.toFixed(4)};
-        transformed.x = mix(position.x, planarX, uFlatten);
-        transformed.z = mix(position.z, -${effectiveRadius.toFixed(4)}, uFlatten);
+        float edgeCoverage = smoothstep(
+          ${ALCHE_TOP_WALL_EDGE_FLATTEN_START.toFixed(2)},
+          ${ALCHE_TOP_WALL_EDGE_FLATTEN_END.toFixed(2)},
+          abs(angle) / 3.14159265359
+        );
+        float effectiveFlatten = uFlatten * (1.0 - edgeCoverage);
+        transformed.x = mix(position.x, planarX, effectiveFlatten);
+        transformed.z = mix(position.z, -${effectiveRadius.toFixed(4)}, effectiveFlatten);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(angleUv, heightUv);
