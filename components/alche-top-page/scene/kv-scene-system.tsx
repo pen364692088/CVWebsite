@@ -168,6 +168,8 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
   };
 }
 
+const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.72;
+
 function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
@@ -220,6 +222,11 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
     material.uniforms.uWhiteMix.value = THREE.MathUtils.damp(material.uniforms.uWhiteMix.value, sceneState.kv.wallWhiteMix, 3.4, delta);
     material.uniforms.uFlatten.value = THREE.MathUtils.damp(material.uniforms.uFlatten.value, sceneState.kv.wallFlatten, 3.2, delta);
     material.uniforms.uSceneFade.value = THREE.MathUtils.damp(material.uniforms.uSceneFade.value, wallVisible, 3.2, delta);
+    const nextSide = material.uniforms.uFlatten.value >= ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD ? THREE.DoubleSide : THREE.BackSide;
+    if (material.side !== nextSide) {
+      material.side = nextSide;
+      material.needsUpdate = true;
+    }
     if (layerDebugRef) {
       const worldPosition = roomRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.wallWorldZ = worldPosition.z;

@@ -14,6 +14,7 @@ const basePath = "/CVWebsite";
 const baseUrl = "http://127.0.0.1:3000/CVWebsite";
 const cliArgs = new Set(process.argv.slice(2));
 const cardsOnlyMode = cliArgs.has("--cards-only");
+const ultraWideViewport = { width: 2000, height: 1080 };
 
 fs.mkdirSync(outputDir, { recursive: true });
 
@@ -1230,6 +1231,11 @@ async function captureRealWheelHandoff(browser, options = {}) {
       await page.evaluate((nextTop) => {
         window.scrollTo(0, nextTop);
       }, top);
+      await page
+        .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, top, {
+          timeout: 1200,
+        })
+        .catch(() => {});
       await page.waitForTimeout(140);
       const snapshot = await page.evaluate((stepLabel) => {
         const root = document.querySelector("[data-active-section]");
@@ -1540,15 +1546,26 @@ async function run() {
       const desktopWideShots = activeFixedStateShots.filter((shot) =>
         ["cards-b-queue", "cards-handoff-mid", "cards-settled"].includes(shot.name),
       );
+      const ultraWideTransitionShots = activeFixedStateShots.filter((shot) =>
+        ["works-outro-flatten", "mission-in-panel"].includes(shot.name),
+      );
       await captureFixedStates(browser, desktopWideShots, {
         viewport: { width: 2560, height: 1600 },
         fileSuffix: "-desktop-16x10",
+      });
+      await captureFixedStates(browser, ultraWideTransitionShots, {
+        viewport: ultraWideViewport,
+        fileSuffix: "-desktop-2000x1080",
       });
       if (!cardsOnlyMode) {
         await captureRealWheelHandoff(browser);
         await captureRealWheelHandoff(browser, {
           viewport: { width: 2560, height: 1600 },
           fileSuffix: "-desktop-16x10",
+        });
+        await captureRealWheelHandoff(browser, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
         });
         await capturePointerInteraction(browser);
       }
