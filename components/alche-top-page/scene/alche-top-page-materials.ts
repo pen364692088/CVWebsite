@@ -32,12 +32,12 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
       uExposure: { value: 1 },
       uFlatten: { value: 0 },
       uSceneFade: { value: 1 },
+      uViewportPx: { value: new THREE.Vector2(1, 1) },
     },
     vertexShader: `
       uniform float uFlatten;
 
       varying vec2 vMediaUv;
-      varying float vProjectedX;
 
       void main() {
         float angle = atan(position.x, position.z);
@@ -52,14 +52,11 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(angleUv, heightUv);
-        vec4 clip = projectionMatrix * viewMatrix * world;
-        vProjectedX = clip.x / max(clip.w, 0.0001) * 0.5 + 0.5;
-        gl_Position = clip;
+        gl_Position = projectionMatrix * viewMatrix * world;
       }
     `,
     fragmentShader: `
       varying vec2 vMediaUv;
-      varying float vProjectedX;
 
       uniform float uTime;
       uniform float uIntro;
@@ -68,6 +65,7 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
       uniform float uExposure;
       uniform float uFlatten;
       uniform float uSceneFade;
+      uniform vec2 uViewportPx;
 
       float linePulse(float value, float width) {
         float grid = abs(fract(value - 0.5) - 0.5) / fwidth(value);
@@ -76,12 +74,13 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
 
       void main() {
         vec2 uv = vMediaUv;
+        float projectedX = gl_FragCoord.x / max(uViewportPx.x, 1.0);
         vec2 microGridUv = vec2(
-          vProjectedX * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
+          projectedX * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
           uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
         vec2 frameGridUv = vec2(
-          vProjectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)},
+          projectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)},
           uv.y * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);

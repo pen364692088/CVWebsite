@@ -222,6 +222,7 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
     material.uniforms.uWhiteMix.value = THREE.MathUtils.damp(material.uniforms.uWhiteMix.value, sceneState.kv.wallWhiteMix, 3.4, delta);
     material.uniforms.uFlatten.value = THREE.MathUtils.damp(material.uniforms.uFlatten.value, sceneState.kv.wallFlatten, 3.2, delta);
     material.uniforms.uSceneFade.value = THREE.MathUtils.damp(material.uniforms.uSceneFade.value, wallVisible, 3.2, delta);
+    material.uniforms.uViewportPx.value.set(state.size.width, state.size.height);
     const nextSide = material.uniforms.uFlatten.value >= ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD ? THREE.DoubleSide : THREE.BackSide;
     if (material.side !== nextSide) {
       material.side = nextSide;
