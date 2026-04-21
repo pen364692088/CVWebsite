@@ -80,6 +80,12 @@ export interface AlcheTopMediaWallConfig {
   cellRows: number;
 }
 
+export interface AlcheMissionPanelLayout {
+  topVh: number;
+  travelVh: number;
+  bottomVh: number;
+}
+
 export interface AlcheKvSceneState {
   visible: number;
   wallVisibility: number;
@@ -288,6 +294,11 @@ export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
 
 export const ALCHE_TOP_WALL_TILE_DENSITY = 12 as const;
 export const ALCHE_TOP_KV_WALL_ARC_STRENGTH = 1.95 as const;
+export const ALCHE_TOP_MISSION_PANEL_LAYOUT: AlcheMissionPanelLayout = {
+  topVh: 54,
+  travelVh: 62,
+  bottomVh: -4,
+} as const;
 export const ALCHE_TOP_MOONFLOW = {
   y: 0.18,
   depthMix: 0.5,
@@ -467,6 +478,13 @@ export const ALCHE_TOP_CAMERA_STATES: Record<AlcheTopSectionId, AlcheTopCameraSt
 
 export function clamp01(value: number) {
   return Math.min(Math.max(value, 0), 1);
+}
+
+export function deriveMissionPanelBoundaryFromProgress(progress: number) {
+  const clampedProgress = clamp01(progress);
+  const panelTopVh =
+    ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh + (1 - clampedProgress) * ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh;
+  return clamp01(1 - panelTopVh / 100);
 }
 
 export function remapRange(value: number, start: number, end: number) {

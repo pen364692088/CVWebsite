@@ -13,6 +13,7 @@
 }
 
 .canvasLayer,
+.edgeOverlayLayer,
 .overlay {
   position: absolute;
   inset: 0;
@@ -42,6 +43,11 @@
   pointer-events: none;
 }
 
+.edgeOverlayLayer {
+  z-index: 9;
+  pointer-events: none;
+}
+
 .missionTransition {
   position: absolute;
   inset: 0;
@@ -59,15 +65,36 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 54vh;
-  bottom: -4vh;
+  top: calc(var(--alche-mission-panel-top-vh, 54) * 1vh);
+  bottom: calc(var(--alche-mission-panel-bottom-vh, -4) * 1vh);
+  overflow: hidden;
   background:
     linear-gradient(180deg, rgba(241, 245, 246, 0.94), rgba(222, 229, 229, 0.98) 38%, #dfe5e5),
     #dfe5e5;
-  transform: translateY(calc((1 - var(--alche-mission-panel-progress, 0)) * 62vh));
+  transform: translateY(calc((1 - var(--alche-mission-panel-progress, 0)) * (var(--alche-mission-panel-travel-vh, 62) * 1vh)));
   box-shadow:
     0 -20px 60px rgba(255, 255, 255, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.missionMaskedModelOutline {
+  position: absolute;
+  left: 50%;
+  top: -16vh;
+  width: min(68vw, 940px);
+  height: min(128vh, 1320px);
+  transform: translateX(-50%) translateY(calc((1 - var(--alche-mission-panel-progress, 0)) * 10vh));
+  opacity: var(--alche-mission-model-outline-opacity, 0);
+  overflow: visible;
+  filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.18));
+
+  path {
+    fill: none;
+    stroke: rgba(102, 112, 124, 0.54);
+    stroke-width: 18;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
 
 .missionTransitionOutline {

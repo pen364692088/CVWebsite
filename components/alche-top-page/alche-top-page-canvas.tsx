@@ -32,6 +32,7 @@ interface AlcheTopPageCanvasProps {
   serviceCount: number;
   canvasEventSource: HTMLElement | null;
   pointerDebugEnabled: boolean;
+  renderMode: "full" | "edge-overlay";
 }
 
 interface AlcheCanvasCaptureOverride {
@@ -61,6 +62,7 @@ export function AlcheTopPageCanvas({
   serviceCount,
   canvasEventSource,
   pointerDebugEnabled,
+  renderMode,
 }: AlcheTopPageCanvasProps) {
   const captureMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("alcheCapture") === "1";
   const [captureOverride, setCaptureOverride] = useState<AlcheCanvasCaptureOverride | null>(null);
@@ -181,7 +183,7 @@ export function AlcheTopPageCanvas({
   }, [pointerDebugRef]);
 
   useEffect(() => {
-    if (!pointerDebugEnabled || !canvasEventSource) {
+    if (renderMode !== "full" || !pointerDebugEnabled || !canvasEventSource) {
       pointerDebugRef.current.domPointerInside = false;
       pointerDebugRef.current.domPointerClientX = null;
       pointerDebugRef.current.domPointerClientY = null;
@@ -207,9 +209,10 @@ export function AlcheTopPageCanvas({
       canvasEventSource.removeEventListener("pointerenter", handlePointerMove);
       canvasEventSource.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [canvasEventSource, pointerDebugEnabled, pointerDebugRef]);
+  }, [canvasEventSource, pointerDebugEnabled, pointerDebugRef, renderMode]);
 
   useEffect(() => {
+    if (renderMode !== "full") return;
     if (typeof window === "undefined") return;
 
     const host = window as typeof window & {
@@ -242,20 +245,20 @@ export function AlcheTopPageCanvas({
       delete host.__getAlchePointerDebugState;
       delete host.__getAlcheLayerDebugState;
     };
-  }, [layerDebugRef, pointerDebugRef]);
+  }, [layerDebugRef, pointerDebugRef, renderMode]);
 
   return (
     <Canvas
       dpr={[1, 1.6]}
       camera={{ position: ALCHE_HERO_LOCK.camera.position, fov: ALCHE_HERO_LOCK.camera.fov }}
-      gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-      eventSource={canvasEventSource ?? undefined}
+      gl={{ antialias: true, alpha: renderMode === "edge-overlay", powerPreference: "high-performance" }}
+      eventSource={renderMode === "full" ? canvasEventSource ?? undefined : undefined}
       eventPrefix="client"
       onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.04;
+        gl.toneMapping = renderMode === "edge-overlay" ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = renderMode === "edge-overlay" ? 1 : 1.04;
         gl.outputColorSpace = THREE.SRGBColorSpace;
-        gl.setClearColor("#000000", 1);
+        gl.setClearColor("#000000", renderMode === "edge-overlay" ? 0 : 1);
       }}
     >
       <AlcheTopPageScene
@@ -269,6 +272,7 @@ export function AlcheTopPageCanvas({
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
         layerDebugRef={layerDebugRef}
+        renderMode={renderMode}
       />
     </Canvas>
   );

@@ -20,6 +20,7 @@ interface AlcheTopPageSceneProps {
   pointerOverride: { x: number; y: number } | null;
   pointerDebugRef: { current: AlchePointerDebugState };
   layerDebugRef: { current: AlcheLayerDebugState };
+  renderMode: "full" | "edge-overlay";
 }
 
 export function AlcheTopPageScene({
@@ -33,6 +34,7 @@ export function AlcheTopPageScene({
   pointerOverride,
   pointerDebugRef,
   layerDebugRef,
+  renderMode,
 }: AlcheTopPageSceneProps) {
   const { camera, size } = useThree();
   const perspectiveCamera = camera as THREE.PerspectiveCamera;
@@ -74,6 +76,23 @@ export function AlcheTopPageScene({
   const ambientIntensity =
     sceneState.activeSection === "mission" || sceneState.activeSection === "vision" || sceneState.activeSection === "vision_out" ? 0.24 : 0.08;
 
+  if (renderMode === "edge-overlay") {
+    return (
+      <KvSceneSystem
+        sceneState={sceneState}
+        reducedMotion={reducedMotion}
+        wallTexturePath={kvWallTexturePath}
+        worksCardItems={worksCardItems}
+        cardDebugMode={cardDebugMode}
+        worksWordHandoff={worksWordHandoff}
+        pointerOverride={pointerOverride}
+        pointerDebugRef={pointerDebugRef}
+        layerDebugRef={layerDebugRef}
+        renderMode={renderMode}
+      />
+    );
+  }
+
   return (
     <>
       <color attach="background" args={["#000000"]} />
@@ -105,6 +124,7 @@ export function AlcheTopPageScene({
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
         layerDebugRef={layerDebugRef}
+        renderMode={renderMode}
       />
       {captureMode ? null : <AlcheTopPagePostProcessing sceneState={sceneState} />}
     </>

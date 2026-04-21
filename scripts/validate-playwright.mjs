@@ -307,7 +307,7 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
 }
 
 async function assertTopPageShell(page, scenarioName) {
-  assert((await page.locator("canvas").count()) === 1, `Expected a single canvas for ${scenarioName}`);
+  assert((await page.locator("canvas").count()) >= 1, `Expected at least one canvas for ${scenarioName}`);
   assert((await page.locator("body").textContent())?.includes("ALCHE"), `Missing ALCHE branding for ${scenarioName}`);
 
   for (const sectionId of expectedSections) {
@@ -750,7 +750,7 @@ async function runScenario(browser, scenario) {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await page.waitForURL(`**${scenario.expectedPath}`, { timeout: 5000 });
     await page.waitForFunction(
-      () => document.querySelectorAll("canvas").length === 1 && document.querySelector("[data-active-section]") !== null,
+      () => document.querySelectorAll("canvas").length >= 1 && document.querySelector("[data-active-section]") !== null,
       undefined,
       { timeout: 12000 },
     );
@@ -842,6 +842,16 @@ async function captureFixedStates(browser, shots, options = {}) {
       }
       await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
       await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
+      if (shot.name in expectedShotStates) {
+        await page.waitForFunction(
+          () => {
+            const state = window.__getAlcheLayerDebugState?.();
+            return state !== null && state !== undefined && state.wallWorldZ !== null && state.worksWorldZ !== null;
+          },
+          undefined,
+          { timeout: 2500 },
+        );
+      }
       const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
       layerStates.set(shot.name, layerState);
       assert(layerState, `Missing layer debug state for ${shot.name}`);
@@ -1081,7 +1091,7 @@ async function capturePointerInteraction(browser) {
   try {
     const page = await context.newPage();
     await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
-    await page.waitForFunction(() => document.querySelectorAll("canvas").length === 1, undefined, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelectorAll("canvas").length >= 1, undefined, { timeout: 5000 });
     await assertTopPageShell(page, "kv-pointer-interaction");
     await page.waitForFunction(
       () =>

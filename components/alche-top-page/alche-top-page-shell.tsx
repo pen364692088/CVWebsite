@@ -8,6 +8,7 @@ import { flushSync } from "react-dom";
 import { alcheTopPageCopy } from "@/data/alche-top-page";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
+  ALCHE_TOP_MISSION_PANEL_LAYOUT,
   type AlchePointerDebugState,
   ALCHE_TOP_RENDERABLE_SECTIONS,
   ALCHE_TOP_SECTION_IDS,
@@ -212,6 +213,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
+  const missionMaskedModelOutlineOpacity = missionPanelVisible
+    ? Math.min(Math.max((missionPanelProgress - 0.32) / 0.42, 0), 1) * 0.94
+    : 0;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -343,8 +347,12 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         "--alche-intro": currentIntroProgress.toFixed(3),
         "--alche-mission-panel-progress": missionPanelProgress.toFixed(3),
         "--alche-mission-outline-opacity": missionOutlineOpacity.toFixed(3),
+        "--alche-mission-model-outline-opacity": missionMaskedModelOutlineOpacity.toFixed(3),
+        "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
+        "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
+        "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
       }) as CSSProperties,
-    [currentIntroProgress, missionOutlineOpacity, missionPanelProgress],
+    [currentIntroProgress, missionMaskedModelOutlineOpacity, missionOutlineOpacity, missionPanelProgress],
   );
 
   return (
@@ -382,6 +390,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               canvasEventSource={canvasEventSource}
               pointerDebugEnabled={pointerDebugEnabled}
               worksWordHandoff={worksWordHandoff}
+              renderMode="full"
             />
           ) : (
             <div className={styles.fallback}>WebGL unavailable. The DOM shell remains available.</div>
@@ -403,7 +412,17 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             data-visible={missionPanelVisible ? "true" : "false"}
             aria-hidden={missionPanelVisible ? "false" : "true"}
           >
-            <div className={styles.missionTransitionPanel} data-mission-panel />
+            <div className={styles.missionTransitionPanel} data-mission-panel>
+              <svg
+                className={styles.missionMaskedModelOutline}
+                data-mission-model-outline
+                viewBox="0 0 1000 1400"
+                aria-hidden="true"
+              >
+                <path d="M500 84 L146 1120 L304 1120 L444 684 L556 684 L696 1120 L854 1120 Z" />
+                <path d="M500 340 L388 652 L612 652 Z" />
+              </svg>
+            </div>
             <svg
               className={styles.missionTransitionOutline}
               data-mission-outline
@@ -415,6 +434,28 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               <path d="M352 598 L648 598" />
             </svg>
           </div>
+
+          {canRenderLive ? (
+            <div className={styles.edgeOverlayLayer}>
+              <AlcheTopPageCanvas
+                activeSection={currentActiveSection}
+                sectionProgress={currentSectionProgress}
+                worksCardsProgress={currentWorksCardsProgress}
+                introProgress={currentIntroProgress}
+                heroShotId={currentHeroShotId}
+                cardDebugMode={currentCardDebugMode}
+                reducedMotion={reducedMotion}
+                kvWallTexturePath={kvWallTexturePath}
+                worksCardItems={worksCardItems}
+                workCount={worksCardItems.length}
+                serviceCount={copy.service.items.length}
+                canvasEventSource={null}
+                pointerDebugEnabled={false}
+                worksWordHandoff={worksWordHandoff}
+                renderMode="edge-overlay"
+              />
+            </div>
+          ) : null}
 
           <header className={styles.header}>
             <button type="button" className={styles.headerBrand} onClick={() => scrollToSection(sectionRefs.current.kv)}>

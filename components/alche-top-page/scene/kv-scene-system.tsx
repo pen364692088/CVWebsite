@@ -17,6 +17,8 @@ import {
   ALCHE_TOP_MOONFLOW,
   ALCHE_TOP_KV_WALL_ARC_STRENGTH,
   ALCHE_TOP_MEDIA_WALL,
+  deriveMissionPanelBoundaryFromProgress,
+  deriveMissionTransitionOverlayState,
   ALCHE_TOP_WORKS_CARDS,
   ALCHE_TOP_WALL_WORD,
   ALCHE_TOP_WALL_TILE_DENSITY,
@@ -29,6 +31,7 @@ import {
 } from "@/lib/alche-top-page";
 import { createCurvedGridMaterial } from "@/components/alche-top-page/scene/alche-top-page-materials";
 import { createBentCardGeometry, placeOnArc } from "@/components/alche-top-page/scene/bent-card-helpers";
+import { createPrismAShape } from "@/components/alche-top-page/scene/scene-helpers";
 import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
@@ -40,6 +43,7 @@ interface KvSceneSystemProps {
   worksCardItems: readonly { title: string; imageSrc: string }[];
   cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
+  renderMode: "full" | "edge-overlay";
   pointerOverride?: { x: number; y: number } | null;
   pointerDebugRef?: { current: AlchePointerDebugState };
   layerDebugRef?: { current: AlcheLayerDebugState };
@@ -65,9 +69,83 @@ interface WorksCardPose {
   scale: number;
 }
 
+interface ScreenSpaceClipUniforms {
+  uViewportPx: { value: THREE.Vector2 };
+  uMaskBoundary: { value: number };
+  uClipMode: { value: number };
+}
+
+interface CenterHeroRenderState {
+  shadedScene: THREE.Group;
+  edgeScene: THREE.Group;
+  outlineProxy: THREE.Group;
+  map: THREE.Texture;
+  modelScale: number;
+  shadedMaterials: THREE.MeshStandardMaterial[];
+  hiddenMaterial: THREE.MeshBasicMaterial;
+  edgeMaterial: THREE.LineBasicMaterial;
+  outlineMaterial: THREE.MeshBasicMaterial;
+  shadedGeometries: Set<THREE.BufferGeometry>;
+  edgeGeometries: THREE.EdgesGeometry[];
+  outlineGeometries: THREE.BufferGeometry[];
+  shadedClipUniforms: ScreenSpaceClipUniforms;
+  edgeClipUniforms: ScreenSpaceClipUniforms;
+}
+
 const entryRightLowerPose = getAlcheWorksCardPoseDefinition("entry-right-lower");
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
+
+function createScreenSpaceClipUniforms(clipMode: 0 | 1): ScreenSpaceClipUniforms {
+  return {
+    uViewportPx: { value: new THREE.Vector2(1, 1) },
+    uMaskBoundary: { value: -1 },
+    uClipMode: { value: clipMode },
+  };
+}
+
+function applyScreenSpaceClip(
+  material: THREE.MeshStandardMaterial | THREE.LineBasicMaterial | THREE.MeshBasicMaterial,
+  uniforms: ScreenSpaceClipUniforms,
+) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uViewportPx = uniforms.uViewportPx;
+    shader.uniforms.uMaskBoundary = uniforms.uMaskBoundary;
+    shader.uniforms.uClipMode = uniforms.uClipMode;
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "void main() {",
+      `
+        uniform vec2 uViewportPx;
+        uniform float uMaskBoundary;
+        uniform float uClipMode;
+
+        void main() {
+          float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
+          float epsilon = 0.75 / max(uViewportPx.y, 1.0);
+          float clipBoundary = uMaskBoundary;
+
+          if (uClipMode < 0.5) {
+            if (screenY < clipBoundary - epsilon) discard;
+          } else {
+            if (screenY >= clipBoundary - epsilon) discard;
+          }
+      `,
+    );
+  };
+  material.customProgramCacheKey = () => `${material.type}:alche-mission-mask:${uniforms.uClipMode.value}`;
+  material.needsUpdate = true;
+}
+
+function createTubeLoopGeometry(points: readonly THREE.Vector2[], radius: number) {
+  const trimmedPoints =
+    points.length > 1 && points[0].distanceToSquared(points[points.length - 1]) < 1e-8 ? points.slice(0, -1) : points;
+  const curve = new THREE.CatmullRomCurve3(
+    trimmedPoints.map((point) => new THREE.Vector3(point.x, point.y, 0)),
+    true,
+    "centripetal",
+  );
+  return new THREE.TubeGeometry(curve, Math.max(trimmedPoints.length * 8, 96), radius, 10, true);
+}
 
 function configureCardTexture(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -772,10 +850,11 @@ function CenterHeroModel({
   sceneState,
   reducedMotion: _reducedMotion,
   wallTexturePath,
+  renderMode,
   pointerOverride: _pointerOverride,
   pointerDebugRef,
   layerDebugRef,
-}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef">) {
+}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "renderMode" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
   const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
@@ -789,10 +868,47 @@ function CenterHeroModel({
       ),
     [effectiveRadius],
   );
-  const texturedScene = useMemo(() => {
-    const cloned = gltf.scene.clone(true);
+  const texturedScene = useMemo<CenterHeroRenderState>(() => {
+    const shadedScene = gltf.scene.clone(true) as THREE.Group;
+    const edgeScene = gltf.scene.clone(true) as THREE.Group;
+    const outlineProxy = new THREE.Group();
     const map = baseTexture.clone();
-    const materials: THREE.MeshStandardMaterial[] = [];
+    const shadedMaterials: THREE.MeshStandardMaterial[] = [];
+    const shadedGeometries = new Set<THREE.BufferGeometry>();
+    const edgeGeometries: THREE.EdgesGeometry[] = [];
+    const outlineGeometries: THREE.BufferGeometry[] = [];
+    const shadedClipUniforms = createScreenSpaceClipUniforms(0);
+    const edgeClipUniforms = createScreenSpaceClipUniforms(1);
+    const hiddenMaterial = new THREE.MeshBasicMaterial({
+      transparent: false,
+      opacity: 1,
+      colorWrite: false,
+      depthWrite: true,
+      depthTest: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+      side: THREE.DoubleSide,
+    });
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: "#505864",
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      depthTest: true,
+      toneMapped: false,
+    });
+    const outlineMaterial = new THREE.MeshBasicMaterial({
+      color: "#8d96a3",
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      depthTest: true,
+      toneMapped: false,
+    });
+    applyScreenSpaceClip(hiddenMaterial, edgeClipUniforms);
+    applyScreenSpaceClip(edgeMaterial, edgeClipUniforms);
+    applyScreenSpaceClip(outlineMaterial, edgeClipUniforms);
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -802,7 +918,7 @@ function CenterHeroModel({
     map.generateMipmaps = false;
     map.needsUpdate = true;
 
-    cloned.traverse((child) => {
+    shadedScene.traverse((child) => {
       if (!("isMesh" in child) || child.isMesh !== true) return;
       const mesh = child as THREE.Mesh;
       mesh.castShadow = false;
@@ -819,24 +935,78 @@ function CenterHeroModel({
         transparent: true,
         opacity: 0,
       });
+      applyScreenSpaceClip(material, shadedClipUniforms);
       mesh.material = material;
-      materials.push(material);
+      shadedMaterials.push(material);
+      shadedGeometries.add(mesh.geometry as THREE.BufferGeometry);
     });
 
-    const bounds = new THREE.Box3().setFromObject(cloned);
+    edgeScene.traverse((child) => {
+      if (!("isMesh" in child) || child.isMesh !== true) return;
+      const mesh = child as THREE.Mesh;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.renderOrder = 5;
+      mesh.material = hiddenMaterial;
+      const edgesGeometry = new THREE.EdgesGeometry(mesh.geometry as THREE.BufferGeometry);
+      const lines = new THREE.LineSegments(edgesGeometry, edgeMaterial);
+      lines.renderOrder = 6;
+      lines.frustumCulled = false;
+      edgeGeometries.push(edgesGeometry);
+      mesh.add(lines);
+    });
+
+    const outlineScale = (ALCHE_TOP_CENTER_MODEL.targetHeight / 2.76) * 1.72;
+    const outlineShape = createPrismAShape(outlineScale);
+    const outlinePoints = outlineShape.extractPoints(72);
+    const outerGeometry = createTubeLoopGeometry(outlinePoints.shape, 0.014);
+    const outerLoop = new THREE.Mesh(outerGeometry, outlineMaterial);
+    outerLoop.renderOrder = 7;
+    outerLoop.frustumCulled = false;
+    outlineGeometries.push(outerGeometry);
+    outlineProxy.add(outerLoop);
+    outlinePoints.holes.forEach((holePoints) => {
+      const holeGeometry = createTubeLoopGeometry(holePoints, 0.0105);
+      const holeLoop = new THREE.Mesh(holeGeometry, outlineMaterial);
+      holeLoop.renderOrder = 7;
+      holeLoop.frustumCulled = false;
+      outlineGeometries.push(holeGeometry);
+      outlineProxy.add(holeLoop);
+    });
+    outlineProxy.position.set(0, -0.36, 0.2);
+
+    const bounds = new THREE.Box3().setFromObject(shadedScene);
     const size = new THREE.Vector3();
     bounds.getSize(size);
     const modelHeight = Math.max(size.y, 0.0001);
     const scale = ALCHE_TOP_CENTER_MODEL.targetHeight / modelHeight;
-    cloned.scale.setScalar(scale);
-    bounds.setFromObject(cloned);
+    shadedScene.scale.setScalar(scale);
+    edgeScene.scale.setScalar(scale);
+    bounds.setFromObject(shadedScene);
     const center = bounds.getCenter(new THREE.Vector3());
-    cloned.position.sub(center);
+    shadedScene.position.sub(center);
+    edgeScene.position.sub(center);
 
-    return { scene: cloned, map, materials };
+    return {
+      shadedScene,
+      edgeScene,
+      outlineProxy,
+      map,
+      modelScale: scale,
+      shadedMaterials,
+      hiddenMaterial,
+      edgeMaterial,
+      outlineMaterial,
+      shadedGeometries,
+      edgeGeometries,
+      outlineGeometries,
+      shadedClipUniforms,
+      edgeClipUniforms,
+    };
   }, [baseTexture, gltf.scene]);
 
   useEffect(() => {
+    if (renderMode !== "full") return;
     if (typeof window === "undefined") return;
 
     const host = window as typeof window & {
@@ -854,49 +1024,79 @@ function CenterHeroModel({
 
     return () => {
       delete host.__getAlcheHeroModelRotation;
-      texturedScene.map.dispose();
-      texturedScene.scene.traverse((child) => {
-        if (!("isMesh" in child) || child.isMesh !== true) return;
-        const mesh = child as THREE.Mesh;
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((material) => material.dispose());
-        } else {
-          mesh.material.dispose();
-        }
-        mesh.geometry.dispose();
-      });
     };
-  }, [texturedScene]);
+  }, [renderMode, texturedScene]);
+
+  useEffect(
+    () => () => {
+      texturedScene.map.dispose();
+      texturedScene.shadedMaterials.forEach((material) => material.dispose());
+      texturedScene.hiddenMaterial.dispose();
+      texturedScene.edgeMaterial.dispose();
+      texturedScene.outlineMaterial.dispose();
+      texturedScene.shadedGeometries.forEach((geometry) => geometry.dispose());
+      texturedScene.edgeGeometries.forEach((geometry) => geometry.dispose());
+      texturedScene.outlineGeometries.forEach((geometry) => geometry.dispose());
+    },
+    [texturedScene],
+  );
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
-    const missionPanelProgress =
-      sceneState.activeSection === "works_outro"
-        ? sceneState.worksOutro.clearMix * 0.42
-        : sceneState.activeSection === "mission_in"
-          ? 0.42 + sceneState.missionIn.flattenMix * 0.58
-          : 0;
-    const missionOcclusionFade =
-      sceneState.activeSection === "mission_in" ? smoothstep(remapRange(missionPanelProgress, 0.8, 0.98)) : 0;
+    const { missionPanelProgress } = deriveMissionTransitionOverlayState(sceneState.activeSection, sceneState.sectionProgress);
+    const splitEnabled = sceneState.activeSection === "mission_in";
+    const maskBoundary = splitEnabled ? deriveMissionPanelBoundaryFromProgress(missionPanelProgress) : -1;
     const visibility =
       sceneState.activeSection === "works_intro" || sceneState.activeSection === "works" || sceneState.activeSection === "works_outro"
         ? sceneState.kv.visible
-        : sceneState.activeSection === "mission_in"
-          ? sceneState.kv.prismVisibility * sceneState.kv.visible * (1 - missionOcclusionFade)
-          : sceneState.kv.prismVisibility * sceneState.kv.visible;
+        : sceneState.kv.prismVisibility * sceneState.kv.visible;
 
     if (pointerDebugRef) {
       pointerDebugRef.current.r3fPointerX = state.pointer.x;
       pointerDebugRef.current.r3fPointerY = state.pointer.y;
     }
 
-    texturedScene.materials.forEach((material) => {
-      material.opacity = THREE.MathUtils.damp(material.opacity, visibility, 4, delta);
-      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, 0.28 * visibility, 4, delta);
-    });
+    texturedScene.shadedClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
+    texturedScene.shadedClipUniforms.uMaskBoundary.value = maskBoundary;
+    texturedScene.edgeClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
+    texturedScene.edgeClipUniforms.uMaskBoundary.value = maskBoundary;
 
-    groupRef.current.visible = visibility > 0.001 || texturedScene.materials.some((material) => material.opacity > 0.001);
+    texturedScene.shadedMaterials.forEach((material) => {
+      material.opacity = THREE.MathUtils.damp(material.opacity, renderMode === "full" ? visibility : 0, 4, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(
+        material.emissiveIntensity,
+        renderMode === "full" ? 0.28 * visibility : 0,
+        4,
+        delta,
+      );
+    });
+    texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
+      texturedScene.edgeMaterial.opacity,
+      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.22 : 0,
+      4,
+      delta,
+    );
+    texturedScene.outlineMaterial.opacity = THREE.MathUtils.damp(
+      texturedScene.outlineMaterial.opacity,
+      renderMode === "edge-overlay" && splitEnabled
+        ? visibility * THREE.MathUtils.lerp(0.62, 1, sceneState.missionIn.emblemMix)
+        : 0,
+      4,
+      delta,
+    );
+
+    const shadedVisible =
+      renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
+    const edgeVisible =
+      renderMode === "edge-overlay" && splitEnabled && (visibility > 0.001 || texturedScene.edgeMaterial.opacity > 0.001);
+    const outlineVisible =
+      renderMode === "edge-overlay" && splitEnabled && (visibility > 0.001 || texturedScene.outlineMaterial.opacity > 0.001);
+    texturedScene.shadedScene.visible = shadedVisible;
+    texturedScene.edgeScene.visible = edgeVisible;
+    texturedScene.outlineProxy.visible = outlineVisible;
+    texturedScene.outlineProxy.quaternion.copy(groupRef.current.quaternion).invert().multiply(state.camera.quaternion);
+    groupRef.current.visible = shadedVisible || edgeVisible || outlineVisible;
     if (!groupRef.current.visible) {
       if (pointerDebugRef) {
         pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
@@ -954,14 +1154,24 @@ function CenterHeroModel({
     if (layerDebugRef) {
       const worldPosition = groupRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.modelWorldZ = worldPosition.z;
-      layerDebugRef.current.modelScale = groupRef.current.scale.x;
+      layerDebugRef.current.modelScale = texturedScene.modelScale;
     }
   });
 
-  return <primitive ref={groupRef} object={texturedScene.scene} visible={false} />;
+  return (
+    <group ref={groupRef} visible={false}>
+      <primitive object={texturedScene.shadedScene} />
+      <primitive object={texturedScene.edgeScene} />
+      <primitive object={texturedScene.outlineProxy} />
+    </group>
+  );
 }
 
 export function KvSceneSystem(props: KvSceneSystemProps) {
+  if (props.renderMode === "edge-overlay") {
+    return <CenterHeroModel {...props} />;
+  }
+
   return (
     <>
       <CurvedMediaWall
