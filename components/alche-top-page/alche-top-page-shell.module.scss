@@ -3,6 +3,10 @@
   min-height: 100vh;
   color: #fff;
   background: #000;
+  --alche-mission-panel-screen-top: calc(
+    (var(--alche-mission-panel-top-vh, 54) * 1vh) +
+      ((1 - var(--alche-mission-panel-progress, 0)) * (var(--alche-mission-panel-travel-vh, 62) * 1vh))
+  );
 }
 
 .stage {
@@ -46,6 +50,11 @@
 .edgeOverlayLayer {
   z-index: 9;
   pointer-events: none;
+  clip-path: inset(100% 0 0 0);
+}
+
+.root[data-mission-panel-visible="true"] .edgeOverlayLayer {
+  clip-path: inset(var(--alche-mission-panel-screen-top, 100vh) 0 0 0);
 }
 
 .missionTransition {

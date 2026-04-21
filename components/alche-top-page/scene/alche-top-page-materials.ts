@@ -7,8 +7,6 @@ import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TI
 const ALCHE_TOP_WALL_SAFE_FLATTEN = 0.997;
 
 export interface MaskedPrismLineArtUniforms {
-  uViewportPx: { value: THREE.Vector2 };
-  uMaskBoundary: { value: number };
   uOpacity: { value: number };
 }
 
@@ -183,8 +181,6 @@ export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUn
   const sharedUniforms: MaskedPrismLineArtUniforms =
     uniforms ??
     {
-      uViewportPx: { value: new THREE.Vector2(1, 1) },
-      uMaskBoundary: { value: -1 },
       uOpacity: { value: 0 },
     };
 
@@ -195,8 +191,6 @@ export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUn
     depthTest: true,
     toneMapped: false,
     uniforms: {
-      uViewportPx: sharedUniforms.uViewportPx,
-      uMaskBoundary: sharedUniforms.uMaskBoundary,
       uOpacity: sharedUniforms.uOpacity,
     },
     vertexShader: `
@@ -215,8 +209,6 @@ export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUn
       }
     `,
     fragmentShader: `
-      uniform vec2 uViewportPx;
-      uniform float uMaskBoundary;
       uniform float uOpacity;
 
       varying vec2 vUv;
@@ -230,11 +222,6 @@ export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUn
       }
 
       void main() {
-        float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
-        float epsilon = 0.75 / max(uViewportPx.y, 1.0);
-
-        if (screenY >= uMaskBoundary - epsilon) discard;
-
         vec2 uv = vUv;
         vec3 normal = normalize(vNormalWorld);
         vec3 viewDir = normalize(cameraPosition - vWorldPos);

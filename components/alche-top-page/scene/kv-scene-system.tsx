@@ -91,7 +91,6 @@ interface CenterHeroRenderState {
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
   shadedClipUniforms: ScreenSpaceClipUniforms;
-  edgeClipUniforms: ScreenSpaceClipUniforms;
   maskedLineArtUniforms: MaskedPrismLineArtUniforms;
 }
 
@@ -869,12 +868,9 @@ function CenterHeroModel({
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
     const maskedLineArtUniforms: MaskedPrismLineArtUniforms = {
-      uViewportPx: { value: new THREE.Vector2(1, 1) },
-      uMaskBoundary: { value: -1 },
       uOpacity: { value: 0 },
     };
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
-    const edgeClipUniforms = createScreenSpaceClipUniforms(1);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
       transparent: false,
       opacity: 1,
@@ -895,8 +891,6 @@ function CenterHeroModel({
       toneMapped: false,
     });
     const maskedLineArtMaterial = createMaskedPrismLineArtMaterial(maskedLineArtUniforms);
-    applyScreenSpaceClip(hiddenMaterial, edgeClipUniforms);
-    applyScreenSpaceClip(edgeMaterial, edgeClipUniforms);
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -980,7 +974,6 @@ function CenterHeroModel({
       shadedGeometries,
       edgeGeometries,
       shadedClipUniforms,
-      edgeClipUniforms,
       maskedLineArtUniforms,
     };
   }, [baseTexture, gltf.scene]);
@@ -1040,10 +1033,6 @@ function CenterHeroModel({
 
     texturedScene.shadedClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
     texturedScene.shadedClipUniforms.uMaskBoundary.value = maskBoundary;
-    texturedScene.edgeClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
-    texturedScene.edgeClipUniforms.uMaskBoundary.value = maskBoundary;
-    texturedScene.maskedLineArtUniforms.uViewportPx.value.set(state.size.width, state.size.height);
-    texturedScene.maskedLineArtUniforms.uMaskBoundary.value = maskBoundary;
 
     texturedScene.shadedMaterials.forEach((material) => {
       material.opacity = THREE.MathUtils.damp(material.opacity, renderMode === "full" ? visibility : 0, 4, delta);
