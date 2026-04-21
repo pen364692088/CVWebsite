@@ -82,8 +82,10 @@ interface CenterHeroRenderState {
   shadedMaterials: THREE.MeshStandardMaterial[];
   hiddenMaterial: THREE.MeshBasicMaterial;
   edgeMaterial: THREE.LineBasicMaterial;
+  maskedWireframeMaterial: THREE.LineBasicMaterial;
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
+  maskedWireframeGeometries: THREE.WireframeGeometry[];
   shadedClipUniforms: ScreenSpaceClipUniforms;
   edgeClipUniforms: ScreenSpaceClipUniforms;
 }
@@ -860,6 +862,7 @@ function CenterHeroModel({
     const shadedMaterials: THREE.MeshStandardMaterial[] = [];
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
+    const maskedWireframeGeometries: THREE.WireframeGeometry[] = [];
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const edgeClipUniforms = createScreenSpaceClipUniforms(1);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
@@ -881,8 +884,17 @@ function CenterHeroModel({
       depthTest: true,
       toneMapped: false,
     });
+    const maskedWireframeMaterial = new THREE.LineBasicMaterial({
+      color: "#9aa3b0",
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+    });
     applyScreenSpaceClip(hiddenMaterial, edgeClipUniforms);
     applyScreenSpaceClip(edgeMaterial, edgeClipUniforms);
+    applyScreenSpaceClip(maskedWireframeMaterial, edgeClipUniforms);
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -928,6 +940,13 @@ function CenterHeroModel({
       lines.frustumCulled = false;
       edgeGeometries.push(edgesGeometry);
       mesh.add(lines);
+
+      const wireframeGeometry = new THREE.WireframeGeometry(mesh.geometry as THREE.BufferGeometry);
+      const wireframeLines = new THREE.LineSegments(wireframeGeometry, maskedWireframeMaterial);
+      wireframeLines.renderOrder = 7;
+      wireframeLines.frustumCulled = false;
+      maskedWireframeGeometries.push(wireframeGeometry);
+      mesh.add(wireframeLines);
     });
 
     const bounds = new THREE.Box3().setFromObject(shadedScene);
@@ -950,8 +969,10 @@ function CenterHeroModel({
       shadedMaterials,
       hiddenMaterial,
       edgeMaterial,
+      maskedWireframeMaterial,
       shadedGeometries,
       edgeGeometries,
+      maskedWireframeGeometries,
       shadedClipUniforms,
       edgeClipUniforms,
     };
@@ -985,8 +1006,10 @@ function CenterHeroModel({
       texturedScene.shadedMaterials.forEach((material) => material.dispose());
       texturedScene.hiddenMaterial.dispose();
       texturedScene.edgeMaterial.dispose();
+      texturedScene.maskedWireframeMaterial.dispose();
       texturedScene.shadedGeometries.forEach((geometry) => geometry.dispose());
       texturedScene.edgeGeometries.forEach((geometry) => geometry.dispose());
+      texturedScene.maskedWireframeGeometries.forEach((geometry) => geometry.dispose());
     },
     [texturedScene],
   );
@@ -1029,11 +1052,21 @@ function CenterHeroModel({
       4,
       delta,
     );
+    texturedScene.maskedWireframeMaterial.opacity = THREE.MathUtils.damp(
+      texturedScene.maskedWireframeMaterial.opacity,
+      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.22 : 0,
+      4,
+      delta,
+    );
 
     const shadedVisible =
       renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
     const edgeVisible =
-      renderMode === "edge-overlay" && splitEnabled && (visibility > 0.001 || texturedScene.edgeMaterial.opacity > 0.001);
+      renderMode === "edge-overlay" &&
+      splitEnabled &&
+      (visibility > 0.001 ||
+        texturedScene.edgeMaterial.opacity > 0.001 ||
+        texturedScene.maskedWireframeMaterial.opacity > 0.001);
     texturedScene.shadedScene.visible = shadedVisible;
     texturedScene.edgeScene.visible = edgeVisible;
     groupRef.current.visible = shadedVisible || edgeVisible;
