@@ -6,6 +6,12 @@ import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TI
 
 const ALCHE_TOP_WALL_SAFE_FLATTEN = 0.997;
 
+export interface MaskedPrismLineArtUniforms {
+  uViewportPx: { value: THREE.Vector2 };
+  uMaskBoundary: { value: number };
+  uOpacity: { value: number };
+}
+
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
   const b = new THREE.Color("#f8fbff");
@@ -167,6 +173,86 @@ export function createGalleryPlaneMaterial() {
         color += mix(vec3(0.06, 0.22, 0.26), vec3(0.05), uWhiteMix) * smoothstep(0.82, 0.06, length(centered * vec2(0.9, 0.72))) * 0.26;
 
         float alpha = (0.045 + frame * 0.18 + diagonal * 0.12 + slabB * 0.06) * uVisibility;
+        gl_FragColor = vec4(color, alpha);
+      }
+    `,
+  });
+}
+
+export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUniforms) {
+  const sharedUniforms: MaskedPrismLineArtUniforms =
+    uniforms ??
+    {
+      uViewportPx: { value: new THREE.Vector2(1, 1) },
+      uMaskBoundary: { value: -1 },
+      uOpacity: { value: 0 },
+    };
+
+  return new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    toneMapped: false,
+    uniforms: {
+      uViewportPx: sharedUniforms.uViewportPx,
+      uMaskBoundary: sharedUniforms.uMaskBoundary,
+      uOpacity: sharedUniforms.uOpacity,
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vModelPos;
+      varying vec3 vNormalWorld;
+      varying vec3 vWorldPos;
+
+      void main() {
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vUv = uv;
+        vModelPos = position;
+        vNormalWorld = normalize(mat3(modelMatrix) * normal);
+        vWorldPos = world.xyz;
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: `
+      uniform vec2 uViewportPx;
+      uniform float uMaskBoundary;
+      uniform float uOpacity;
+
+      varying vec2 vUv;
+      varying vec3 vModelPos;
+      varying vec3 vNormalWorld;
+      varying vec3 vWorldPos;
+
+      float linePulse(float value, float width) {
+        float grid = abs(fract(value - 0.5) - 0.5) / fwidth(value);
+        return 1.0 - min(grid / width, 1.0);
+      }
+
+      void main() {
+        float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
+        float epsilon = 0.75 / max(uViewportPx.y, 1.0);
+
+        if (screenY >= uMaskBoundary - epsilon) discard;
+
+        vec2 uv = vUv;
+        vec3 normal = normalize(vNormalWorld);
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 2.25);
+
+        float diagonalA = linePulse((vModelPos.y + vModelPos.x * 0.22 + 1.8) * 2.9, 1.25) * 0.34;
+        float diagonalB = linePulse((vModelPos.y - vModelPos.x * 0.38 + 1.25) * 3.3, 1.2) * 0.26;
+        float vertical = linePulse((vModelPos.x + 0.72) * 5.2, 1.4) * 0.18;
+        float horizontal = linePulse((vModelPos.y + 1.55) * 5.8, 1.45) * 0.14;
+        float uvFrame = smoothstep(0.08, 0.0, min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y))) * 0.42;
+        float uvDiagonal = linePulse((uv.x + uv.y * 0.82) * 8.5, 1.2) * 0.18;
+        float uvCross = linePulse((uv.x - uv.y * 0.94 + 0.18) * 10.0, 1.2) * 0.14;
+        float contour = smoothstep(0.16, 0.84, fresnel) * 0.52;
+
+        float lineField = diagonalA + diagonalB + vertical + horizontal + uvFrame + uvDiagonal + uvCross + contour;
+        float alpha = clamp(lineField, 0.0, 1.0) * uOpacity;
+        vec3 color = vec3(0.58, 0.62, 0.7);
+
         gl_FragColor = vec4(color, alpha);
       }
     `,
