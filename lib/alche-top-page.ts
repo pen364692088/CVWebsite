@@ -295,8 +295,8 @@ export const ALCHE_TOP_MEDIA_WALL: AlcheTopMediaWallConfig = {
 export const ALCHE_TOP_WALL_TILE_DENSITY = 12 as const;
 export const ALCHE_TOP_KV_WALL_ARC_STRENGTH = 1.95 as const;
 export const ALCHE_TOP_MISSION_PANEL_LAYOUT: AlcheMissionPanelLayout = {
-  topVh: 54,
-  travelVh: 62,
+  topVh: -4,
+  travelVh: 162,
   bottomVh: -4,
 } as const;
 export const ALCHE_TOP_MOONFLOW = {
@@ -684,7 +684,7 @@ export function deriveMissionTransitionOverlayState(activeSection: AlcheTopSecti
     const worksOutro = deriveWorksOutroState(sectionProgress);
     return {
       missionPanelProgress: worksOutro.clearMix * 0.42,
-      missionOutlineOpacity: smoothstep(remapRange(worksOutro.clearMix, 0.62, 0.96)) * 0.24,
+      missionOutlineOpacity: 0,
     };
   }
 
@@ -693,7 +693,7 @@ export function deriveMissionTransitionOverlayState(activeSection: AlcheTopSecti
     const missionPanelProgress = 0.42 + missionIn.flattenMix * 0.58;
     return {
       missionPanelProgress,
-      missionOutlineOpacity: 0.18 + smoothstep(remapRange(missionPanelProgress, 0.86, 1.0)) * 0.54,
+      missionOutlineOpacity: 0,
     };
   }
 
@@ -910,7 +910,7 @@ export function deriveTopSceneState(
         ? 0.28 * (1 - works.cardMix * 0.68)
         : runtimeSection === "works_outro"
           ? 0.14 * worksOutro.residualMix
-          : 0.24 * (1 - missionIn.emblemMix * 0.42) * (1 - smoothstep(remapRange(missionInPanelProgress, 0.82, 0.98)) * 0.14);
+          : 1;
     kv.wallFlatten = runtimeSection === "works_outro" ? worksOutroWallFlatten : runtimeSection === "mission_in" ? missionInWallFlatten : 0;
     kv.wallWhiteMix = runtimeSection === "mission_in" ? missionIn.whiteMix * 0.86 : 0;
     kv.visible = runtimeSection === "mission_in" ? 1 - missionIn.whiteMix * 0.64 : 1;

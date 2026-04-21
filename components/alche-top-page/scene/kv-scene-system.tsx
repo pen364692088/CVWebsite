@@ -998,7 +998,9 @@ function CenterHeroModel({
     const splitEnabled = sceneState.activeSection === "mission_in";
     const maskBoundary = splitEnabled ? deriveMissionPanelBoundaryFromProgress(missionPanelProgress) : -1;
     const visibility =
-      sceneState.activeSection === "works_intro" || sceneState.activeSection === "works" || sceneState.activeSection === "works_outro"
+      splitEnabled
+        ? sceneState.kv.prismVisibility
+        : sceneState.activeSection === "works_intro" || sceneState.activeSection === "works" || sceneState.activeSection === "works_outro"
         ? sceneState.kv.visible
         : sceneState.kv.prismVisibility * sceneState.kv.visible;
 

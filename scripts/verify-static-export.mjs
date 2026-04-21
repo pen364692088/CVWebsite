@@ -44,7 +44,7 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes("data-top_section=\"mission_in\""), `Missing mission_in data-top_section marker in ${locale}`);
   assert(html.includes("data-mission-transition"), `Missing mission transition overlay in ${locale}`);
   assert(html.includes("data-mission-panel"), `Missing mission panel in ${locale}`);
-  assert(html.includes("data-mission-outline"), `Missing mission outline in ${locale}`);
+  assert(!html.includes("data-mission-outline"), `Unexpected mission outline in ${locale}`);
   assert(!html.includes("data-top-scroll-indicator"), `Unexpected top scroll indicator in ${locale}`);
 }
 

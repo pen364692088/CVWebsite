@@ -211,9 +211,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentShotId = debugOverride?.shotId ?? null;
   const showShotSelector = !captureMode && currentShotId !== null;
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
-  const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
+  const { missionPanelProgress } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
-  const visibleMissionOutlineOpacity = currentTrackedSection === "mission_in" ? 0 : missionOutlineOpacity;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -344,12 +343,11 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       ({
         "--alche-intro": currentIntroProgress.toFixed(3),
         "--alche-mission-panel-progress": missionPanelProgress.toFixed(3),
-        "--alche-mission-outline-opacity": visibleMissionOutlineOpacity.toFixed(3),
         "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
         "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
         "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
       }) as CSSProperties,
-    [currentIntroProgress, missionPanelProgress, visibleMissionOutlineOpacity],
+    [currentIntroProgress, missionPanelProgress],
   );
 
   return (
@@ -367,7 +365,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-pointer-debug={pointerDebugEnabled ? "true" : "false"}
       data-mission-panel-visible={missionPanelVisible ? "true" : "false"}
       data-mission-panel-progress={missionPanelProgress.toFixed(3)}
-      data-mission-outline-opacity={visibleMissionOutlineOpacity.toFixed(3)}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -410,16 +407,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             aria-hidden={missionPanelVisible ? "false" : "true"}
           >
             <div className={styles.missionTransitionPanel} data-mission-panel />
-            <svg
-              className={styles.missionTransitionOutline}
-              data-mission-outline
-              viewBox="0 0 1000 1000"
-              role="img"
-              aria-label="Mission transition emblem"
-            >
-              <path d="M236 842 L500 128 L764 842" />
-              <path d="M352 598 L648 598" />
-            </svg>
           </div>
 
           {canRenderLive ? (
