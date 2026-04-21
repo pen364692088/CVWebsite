@@ -213,6 +213,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
+  const visibleMissionOutlineOpacity = currentTrackedSection === "mission_in" ? 0 : missionOutlineOpacity;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -343,12 +344,12 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       ({
         "--alche-intro": currentIntroProgress.toFixed(3),
         "--alche-mission-panel-progress": missionPanelProgress.toFixed(3),
-        "--alche-mission-outline-opacity": missionOutlineOpacity.toFixed(3),
+        "--alche-mission-outline-opacity": visibleMissionOutlineOpacity.toFixed(3),
         "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
         "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
         "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
       }) as CSSProperties,
-    [currentIntroProgress, missionOutlineOpacity, missionPanelProgress],
+    [currentIntroProgress, missionPanelProgress, visibleMissionOutlineOpacity],
   );
 
   return (
@@ -366,7 +367,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-pointer-debug={pointerDebugEnabled ? "true" : "false"}
       data-mission-panel-visible={missionPanelVisible ? "true" : "false"}
       data-mission-panel-progress={missionPanelProgress.toFixed(3)}
-      data-mission-outline-opacity={missionOutlineOpacity.toFixed(3)}
+      data-mission-outline-opacity={visibleMissionOutlineOpacity.toFixed(3)}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>

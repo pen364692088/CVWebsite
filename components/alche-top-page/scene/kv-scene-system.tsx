@@ -874,7 +874,7 @@ function CenterHeroModel({
       side: THREE.DoubleSide,
     });
     const edgeMaterial = new THREE.LineBasicMaterial({
-      color: "#b9c4d1",
+      color: "#707985",
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -1023,7 +1023,7 @@ function CenterHeroModel({
     });
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
       texturedScene.edgeMaterial.opacity,
-      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.86 : 0,
+      renderMode === "edge-overlay" && splitEnabled ? visibility * 1 : 0,
       4,
       delta,
     );
