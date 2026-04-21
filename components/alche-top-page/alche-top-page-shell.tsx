@@ -213,9 +213,6 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
-  const missionMaskedModelOutlineOpacity = missionPanelVisible
-    ? Math.min(Math.max((missionPanelProgress - 0.32) / 0.42, 0), 1) * 0.94
-    : 0;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
     stageRef.current = node;
     setCanvasEventSource(node);
@@ -347,12 +344,11 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         "--alche-intro": currentIntroProgress.toFixed(3),
         "--alche-mission-panel-progress": missionPanelProgress.toFixed(3),
         "--alche-mission-outline-opacity": missionOutlineOpacity.toFixed(3),
-        "--alche-mission-model-outline-opacity": missionMaskedModelOutlineOpacity.toFixed(3),
         "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
         "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
         "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
       }) as CSSProperties,
-    [currentIntroProgress, missionMaskedModelOutlineOpacity, missionOutlineOpacity, missionPanelProgress],
+    [currentIntroProgress, missionOutlineOpacity, missionPanelProgress],
   );
 
   return (
@@ -412,17 +408,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             data-visible={missionPanelVisible ? "true" : "false"}
             aria-hidden={missionPanelVisible ? "false" : "true"}
           >
-            <div className={styles.missionTransitionPanel} data-mission-panel>
-              <svg
-                className={styles.missionMaskedModelOutline}
-                data-mission-model-outline
-                viewBox="0 0 1000 1400"
-                aria-hidden="true"
-              >
-                <path d="M500 84 L146 1120 L304 1120 L444 684 L556 684 L696 1120 L854 1120 Z" />
-                <path d="M500 340 L388 652 L612 652 Z" />
-              </svg>
-            </div>
+            <div className={styles.missionTransitionPanel} data-mission-panel />
             <svg
               className={styles.missionTransitionOutline}
               data-mission-outline

@@ -31,7 +31,6 @@ import {
 } from "@/lib/alche-top-page";
 import { createCurvedGridMaterial } from "@/components/alche-top-page/scene/alche-top-page-materials";
 import { createBentCardGeometry, placeOnArc } from "@/components/alche-top-page/scene/bent-card-helpers";
-import { createPrismAShape } from "@/components/alche-top-page/scene/scene-helpers";
 import { assetPath } from "@/lib/site";
 
 configureTextBuilder({ useWorker: false });
@@ -78,16 +77,13 @@ interface ScreenSpaceClipUniforms {
 interface CenterHeroRenderState {
   shadedScene: THREE.Group;
   edgeScene: THREE.Group;
-  outlineProxy: THREE.Group;
   map: THREE.Texture;
   modelScale: number;
   shadedMaterials: THREE.MeshStandardMaterial[];
   hiddenMaterial: THREE.MeshBasicMaterial;
   edgeMaterial: THREE.LineBasicMaterial;
-  outlineMaterial: THREE.MeshBasicMaterial;
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
-  outlineGeometries: THREE.BufferGeometry[];
   shadedClipUniforms: ScreenSpaceClipUniforms;
   edgeClipUniforms: ScreenSpaceClipUniforms;
 }
@@ -134,17 +130,6 @@ function applyScreenSpaceClip(
   };
   material.customProgramCacheKey = () => `${material.type}:alche-mission-mask:${uniforms.uClipMode.value}`;
   material.needsUpdate = true;
-}
-
-function createTubeLoopGeometry(points: readonly THREE.Vector2[], radius: number) {
-  const trimmedPoints =
-    points.length > 1 && points[0].distanceToSquared(points[points.length - 1]) < 1e-8 ? points.slice(0, -1) : points;
-  const curve = new THREE.CatmullRomCurve3(
-    trimmedPoints.map((point) => new THREE.Vector3(point.x, point.y, 0)),
-    true,
-    "centripetal",
-  );
-  return new THREE.TubeGeometry(curve, Math.max(trimmedPoints.length * 8, 96), radius, 10, true);
 }
 
 function configureCardTexture(texture: THREE.Texture) {
@@ -871,12 +856,10 @@ function CenterHeroModel({
   const texturedScene = useMemo<CenterHeroRenderState>(() => {
     const shadedScene = gltf.scene.clone(true) as THREE.Group;
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
-    const outlineProxy = new THREE.Group();
     const map = baseTexture.clone();
     const shadedMaterials: THREE.MeshStandardMaterial[] = [];
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
-    const outlineGeometries: THREE.BufferGeometry[] = [];
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const edgeClipUniforms = createScreenSpaceClipUniforms(1);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
@@ -891,15 +874,7 @@ function CenterHeroModel({
       side: THREE.DoubleSide,
     });
     const edgeMaterial = new THREE.LineBasicMaterial({
-      color: "#505864",
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      depthTest: true,
-      toneMapped: false,
-    });
-    const outlineMaterial = new THREE.MeshBasicMaterial({
-      color: "#8d96a3",
+      color: "#b9c4d1",
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -908,7 +883,6 @@ function CenterHeroModel({
     });
     applyScreenSpaceClip(hiddenMaterial, edgeClipUniforms);
     applyScreenSpaceClip(edgeMaterial, edgeClipUniforms);
-    applyScreenSpaceClip(outlineMaterial, edgeClipUniforms);
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -956,25 +930,6 @@ function CenterHeroModel({
       mesh.add(lines);
     });
 
-    const outlineScale = (ALCHE_TOP_CENTER_MODEL.targetHeight / 2.76) * 1.72;
-    const outlineShape = createPrismAShape(outlineScale);
-    const outlinePoints = outlineShape.extractPoints(72);
-    const outerGeometry = createTubeLoopGeometry(outlinePoints.shape, 0.014);
-    const outerLoop = new THREE.Mesh(outerGeometry, outlineMaterial);
-    outerLoop.renderOrder = 7;
-    outerLoop.frustumCulled = false;
-    outlineGeometries.push(outerGeometry);
-    outlineProxy.add(outerLoop);
-    outlinePoints.holes.forEach((holePoints) => {
-      const holeGeometry = createTubeLoopGeometry(holePoints, 0.0105);
-      const holeLoop = new THREE.Mesh(holeGeometry, outlineMaterial);
-      holeLoop.renderOrder = 7;
-      holeLoop.frustumCulled = false;
-      outlineGeometries.push(holeGeometry);
-      outlineProxy.add(holeLoop);
-    });
-    outlineProxy.position.set(0, -0.36, 0.2);
-
     const bounds = new THREE.Box3().setFromObject(shadedScene);
     const size = new THREE.Vector3();
     bounds.getSize(size);
@@ -990,16 +945,13 @@ function CenterHeroModel({
     return {
       shadedScene,
       edgeScene,
-      outlineProxy,
       map,
       modelScale: scale,
       shadedMaterials,
       hiddenMaterial,
       edgeMaterial,
-      outlineMaterial,
       shadedGeometries,
       edgeGeometries,
-      outlineGeometries,
       shadedClipUniforms,
       edgeClipUniforms,
     };
@@ -1033,10 +985,8 @@ function CenterHeroModel({
       texturedScene.shadedMaterials.forEach((material) => material.dispose());
       texturedScene.hiddenMaterial.dispose();
       texturedScene.edgeMaterial.dispose();
-      texturedScene.outlineMaterial.dispose();
       texturedScene.shadedGeometries.forEach((geometry) => geometry.dispose());
       texturedScene.edgeGeometries.forEach((geometry) => geometry.dispose());
-      texturedScene.outlineGeometries.forEach((geometry) => geometry.dispose());
     },
     [texturedScene],
   );
@@ -1073,15 +1023,7 @@ function CenterHeroModel({
     });
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
       texturedScene.edgeMaterial.opacity,
-      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.22 : 0,
-      4,
-      delta,
-    );
-    texturedScene.outlineMaterial.opacity = THREE.MathUtils.damp(
-      texturedScene.outlineMaterial.opacity,
-      renderMode === "edge-overlay" && splitEnabled
-        ? visibility * THREE.MathUtils.lerp(0.62, 1, sceneState.missionIn.emblemMix)
-        : 0,
+      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.86 : 0,
       4,
       delta,
     );
@@ -1090,13 +1032,9 @@ function CenterHeroModel({
       renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
     const edgeVisible =
       renderMode === "edge-overlay" && splitEnabled && (visibility > 0.001 || texturedScene.edgeMaterial.opacity > 0.001);
-    const outlineVisible =
-      renderMode === "edge-overlay" && splitEnabled && (visibility > 0.001 || texturedScene.outlineMaterial.opacity > 0.001);
     texturedScene.shadedScene.visible = shadedVisible;
     texturedScene.edgeScene.visible = edgeVisible;
-    texturedScene.outlineProxy.visible = outlineVisible;
-    texturedScene.outlineProxy.quaternion.copy(groupRef.current.quaternion).invert().multiply(state.camera.quaternion);
-    groupRef.current.visible = shadedVisible || edgeVisible || outlineVisible;
+    groupRef.current.visible = shadedVisible || edgeVisible;
     if (!groupRef.current.visible) {
       if (pointerDebugRef) {
         pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
@@ -1162,7 +1100,6 @@ function CenterHeroModel({
     <group ref={groupRef} visible={false}>
       <primitive object={texturedScene.shadedScene} />
       <primitive object={texturedScene.edgeScene} />
-      <primitive object={texturedScene.outlineProxy} />
     </group>
   );
 }

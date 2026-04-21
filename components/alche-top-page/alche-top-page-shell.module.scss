@@ -77,26 +77,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
-.missionMaskedModelOutline {
-  position: absolute;
-  left: 50%;
-  top: -16vh;
-  width: min(68vw, 940px);
-  height: min(128vh, 1320px);
-  transform: translateX(-50%) translateY(calc((1 - var(--alche-mission-panel-progress, 0)) * 10vh));
-  opacity: var(--alche-mission-model-outline-opacity, 0);
-  overflow: visible;
-  filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.18));
-
-  path {
-    fill: none;
-    stroke: rgba(102, 112, 124, 0.54);
-    stroke-width: 18;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-}
-
 .missionTransitionOutline {
   position: absolute;
   left: 50%;
