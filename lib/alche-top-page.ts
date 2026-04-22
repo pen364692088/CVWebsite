@@ -105,6 +105,7 @@ export interface AlcheKvSceneState {
   prismRotationX: number;
   prismRotationY: number;
   prismRotationZ: number;
+  prismRainbowMix: number;
   hudVisibility: number;
 }
 
@@ -646,6 +647,7 @@ export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroS
     prismRotationX: ALCHE_TOP_CENTER_MODEL.baseRotationX,
     prismRotationY: ALCHE_TOP_CENTER_MODEL.baseRotationY,
     prismRotationZ: ALCHE_TOP_CENTER_MODEL.baseRotationZ,
+    prismRainbowMix: 0,
     hudVisibility: intro.hudReveal * (1 - handoffMix * 0.72),
   };
 }
@@ -916,6 +918,7 @@ export function deriveTopSceneState(
       ALCHE_TOP_CENTER_MODEL.missionTurnStartOffset +
       ALCHE_TOP_CENTER_MODEL.missionTurnRadians * missionTurnMix;
   }
+  kv.prismRainbowMix = missionTurnMix;
 
   if (runtimeSection === "works_intro") {
     kv.wordVisibility *= 1 - worksIntro.alcheFade;

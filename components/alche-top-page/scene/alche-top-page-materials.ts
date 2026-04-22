@@ -10,6 +10,12 @@ export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
 }
 
+export interface PrismSideRainbowUniforms {
+  uTime: { value: number };
+  uOpacity: { value: number };
+  uRainbowMix: { value: number };
+}
+
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
   const b = new THREE.Color("#f8fbff");
@@ -241,6 +247,99 @@ export function createMaskedPrismLineArtMaterial(uniforms?: MaskedPrismLineArtUn
         vec3 color = vec3(0.58, 0.62, 0.7);
 
         gl_FragColor = vec4(color, alpha);
+      }
+    `,
+  });
+}
+
+export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUniforms) {
+  const sharedUniforms: PrismSideRainbowUniforms =
+    uniforms ??
+    {
+      uTime: { value: 0 },
+      uOpacity: { value: 0 },
+      uRainbowMix: { value: 0 },
+    };
+
+  return new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    toneMapped: false,
+    uniforms: {
+      uTime: sharedUniforms.uTime,
+      uOpacity: sharedUniforms.uOpacity,
+      uRainbowMix: sharedUniforms.uRainbowMix,
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vModelPos;
+      varying vec3 vWorldPos;
+
+      void main() {
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vUv = uv;
+        vModelPos = position;
+        vWorldPos = world.xyz;
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uOpacity;
+      uniform float uRainbowMix;
+
+      varying vec2 vUv;
+      varying vec3 vModelPos;
+      varying vec3 vWorldPos;
+
+      vec3 hsv2rgb(vec3 c) {
+        vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+        rgb = rgb * rgb * (3.0 - 2.0 * rgb);
+        return c.z * mix(vec3(1.0), rgb, c.y);
+      }
+
+      float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+
+      void main() {
+        vec3 faceNormalModel = normalize(cross(dFdx(vModelPos), dFdy(vModelPos)));
+        vec3 targetFaceNormal = normalize(vec3(-0.577, -0.577, -0.577));
+        float faceMask = smoothstep(0.985, 0.9985, dot(faceNormalModel, targetFaceNormal));
+        if (faceMask <= 0.0001 || uOpacity <= 0.0001) discard;
+
+        vec3 worldNormal = normalize(cross(dFdx(vWorldPos), dFdy(vWorldPos)));
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        float fresnel = pow(1.0 - abs(dot(viewDir, worldNormal)), 1.7);
+
+        float flowA = sin(vModelPos.y * 3.2 + vModelPos.x * 1.45 + uTime * 0.78);
+        float flowB = sin(vModelPos.x * 4.9 - vModelPos.y * 1.18 - uTime * 0.64);
+        float flowC = sin((vModelPos.x + vModelPos.y) * 2.7 + uTime * 0.42);
+        float warp = flowA * 0.11 + flowB * 0.09 + flowC * 0.07;
+        float hue = fract(
+          0.12 +
+          vUv.y * 0.18 +
+          vModelPos.y * 0.12 +
+          vModelPos.x * 0.08 +
+          warp +
+          uTime * 0.028
+        );
+
+        float band = sin((vModelPos.y * 2.2 - vModelPos.x * 1.05) * 2.6 + uTime * 0.9) * 0.5 + 0.5;
+        float grain = hash21(gl_FragCoord.xy * 0.91 + vec2(uTime * 24.0, uTime * 16.0));
+        float sparkle = smoothstep(0.76, 0.995, grain) * (0.22 + uRainbowMix * 0.14);
+        float saturation = mix(0.68, 0.98, uRainbowMix);
+        float value = 0.84 + band * 0.14 + fresnel * 0.18 + sparkle * 0.24;
+
+        vec3 rainbow = hsv2rgb(vec3(hue, saturation, min(value, 1.0)));
+        rainbow = mix(rainbow, vec3(0.985, 0.985, 1.0), 0.06 + fresnel * 0.05);
+        float alpha = faceMask * uOpacity * (0.96 + fresnel * 0.18);
+
+        gl_FragColor = vec4(rainbow, alpha);
       }
     `,
   });

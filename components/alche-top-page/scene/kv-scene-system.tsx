@@ -33,6 +33,8 @@ import {
   createCurvedGridMaterial,
   createMaskedPrismLineArtMaterial,
   type MaskedPrismLineArtUniforms,
+  createPrismSideRainbowMaterial,
+  type PrismSideRainbowUniforms,
 } from "@/components/alche-top-page/scene/alche-top-page-materials";
 import { createBentCardGeometry, placeOnArc } from "@/components/alche-top-page/scene/bent-card-helpers";
 import { assetPath } from "@/lib/site";
@@ -82,16 +84,19 @@ interface CenterHeroRenderState {
   shadedScene: THREE.Group;
   edgeScene: THREE.Group;
   maskedLineArtScene: THREE.Group;
+  rainbowScene: THREE.Group;
   map: THREE.Texture;
   modelScale: number;
   shadedMaterials: THREE.MeshStandardMaterial[];
   hiddenMaterial: THREE.MeshBasicMaterial;
   edgeMaterial: THREE.LineBasicMaterial;
   maskedLineArtMaterial: THREE.ShaderMaterial;
+  rainbowMaterial: THREE.ShaderMaterial;
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
   shadedClipUniforms: ScreenSpaceClipUniforms;
   maskedLineArtUniforms: MaskedPrismLineArtUniforms;
+  rainbowUniforms: PrismSideRainbowUniforms;
 }
 
 const entryRightLowerPose = getAlcheWorksCardPoseDefinition("entry-right-lower");
@@ -863,12 +868,18 @@ function CenterHeroModel({
     const shadedScene = gltf.scene.clone(true) as THREE.Group;
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
     const maskedLineArtScene = gltf.scene.clone(true) as THREE.Group;
+    const rainbowScene = gltf.scene.clone(true) as THREE.Group;
     const map = baseTexture.clone();
     const shadedMaterials: THREE.MeshStandardMaterial[] = [];
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
     const maskedLineArtUniforms: MaskedPrismLineArtUniforms = {
       uOpacity: { value: 0 },
+    };
+    const rainbowUniforms: PrismSideRainbowUniforms = {
+      uTime: { value: 0 },
+      uOpacity: { value: 0 },
+      uRainbowMix: { value: 0 },
     };
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
@@ -891,6 +902,7 @@ function CenterHeroModel({
       toneMapped: false,
     });
     const maskedLineArtMaterial = createMaskedPrismLineArtMaterial(maskedLineArtUniforms);
+    const rainbowMaterial = createPrismSideRainbowMaterial(rainbowUniforms);
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
     map.wrapS = THREE.ClampToEdgeWrapping;
@@ -947,6 +959,15 @@ function CenterHeroModel({
       mesh.material = maskedLineArtMaterial;
     });
 
+    rainbowScene.traverse((child) => {
+      if (!("isMesh" in child) || child.isMesh !== true) return;
+      const mesh = child as THREE.Mesh;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.renderOrder = 5.5;
+      mesh.material = rainbowMaterial;
+    });
+
     const bounds = new THREE.Box3().setFromObject(shadedScene);
     const size = new THREE.Vector3();
     bounds.getSize(size);
@@ -955,26 +976,31 @@ function CenterHeroModel({
     shadedScene.scale.setScalar(scale);
     edgeScene.scale.setScalar(scale);
     maskedLineArtScene.scale.setScalar(scale);
+    rainbowScene.scale.setScalar(scale);
     bounds.setFromObject(shadedScene);
     const center = bounds.getCenter(new THREE.Vector3());
     shadedScene.position.sub(center);
     edgeScene.position.sub(center);
     maskedLineArtScene.position.sub(center);
+    rainbowScene.position.sub(center);
 
     return {
       shadedScene,
       edgeScene,
       maskedLineArtScene,
+      rainbowScene,
       map,
       modelScale: scale,
       shadedMaterials,
       hiddenMaterial,
       edgeMaterial,
       maskedLineArtMaterial,
+      rainbowMaterial,
       shadedGeometries,
       edgeGeometries,
       shadedClipUniforms,
       maskedLineArtUniforms,
+      rainbowUniforms,
     };
   }, [baseTexture, gltf.scene]);
 
@@ -1007,6 +1033,7 @@ function CenterHeroModel({
       texturedScene.hiddenMaterial.dispose();
       texturedScene.edgeMaterial.dispose();
       texturedScene.maskedLineArtMaterial.dispose();
+      texturedScene.rainbowMaterial.dispose();
       texturedScene.shadedGeometries.forEach((geometry) => geometry.dispose());
       texturedScene.edgeGeometries.forEach((geometry) => geometry.dispose());
     },
@@ -1033,6 +1060,7 @@ function CenterHeroModel({
 
     texturedScene.shadedClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
     texturedScene.shadedClipUniforms.uMaskBoundary.value = maskBoundary;
+    texturedScene.rainbowUniforms.uTime.value = state.clock.elapsedTime;
 
     texturedScene.shadedMaterials.forEach((material) => {
       material.opacity = THREE.MathUtils.damp(material.opacity, renderMode === "full" ? visibility : 0, 4, delta);
@@ -1055,6 +1083,18 @@ function CenterHeroModel({
       4,
       delta,
     );
+    texturedScene.rainbowUniforms.uOpacity.value = THREE.MathUtils.damp(
+      texturedScene.rainbowUniforms.uOpacity.value,
+      renderMode === "edge-overlay" && splitEnabled ? visibility * sceneState.kv.prismRainbowMix * 0.92 : 0,
+      4,
+      delta,
+    );
+    texturedScene.rainbowUniforms.uRainbowMix.value = THREE.MathUtils.damp(
+      texturedScene.rainbowUniforms.uRainbowMix.value,
+      renderMode === "edge-overlay" && splitEnabled ? sceneState.kv.prismRainbowMix : 0,
+      4,
+      delta,
+    );
 
     const shadedVisible =
       renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
@@ -1063,10 +1103,15 @@ function CenterHeroModel({
       splitEnabled &&
       (visibility > 0.001 ||
         texturedScene.edgeMaterial.opacity > 0.001 ||
-        texturedScene.maskedLineArtUniforms.uOpacity.value > 0.001);
+        texturedScene.maskedLineArtUniforms.uOpacity.value > 0.001 ||
+        texturedScene.rainbowUniforms.uOpacity.value > 0.001);
+    const rainbowVisible =
+      edgeVisible &&
+      (sceneState.kv.prismRainbowMix > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001);
     texturedScene.shadedScene.visible = shadedVisible;
     texturedScene.edgeScene.visible = edgeVisible;
     texturedScene.maskedLineArtScene.visible = edgeVisible;
+    texturedScene.rainbowScene.visible = rainbowVisible;
     groupRef.current.visible = shadedVisible || edgeVisible;
     if (!groupRef.current.visible) {
       if (pointerDebugRef) {
@@ -1133,6 +1178,7 @@ function CenterHeroModel({
     <group ref={groupRef} visible={false}>
       <primitive object={texturedScene.shadedScene} />
       <primitive object={texturedScene.edgeScene} />
+      <primitive object={texturedScene.rainbowScene} />
       <primitive object={texturedScene.maskedLineArtScene} />
     </group>
   );
