@@ -353,7 +353,7 @@ export const ALCHE_TOP_WORKS_CARDS = {
 } as const;
 
 export const ALCHE_TOP_CENTER_MODEL = {
-  path: "/alche-top-page/kv/tetrahedron-cutout-standard-uv-grid.glb",
+  path: "/alche-top-page/kv/tetrahedron-front-hole-solid.glb",
   y: 0.08,
   depthMix: 0.5,
   depthOffset: 0.38,
