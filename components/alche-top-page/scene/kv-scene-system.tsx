@@ -880,6 +880,7 @@ function CenterHeroModel({
       uTime: { value: 0 },
       uOpacity: { value: 0 },
       uRainbowMix: { value: 0 },
+      uBlackMix: { value: 0 },
     };
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
@@ -1095,6 +1096,12 @@ function CenterHeroModel({
       4,
       delta,
     );
+    texturedScene.rainbowUniforms.uBlackMix.value = THREE.MathUtils.damp(
+      texturedScene.rainbowUniforms.uBlackMix.value,
+      renderMode === "edge-overlay" && splitEnabled ? sceneState.kv.prismRainbowBlackMix : 0,
+      4,
+      delta,
+    );
 
     const shadedVisible =
       renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
@@ -1162,6 +1169,14 @@ function CenterHeroModel({
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
+    const targetGroupScale = sceneState.kv.prismGroupScale;
+    const nextGroupScale = THREE.MathUtils.damp(
+      groupRef.current.scale.x,
+      targetGroupScale,
+      ALCHE_TOP_CENTER_MODEL.rotationDamp,
+      delta,
+    );
+    groupRef.current.scale.setScalar(nextGroupScale);
     if (pointerDebugRef) {
       pointerDebugRef.current.modelRotationX = groupRef.current.rotation.x;
       pointerDebugRef.current.modelRotationY = groupRef.current.rotation.y;
@@ -1170,7 +1185,7 @@ function CenterHeroModel({
     if (layerDebugRef) {
       const worldPosition = groupRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.modelWorldZ = worldPosition.z;
-      layerDebugRef.current.modelScale = texturedScene.modelScale;
+      layerDebugRef.current.modelScale = texturedScene.modelScale * groupRef.current.scale.x;
     }
   });
 

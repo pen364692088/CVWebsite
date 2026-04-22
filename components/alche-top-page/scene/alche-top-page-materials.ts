@@ -14,6 +14,7 @@ export interface PrismSideRainbowUniforms {
   uTime: { value: number };
   uOpacity: { value: number };
   uRainbowMix: { value: number };
+  uBlackMix: { value: number };
 }
 
 function spectralPalette(t: number) {
@@ -259,6 +260,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uTime: { value: 0 },
       uOpacity: { value: 0 },
       uRainbowMix: { value: 0 },
+      uBlackMix: { value: 0 },
     };
 
   return new THREE.ShaderMaterial({
@@ -271,6 +273,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uTime: sharedUniforms.uTime,
       uOpacity: sharedUniforms.uOpacity,
       uRainbowMix: sharedUniforms.uRainbowMix,
+      uBlackMix: sharedUniforms.uBlackMix,
     },
     vertexShader: `
       varying vec2 vUv;
@@ -289,6 +292,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uniform float uTime;
       uniform float uOpacity;
       uniform float uRainbowMix;
+      uniform float uBlackMix;
 
       varying vec2 vUv;
       varying vec3 vModelPos;
@@ -337,9 +341,10 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
 
         vec3 rainbow = hsv2rgb(vec3(hue, saturation, min(value, 1.0)));
         rainbow = mix(rainbow, vec3(0.985, 0.985, 1.0), 0.06 + fresnel * 0.05);
+        vec3 finalColor = mix(rainbow, vec3(0.0), clamp(uBlackMix, 0.0, 1.0));
         float alpha = faceMask * uOpacity * (0.96 + fresnel * 0.18);
 
-        gl_FragColor = vec4(rainbow, alpha);
+        gl_FragColor = vec4(finalColor, alpha);
       }
     `,
   });

@@ -33,6 +33,7 @@ interface DebugState {
   progress: number;
   intro: number;
   missionTurnProgress: number;
+  visionCoverProgress: number;
   heroShotId: AlcheHeroShotId | null;
 }
 
@@ -60,6 +61,29 @@ function resolveDebugMissionTurnProgress(
   }
 }
 
+function resolveDebugVisionCoverProgress(
+  requestedSection: AlcheTopSectionId | null,
+  progress: number,
+  explicitVisionCoverProgress: number | null,
+) {
+  if (explicitVisionCoverProgress !== null && Number.isFinite(explicitVisionCoverProgress)) {
+    return clamp01(explicitVisionCoverProgress);
+  }
+
+  switch (requestedSection) {
+    case "vision":
+      return clamp01(progress);
+    case "vision_out":
+    case "service_in":
+    case "service":
+    case "stellla":
+    case "outro":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 function readDebugState(): DebugState | null {
   if (typeof window === "undefined") return null;
 
@@ -68,6 +92,7 @@ function readDebugState(): DebugState | null {
   const section = params.get("alcheSection") ?? params.get("alchePhase");
   const heroShotId = readAlcheHeroShotId(params.get("alcheHeroShot"));
   const explicitMissionTurnProgress = params.get("alcheMissionTurnProgress");
+  const explicitVisionCoverProgress = params.get("alcheVisionCoverProgress");
   if (shotId) {
     const shotOverride = getAlcheWorksShotOverride(shotId);
     if (!shotOverride) return null;
@@ -79,6 +104,11 @@ function readDebugState(): DebugState | null {
         shotOverride.section,
         shotOverride.progress,
         explicitMissionTurnProgress === null ? null : Number(explicitMissionTurnProgress),
+      ),
+      visionCoverProgress: resolveDebugVisionCoverProgress(
+        shotOverride.section,
+        shotOverride.progress,
+        explicitVisionCoverProgress === null ? null : Number(explicitVisionCoverProgress),
       ),
       heroShotId,
     };
@@ -96,6 +126,11 @@ function readDebugState(): DebugState | null {
       requestedSection,
       progress,
       explicitMissionTurnProgress === null ? null : Number(explicitMissionTurnProgress),
+    ),
+    visionCoverProgress: resolveDebugVisionCoverProgress(
+      requestedSection,
+      progress,
+      explicitVisionCoverProgress === null ? null : Number(explicitVisionCoverProgress),
     ),
     heroShotId,
   };
@@ -159,6 +194,16 @@ function getMissionTurnProgress(sectionRefs: Record<AlcheScrollableSectionId, HT
   return clamp01((window.scrollY - start) / Math.max(end - start, 1));
 }
 
+function getVisionCoverProgress(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
+  const vision = sectionRefs.vision;
+  if (!vision) return 0;
+
+  const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
+  const start = getAbsoluteTop(vision) - viewportLine;
+  const end = Math.max(document.documentElement.scrollHeight - window.innerHeight, start + 1);
+  return clamp01((window.scrollY - start) / Math.max(end - start, 1));
+}
+
 function findSectionAtViewport(sectionRefs: Record<AlcheScrollableSectionId, HTMLElement | null>) {
   const viewportLine = window.innerHeight * ALCHE_TOP_SCROLL_TUNING.activeViewport;
   let matchedSection: AlcheScrollableSectionId = ALCHE_TOP_RENDERABLE_SECTIONS[0] ?? "kv";
@@ -198,6 +243,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
   const [worksCardsProgress, setWorksCardsProgress] = useState(debugState?.section === "works_cards" ? debugState.progress : 0);
   const [introProgress, setIntroProgress] = useState(debugState?.intro ?? (reducedMotion ? 1 : 0));
   const [missionTurnProgress, setMissionTurnProgress] = useState(debugState?.missionTurnProgress ?? 0);
+  const [visionCoverProgress, setVisionCoverProgress] = useState(debugState?.visionCoverProgress ?? 0);
   const [heroShotId, setHeroShotId] = useState<AlcheHeroShotId | null>(debugState?.heroShotId ?? null);
   const [worksWordHandoff, setWorksWordHandoff] = useState(debugState ? deriveWorksWordHandoff(debugState.section, debugState.progress) : 0);
   const renderDebugState = typeof window === "undefined" ? null : readDebugState();
@@ -211,6 +257,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     renderDebugState?.section === "works_cards" ? renderDebugState.progress : worksCardsProgress;
   const resolvedIntroProgress = renderDebugState?.intro ?? introProgress;
   const resolvedMissionTurnProgress = renderDebugState?.missionTurnProgress ?? missionTurnProgress;
+  const resolvedVisionCoverProgress = renderDebugState?.visionCoverProgress ?? visionCoverProgress;
   const resolvedHeroShotId = renderDebugState?.heroShotId ?? heroShotId;
   const resolvedWorksWordHandoff =
     renderDebugState ? deriveWorksWordHandoff(renderDebugState.section, renderDebugState.progress) : worksWordHandoff;
@@ -242,6 +289,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       setWorksCardsProgress(nextDebugState.section === "works_cards" ? nextDebugState.progress : 0);
       setIntroProgress(nextDebugState.intro);
       setMissionTurnProgress(nextDebugState.missionTurnProgress);
+      setVisionCoverProgress(nextDebugState.visionCoverProgress);
       setHeroShotId(nextDebugState.heroShotId);
       setWorksWordHandoff(deriveWorksWordHandoff(nextDebugState.section, nextDebugState.progress));
       return;
@@ -279,10 +327,15 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
       setMissionTurnProgress(getMissionTurnProgress(sectionRefs.current));
     };
 
+    const syncVisionCoverProgress = () => {
+      setVisionCoverProgress(getVisionCoverProgress(sectionRefs.current));
+    };
+
     const handleViewportScroll = () => {
       setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
       syncWorksCardsProgress();
       syncMissionTurnProgress();
+      syncVisionCoverProgress();
       syncDisplayFromViewport();
     };
 
@@ -300,6 +353,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
         syncWorksCardsProgress();
         syncMissionTurnProgress();
+        syncVisionCoverProgress();
         syncDisplayFromViewport();
       });
 
@@ -374,6 +428,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
         progressRef.current[nextSection] = progress;
         syncWorksCardsProgress();
         syncMissionTurnProgress();
+        syncVisionCoverProgress();
         setWorksWordHandoff(getWorksWordHandoff(sectionRefs.current));
         syncDisplaySection(nextSection, progress);
       };
@@ -436,6 +491,7 @@ export function useTopPageScroll({ sectionRefs }: UseTopPageScrollOptions) {
     groupProgress,
     introProgress: resolvedIntroProgress,
     missionTurnProgress: resolvedMissionTurnProgress,
+    visionCoverProgress: resolvedVisionCoverProgress,
     heroShotId: resolvedHeroShotId,
     worksWordHandoff: resolvedWorksWordHandoff,
     scrollToSection,

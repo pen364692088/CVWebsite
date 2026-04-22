@@ -60,6 +60,7 @@ interface AlcheShellDebugOverride {
   progress: number;
   intro: number;
   missionTurnProgress?: number;
+  visionCoverProgress?: number;
   heroShotId: AlcheHeroShotId | null;
   shotId: AlcheWorksShotId | null;
 }
@@ -72,6 +73,7 @@ function createShellDebugOverrideFromShot(shotId: AlcheWorksShotId, heroShotId: 
     ...shotOverride,
     section: normalizeTopRuntimeSection(shotOverride.section),
     missionTurnProgress: 0,
+    visionCoverProgress: 0,
     heroShotId,
   };
 }
@@ -95,6 +97,8 @@ function readShellDebugOverride(params: Pick<URLSearchParams, "get"> | null): Al
     intro: Number(params.get("alcheIntro") ?? (normalizedSection === "loading" ? "0.2" : "1")),
     missionTurnProgress:
       params.get("alcheMissionTurnProgress") === null ? undefined : Number(params.get("alcheMissionTurnProgress")),
+    visionCoverProgress:
+      params.get("alcheVisionCoverProgress") === null ? undefined : Number(params.get("alcheVisionCoverProgress")),
     heroShotId,
   };
 }
@@ -116,6 +120,7 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
     url.searchParams.delete("alcheProgress");
     url.searchParams.delete("alcheIntro");
     url.searchParams.delete("alcheMissionTurnProgress");
+    url.searchParams.delete("alcheVisionCoverProgress");
     url.searchParams.delete("alcheHeroShot");
   } else {
     if (normalizedOverride.shotId) {
@@ -140,6 +145,12 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
       url.searchParams.delete("alcheMissionTurnProgress");
     } else {
       url.searchParams.set("alcheMissionTurnProgress", String(normalizedOverride.missionTurnProgress));
+    }
+
+    if (normalizedOverride.visionCoverProgress === undefined) {
+      url.searchParams.delete("alcheVisionCoverProgress");
+    } else {
+      url.searchParams.set("alcheVisionCoverProgress", String(normalizedOverride.visionCoverProgress));
     }
   }
 
@@ -193,6 +204,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     worksCardsProgress,
     introProgress,
     missionTurnProgress,
+    visionCoverProgress,
     heroShotId,
     worksWordHandoff,
     scrollToSection,
@@ -291,6 +303,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         progress: number;
         intro: number;
         missionTurnProgress?: number;
+        visionCoverProgress?: number;
         heroShotId: AlcheHeroShotId | null;
       } | null) => void;
     };
@@ -315,6 +328,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               progress: normalizedOverride.progress,
               intro: normalizedOverride.intro,
               missionTurnProgress: normalizedOverride.missionTurnProgress,
+              visionCoverProgress: normalizedOverride.visionCoverProgress,
               heroShotId: normalizedOverride.heroShotId,
             }
           : null,
@@ -389,6 +403,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               worksCardsProgress={currentWorksCardsProgress}
               introProgress={currentIntroProgress}
               missionTurnProgress={missionTurnProgress}
+              visionCoverProgress={visionCoverProgress}
               heroShotId={currentHeroShotId}
               cardDebugMode={currentCardDebugMode}
               reducedMotion={reducedMotion}
@@ -432,6 +447,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
                 worksCardsProgress={currentWorksCardsProgress}
                 introProgress={currentIntroProgress}
                 missionTurnProgress={missionTurnProgress}
+                visionCoverProgress={visionCoverProgress}
                 heroShotId={currentHeroShotId}
                 cardDebugMode={currentCardDebugMode}
                 reducedMotion={reducedMotion}

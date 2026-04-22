@@ -69,6 +69,24 @@ const fixedStateShots = [
     name: "mission-turn-side",
     search: withIdentityCardDebug("?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheCapture=1"),
   },
+  {
+    name: "vision-cover-mid",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=0.5&alcheCapture=1",
+    ),
+  },
+  {
+    name: "vision-cover-black-mid",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=0.75&alcheCapture=1",
+    ),
+  },
+  {
+    name: "vision-cover-full",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheCapture=1",
+    ),
+  },
 ];
 
 const referenceBoardShots = worksShotNames;
@@ -798,6 +816,8 @@ async function captureFixedStates(browser, shots, options = {}) {
         intro: Number(params.get("alcheIntro") ?? ((params.get("alcheSection") ?? "loading") === "loading" ? "0.2" : "1")),
         missionTurnProgress:
           params.get("alcheMissionTurnProgress") === null ? undefined : Number(params.get("alcheMissionTurnProgress")),
+        visionCoverProgress:
+          params.get("alcheVisionCoverProgress") === null ? undefined : Number(params.get("alcheVisionCoverProgress")),
         heroShotId: params.get("alcheHeroShot"),
       };
       const sectionId = override.section;

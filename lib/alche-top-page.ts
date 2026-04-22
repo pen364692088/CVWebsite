@@ -106,6 +106,8 @@ export interface AlcheKvSceneState {
   prismRotationY: number;
   prismRotationZ: number;
   prismRainbowMix: number;
+  prismRainbowBlackMix: number;
+  prismGroupScale: number;
   hudVisibility: number;
 }
 
@@ -361,6 +363,7 @@ export const ALCHE_TOP_CENTER_MODEL = {
   baseRotationZ: 0.18,
   missionTurnRadians: 1.57,
   missionTurnStartOffset: 0,
+  coverScale: 2.8,
   pointerYawStrength: 0.18,
   pointerPitchStrength: 0.08,
   rotationDamp: 3.8,
@@ -648,6 +651,8 @@ export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroS
     prismRotationY: ALCHE_TOP_CENTER_MODEL.baseRotationY,
     prismRotationZ: ALCHE_TOP_CENTER_MODEL.baseRotationZ,
     prismRainbowMix: 0,
+    prismRainbowBlackMix: 0,
+    prismGroupScale: 1,
     hudVisibility: intro.hudReveal * (1 - handoffMix * 0.72),
   };
 }
@@ -820,6 +825,7 @@ export function deriveTopSceneState(
   worksCardsProgress: number,
   introProgress: number,
   missionTurnProgress: number,
+  visionCoverProgress: number,
   heroShotId: AlcheHeroShotId | null,
   workCount: number,
   serviceCount: number,
@@ -911,6 +917,8 @@ export function deriveTopSceneState(
     runtimeSection === "works_intro" ? worksIntro.handoffMix : runtimeSection === "works" ? 1 : 0,
   );
   const missionTurnMix = smoothstep(clamp01(missionTurnProgress));
+  const visionCoverMix = smoothstep(clamp01(visionCoverProgress));
+  const visionBlackMix = smoothstep(remapRange(visionCoverProgress, 0.5, 1.0));
 
   if (missionTurnMix > 0) {
     kv.prismRotationY =
@@ -919,6 +927,8 @@ export function deriveTopSceneState(
       ALCHE_TOP_CENTER_MODEL.missionTurnRadians * missionTurnMix;
   }
   kv.prismRainbowMix = missionTurnMix;
+  kv.prismGroupScale = 1 + (ALCHE_TOP_CENTER_MODEL.coverScale - 1) * visionCoverMix;
+  kv.prismRainbowBlackMix = visionBlackMix;
 
   if (runtimeSection === "works_intro") {
     kv.wordVisibility *= 1 - worksIntro.alcheFade;

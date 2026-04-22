@@ -23,6 +23,7 @@ interface AlcheTopPageCanvasProps {
   worksCardsProgress: number;
   introProgress: number;
   missionTurnProgress: number;
+  visionCoverProgress: number;
   heroShotId: AlcheHeroShotId | null;
   cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
@@ -41,6 +42,7 @@ interface AlcheCanvasCaptureOverride {
   progress: number;
   intro: number;
   missionTurnProgress?: number;
+  visionCoverProgress?: number;
   heroShotId: AlcheHeroShotId | null;
 }
 
@@ -55,6 +57,7 @@ export function AlcheTopPageCanvas({
   worksCardsProgress,
   introProgress,
   missionTurnProgress,
+  visionCoverProgress,
   heroShotId,
   cardDebugMode,
   worksWordHandoff,
@@ -75,6 +78,7 @@ export function AlcheTopPageCanvas({
   const resolvedWorksCardsProgress = captureOverride ? (captureOverride.section === "works_cards" ? captureOverride.progress : 0) : worksCardsProgress;
   const resolvedIntroProgress = captureOverride?.intro ?? introProgress;
   const resolvedMissionTurnProgress = captureOverride?.missionTurnProgress ?? missionTurnProgress;
+  const resolvedVisionCoverProgress = captureOverride?.visionCoverProgress ?? visionCoverProgress;
   const resolvedHeroShotId = captureOverride?.heroShotId ?? heroShotId;
   const sceneState = useMemo(
     () =>
@@ -84,6 +88,7 @@ export function AlcheTopPageCanvas({
         resolvedWorksCardsProgress,
         resolvedIntroProgress,
         resolvedMissionTurnProgress,
+        resolvedVisionCoverProgress,
         resolvedHeroShotId,
         workCount,
         serviceCount,
@@ -93,6 +98,7 @@ export function AlcheTopPageCanvas({
       resolvedHeroShotId,
       resolvedIntroProgress,
       resolvedMissionTurnProgress,
+      resolvedVisionCoverProgress,
       resolvedSectionProgress,
       resolvedWorksCardsProgress,
       serviceCount,
