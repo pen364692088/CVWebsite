@@ -10,7 +10,7 @@ import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
   ALCHE_TOP_MISSION_PANEL_LAYOUT,
   type AlchePointerDebugState,
-  ALCHE_TOP_RENDERABLE_SECTIONS,
+  ALCHE_TOP_SCROLL_TRACK_SECTIONS,
   ALCHE_TOP_SECTION_IDS,
   ALCHE_TOP_SECTIONS,
   deriveMissionTransitionOverlayState,
@@ -59,6 +59,7 @@ interface AlcheShellDebugOverride {
   section: AlcheTopSectionId;
   progress: number;
   intro: number;
+  missionTurnProgress?: number;
   heroShotId: AlcheHeroShotId | null;
   shotId: AlcheWorksShotId | null;
 }
@@ -70,6 +71,7 @@ function createShellDebugOverrideFromShot(shotId: AlcheWorksShotId, heroShotId: 
   return {
     ...shotOverride,
     section: normalizeTopRuntimeSection(shotOverride.section),
+    missionTurnProgress: 0,
     heroShotId,
   };
 }
@@ -91,6 +93,8 @@ function readShellDebugOverride(params: Pick<URLSearchParams, "get"> | null): Al
     section: normalizedSection,
     progress: Number(params.get("alcheProgress") ?? (normalizedSection === "loading" ? "0" : "1")),
     intro: Number(params.get("alcheIntro") ?? (normalizedSection === "loading" ? "0.2" : "1")),
+    missionTurnProgress:
+      params.get("alcheMissionTurnProgress") === null ? undefined : Number(params.get("alcheMissionTurnProgress")),
     heroShotId,
   };
 }
@@ -111,6 +115,7 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
     url.searchParams.delete("alcheSection");
     url.searchParams.delete("alcheProgress");
     url.searchParams.delete("alcheIntro");
+    url.searchParams.delete("alcheMissionTurnProgress");
     url.searchParams.delete("alcheHeroShot");
   } else {
     if (normalizedOverride.shotId) {
@@ -129,6 +134,12 @@ function writeShellDebugOverrideToLocation(nextOverride: AlcheShellDebugOverride
       url.searchParams.set("alcheHeroShot", normalizedOverride.heroShotId);
     } else {
       url.searchParams.delete("alcheHeroShot");
+    }
+
+    if (normalizedOverride.missionTurnProgress === undefined) {
+      url.searchParams.delete("alcheMissionTurnProgress");
+    } else {
+      url.searchParams.set("alcheMissionTurnProgress", String(normalizedOverride.missionTurnProgress));
     }
   }
 
@@ -181,6 +192,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     sectionProgress,
     worksCardsProgress,
     introProgress,
+    missionTurnProgress,
     heroShotId,
     worksWordHandoff,
     scrollToSection,
@@ -278,6 +290,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         section: AlcheTopSectionId;
         progress: number;
         intro: number;
+        missionTurnProgress?: number;
         heroShotId: AlcheHeroShotId | null;
       } | null) => void;
     };
@@ -301,6 +314,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               section: normalizedOverride.section,
               progress: normalizedOverride.progress,
               intro: normalizedOverride.intro,
+              missionTurnProgress: normalizedOverride.missionTurnProgress,
               heroShotId: normalizedOverride.heroShotId,
             }
           : null,
@@ -374,6 +388,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               sectionProgress={currentSectionProgress}
               worksCardsProgress={currentWorksCardsProgress}
               introProgress={currentIntroProgress}
+              missionTurnProgress={missionTurnProgress}
               heroShotId={currentHeroShotId}
               cardDebugMode={currentCardDebugMode}
               reducedMotion={reducedMotion}
@@ -416,6 +431,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
                 sectionProgress={currentSectionProgress}
                 worksCardsProgress={currentWorksCardsProgress}
                 introProgress={currentIntroProgress}
+                missionTurnProgress={missionTurnProgress}
                 heroShotId={currentHeroShotId}
                 cardDebugMode={currentCardDebugMode}
                 reducedMotion={reducedMotion}
@@ -610,7 +626,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       </div>
 
       <main className={styles.sectionTrack}>
-        {ALCHE_TOP_RENDERABLE_SECTIONS.map((sectionId) => {
+        {ALCHE_TOP_SCROLL_TRACK_SECTIONS.map((sectionId) => {
           const section = ALCHE_TOP_SECTIONS.find((entry) => entry.id === sectionId);
           if (!section) return null;
 

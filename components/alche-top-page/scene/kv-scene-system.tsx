@@ -1101,19 +1101,19 @@ function CenterHeroModel({
     );
     groupRef.current.rotation.x = THREE.MathUtils.damp(
       groupRef.current.rotation.x,
-      ALCHE_TOP_CENTER_MODEL.baseRotationX,
+      sceneState.kv.prismRotationX,
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
     groupRef.current.rotation.y = THREE.MathUtils.damp(
       groupRef.current.rotation.y,
-      ALCHE_TOP_CENTER_MODEL.baseRotationY,
+      sceneState.kv.prismRotationY,
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );
     groupRef.current.rotation.z = THREE.MathUtils.damp(
       groupRef.current.rotation.z,
-      ALCHE_TOP_CENTER_MODEL.baseRotationZ,
+      sceneState.kv.prismRotationZ,
       ALCHE_TOP_CENTER_MODEL.rotationDamp,
       delta,
     );

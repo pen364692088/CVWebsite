@@ -22,6 +22,7 @@ interface AlcheTopPageCanvasProps {
   sectionProgress: number;
   worksCardsProgress: number;
   introProgress: number;
+  missionTurnProgress: number;
   heroShotId: AlcheHeroShotId | null;
   cardDebugMode: AlcheWorksCardDebugMode;
   worksWordHandoff: number;
@@ -39,6 +40,7 @@ interface AlcheCanvasCaptureOverride {
   section: AlcheTopSectionId;
   progress: number;
   intro: number;
+  missionTurnProgress?: number;
   heroShotId: AlcheHeroShotId | null;
 }
 
@@ -52,6 +54,7 @@ export function AlcheTopPageCanvas({
   sectionProgress,
   worksCardsProgress,
   introProgress,
+  missionTurnProgress,
   heroShotId,
   cardDebugMode,
   worksWordHandoff,
@@ -71,6 +74,7 @@ export function AlcheTopPageCanvas({
   const resolvedSectionProgress = captureOverride?.progress ?? sectionProgress;
   const resolvedWorksCardsProgress = captureOverride ? (captureOverride.section === "works_cards" ? captureOverride.progress : 0) : worksCardsProgress;
   const resolvedIntroProgress = captureOverride?.intro ?? introProgress;
+  const resolvedMissionTurnProgress = captureOverride?.missionTurnProgress ?? missionTurnProgress;
   const resolvedHeroShotId = captureOverride?.heroShotId ?? heroShotId;
   const sceneState = useMemo(
     () =>
@@ -79,11 +83,21 @@ export function AlcheTopPageCanvas({
         resolvedSectionProgress,
         resolvedWorksCardsProgress,
         resolvedIntroProgress,
+        resolvedMissionTurnProgress,
         resolvedHeroShotId,
         workCount,
         serviceCount,
       ),
-    [resolvedActiveSection, resolvedHeroShotId, resolvedIntroProgress, resolvedSectionProgress, resolvedWorksCardsProgress, serviceCount, workCount],
+    [
+      resolvedActiveSection,
+      resolvedHeroShotId,
+      resolvedIntroProgress,
+      resolvedMissionTurnProgress,
+      resolvedSectionProgress,
+      resolvedWorksCardsProgress,
+      serviceCount,
+      workCount,
+    ],
   );
   const { missionPanelProgress, missionOutlineOpacity } = deriveMissionTransitionOverlayState(
     sceneState.activeSection,

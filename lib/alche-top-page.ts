@@ -36,6 +36,12 @@ export const ALCHE_TOP_RENDERABLE_SECTIONS: readonly AlcheScrollableSectionId[] 
   "mission_in",
 ];
 
+export const ALCHE_TOP_SCROLL_TRACK_SECTIONS: readonly AlcheScrollableSectionId[] = [
+  ...ALCHE_TOP_RENDERABLE_SECTIONS,
+  "mission",
+  "vision",
+];
+
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;
 
 export type AlcheTopGroupId = (typeof ALCHE_TOP_GROUP_IDS)[number];
@@ -96,6 +102,9 @@ export interface AlcheKvSceneState {
   wordVisibility: number;
   prismVisibility: number;
   prismScale: number;
+  prismRotationX: number;
+  prismRotationY: number;
+  prismRotationZ: number;
   hudVisibility: number;
 }
 
@@ -349,6 +358,8 @@ export const ALCHE_TOP_CENTER_MODEL = {
   baseRotationX: -0.22,
   baseRotationY: 0.58,
   baseRotationZ: 0.18,
+  missionTurnRadians: 1.57,
+  missionTurnStartOffset: 0,
   pointerYawStrength: 0.18,
   pointerPitchStrength: 0.08,
   rotationDamp: 3.8,
@@ -632,6 +643,9 @@ export function deriveKvSceneState(introProgress: number, heroShotId: AlcheHeroS
     wordVisibility: intro.wordReveal * (1 - handoffMix),
     prismVisibility: Math.max(0.12, 1 - handoffMix * 0.74),
     prismScale: (heroShot?.prismEmphasis.scale ?? 1) * ALCHE_HERO_LOCK.prism.scale,
+    prismRotationX: ALCHE_TOP_CENTER_MODEL.baseRotationX,
+    prismRotationY: ALCHE_TOP_CENTER_MODEL.baseRotationY,
+    prismRotationZ: ALCHE_TOP_CENTER_MODEL.baseRotationZ,
     hudVisibility: intro.hudReveal * (1 - handoffMix * 0.72),
   };
 }
@@ -803,6 +817,7 @@ export function deriveTopSceneState(
   sectionProgress: number,
   worksCardsProgress: number,
   introProgress: number,
+  missionTurnProgress: number,
   heroShotId: AlcheHeroShotId | null,
   workCount: number,
   serviceCount: number,
@@ -893,6 +908,14 @@ export function deriveTopSceneState(
     runtimeSection === "kv" || runtimeSection === "loading" ? heroShotId : null,
     runtimeSection === "works_intro" ? worksIntro.handoffMix : runtimeSection === "works" ? 1 : 0,
   );
+  const missionTurnMix = smoothstep(clamp01(missionTurnProgress));
+
+  if (missionTurnMix > 0) {
+    kv.prismRotationY =
+      ALCHE_TOP_CENTER_MODEL.baseRotationY +
+      ALCHE_TOP_CENTER_MODEL.missionTurnStartOffset +
+      ALCHE_TOP_CENTER_MODEL.missionTurnRadians * missionTurnMix;
+  }
 
   if (runtimeSection === "works_intro") {
     kv.wordVisibility *= 1 - worksIntro.alcheFade;
