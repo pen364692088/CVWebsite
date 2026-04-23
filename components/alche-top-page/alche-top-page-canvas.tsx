@@ -124,6 +124,10 @@ export function AlcheTopPageCanvas({
     modelRotationZ: null,
   });
   const layerDebugRef = useRef<AlcheLayerDebugState>({
+    sceneActiveSection: null,
+    missionTurnProgress: null,
+    visionCoverProgress: null,
+    prismGroupScale: null,
     viewportWidth: null,
     viewportHeight: null,
     cameraPosition: [0, 0, 0],
@@ -188,6 +192,9 @@ export function AlcheTopPageCanvas({
   layerDebugRef.current.missionPanelProgress = missionPanelProgress;
   layerDebugRef.current.missionOutlineOpacity = missionOutlineOpacity;
   layerDebugRef.current.kvWallFlatten = sceneState.kv.wallFlatten;
+  layerDebugRef.current.sceneActiveSection = sceneState.activeSection;
+  layerDebugRef.current.missionTurnProgress = resolvedMissionTurnProgress;
+  layerDebugRef.current.visionCoverProgress = resolvedVisionCoverProgress;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

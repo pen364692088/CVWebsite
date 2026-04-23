@@ -14,6 +14,7 @@ const basePath = "/CVWebsite";
 const baseUrl = "http://127.0.0.1:3000/CVWebsite";
 const cliArgs = new Set(process.argv.slice(2));
 const cardsOnlyMode = cliArgs.has("--cards-only");
+const visionCoverLiveOnlyMode = cliArgs.has("--vision-cover-live-only");
 const ultraWideViewport = { width: 2000, height: 1080 };
 
 fs.mkdirSync(outputDir, { recursive: true });
@@ -1218,6 +1219,54 @@ async function captureRealWheelHandoff(browser, options = {}) {
       { timeout: 12000 },
     );
     await page.mouse.move(viewport.width / 2, viewport.height / 2);
+    const readLiveSnapshot = async (stepLabel) =>
+      page.evaluate((resolvedStepLabel) => {
+        const root = document.querySelector("[data-active-section]");
+        const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+        return {
+          step: resolvedStepLabel,
+          scrollY: Math.round(window.scrollY),
+          maxScroll: Math.round(maxScroll),
+          active: root?.getAttribute("data-active-section"),
+          tracked: root?.getAttribute("data-tracked-section"),
+          introReady: root?.getAttribute("data-intro-ready"),
+          sceneActive: layerState?.sceneActiveSection ?? null,
+          missionTurnProgress: layerState?.missionTurnProgress ?? null,
+          visionCoverProgress: layerState?.visionCoverProgress ?? null,
+          prismGroupScale: layerState?.prismGroupScale ?? null,
+          handoff: layerState?.worksHandoff ?? null,
+          worksOpacity: layerState?.worksOpacity ?? null,
+          moonflowOpacity: layerState?.moonflowOpacity ?? null,
+          worksWorldX: layerState?.worksWorldX ?? null,
+          worksRotationY: layerState?.worksRotationY ?? null,
+          modelWorldZ: layerState?.modelWorldZ ?? null,
+          worksWorldZ: layerState?.worksWorldZ ?? null,
+          cardsOpacity: layerState?.cardsOpacity ?? null,
+          cardsLeadIndex: layerState?.cardsLeadIndex ?? null,
+          card0Visible: layerState?.card0Visible ?? false,
+          card1Visible: layerState?.card1Visible ?? false,
+          card0FacingError: layerState?.card0FacingError ?? null,
+          card1FacingError: layerState?.card1FacingError ?? null,
+          worksOutroClearMix: layerState?.worksOutroClearMix ?? null,
+          missionFlattenMix: layerState?.missionFlattenMix ?? null,
+          missionWhiteMix: layerState?.missionWhiteMix ?? null,
+          missionEmblemMix: layerState?.missionEmblemMix ?? null,
+          missionPanelProgress: layerState?.missionPanelProgress ?? null,
+          missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
+          kvWallFlatten: layerState?.kvWallFlatten ?? null,
+          viewportWidth: layerState?.viewportWidth ?? null,
+          viewportHeight: layerState?.viewportHeight ?? null,
+          card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
+          card0ScreenRight: layerState?.card0ScreenRight ?? null,
+          card0ScreenTop: layerState?.card0ScreenTop ?? null,
+          card0ScreenBottom: layerState?.card0ScreenBottom ?? null,
+          card1ScreenLeft: layerState?.card1ScreenLeft ?? null,
+          card1ScreenRight: layerState?.card1ScreenRight ?? null,
+          card1ScreenTop: layerState?.card1ScreenTop ?? null,
+          card1ScreenBottom: layerState?.card1ScreenBottom ?? null,
+        };
+      }, stepLabel);
     const scrollPositions = await page.evaluate(() => {
       const activeViewportLine = window.innerHeight * 0.38;
       const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
@@ -1276,47 +1325,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
         })
         .catch(() => {});
       await page.waitForTimeout(140);
-      const snapshot = await page.evaluate((stepLabel) => {
-        const root = document.querySelector("[data-active-section]");
-        const layerState = window.__getAlcheLayerDebugState?.() ?? null;
-        return {
-          step: stepLabel,
-          scrollY: Math.round(window.scrollY),
-          active: root?.getAttribute("data-active-section"),
-          tracked: root?.getAttribute("data-tracked-section"),
-          introReady: root?.getAttribute("data-intro-ready"),
-          handoff: layerState?.worksHandoff ?? null,
-          worksOpacity: layerState?.worksOpacity ?? null,
-          moonflowOpacity: layerState?.moonflowOpacity ?? null,
-          worksWorldX: layerState?.worksWorldX ?? null,
-          worksRotationY: layerState?.worksRotationY ?? null,
-          modelWorldZ: layerState?.modelWorldZ ?? null,
-          worksWorldZ: layerState?.worksWorldZ ?? null,
-          cardsOpacity: layerState?.cardsOpacity ?? null,
-          cardsLeadIndex: layerState?.cardsLeadIndex ?? null,
-          card0Visible: layerState?.card0Visible ?? false,
-          card1Visible: layerState?.card1Visible ?? false,
-          card0FacingError: layerState?.card0FacingError ?? null,
-          card1FacingError: layerState?.card1FacingError ?? null,
-          worksOutroClearMix: layerState?.worksOutroClearMix ?? null,
-          missionFlattenMix: layerState?.missionFlattenMix ?? null,
-          missionWhiteMix: layerState?.missionWhiteMix ?? null,
-          missionEmblemMix: layerState?.missionEmblemMix ?? null,
-          missionPanelProgress: layerState?.missionPanelProgress ?? null,
-          missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
-          kvWallFlatten: layerState?.kvWallFlatten ?? null,
-          viewportWidth: layerState?.viewportWidth ?? null,
-          viewportHeight: layerState?.viewportHeight ?? null,
-          card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
-          card0ScreenRight: layerState?.card0ScreenRight ?? null,
-          card0ScreenTop: layerState?.card0ScreenTop ?? null,
-          card0ScreenBottom: layerState?.card0ScreenBottom ?? null,
-          card1ScreenLeft: layerState?.card1ScreenLeft ?? null,
-          card1ScreenRight: layerState?.card1ScreenRight ?? null,
-          card1ScreenTop: layerState?.card1ScreenTop ?? null,
-          card1ScreenBottom: layerState?.card1ScreenBottom ?? null,
-        };
-      }, step);
+      const snapshot = await readLiveSnapshot(step);
       samples.push(snapshot);
 
       if (
@@ -1539,6 +1548,138 @@ async function captureRealWheelHandoff(browser, options = {}) {
   }
 }
 
+async function captureVisionCoverLiveEndState(browser, options = {}) {
+  const viewport = options.viewport ?? ultraWideViewport;
+  const fileSuffix = options.fileSuffix ?? "";
+  const context = await browser.newContext({
+    viewport,
+    locale: "en-US",
+    reducedMotion: "no-preference",
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    await assertTopPageShell(page, "vision-cover-live-end");
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-active-section]")?.getAttribute("data-intro-ready") === "true" &&
+        typeof window.__getAlcheLayerDebugState === "function",
+      undefined,
+      { timeout: 12000 },
+    );
+    await page.mouse.move(viewport.width / 2, viewport.height / 2);
+
+    const readSnapshot = async (stepLabel) =>
+      page.evaluate((resolvedStepLabel) => {
+        const root = document.querySelector("[data-active-section]");
+        const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+        return {
+          step: resolvedStepLabel,
+          scrollY: Math.round(window.scrollY),
+          maxScroll: Math.round(maxScroll),
+          active: root?.getAttribute("data-active-section"),
+          tracked: root?.getAttribute("data-tracked-section"),
+          sceneActive: layerState?.sceneActiveSection ?? null,
+          missionTurnProgress: layerState?.missionTurnProgress ?? null,
+          visionCoverProgress: layerState?.visionCoverProgress ?? null,
+          prismGroupScale: layerState?.prismGroupScale ?? null,
+          viewportWidth: layerState?.viewportWidth ?? null,
+          viewportHeight: layerState?.viewportHeight ?? null,
+        };
+      }, stepLabel);
+
+    const settleAtBottom = async () => {
+      let previousSnapshot = null;
+      let stableSamples = 0;
+
+      for (let attempt = 0; attempt < 24; attempt += 1) {
+        const snapshot = await readSnapshot(`vision-live-bottom-${attempt}`);
+        const atBottom = Math.abs((snapshot.scrollY ?? 0) - (snapshot.maxScroll ?? 0)) <= 2;
+        const coverReady = (snapshot.visionCoverProgress ?? 0) >= 0.98;
+        const scaleReady = (snapshot.prismGroupScale ?? 0) >= 3.95;
+        const scaleDelta =
+          previousSnapshot === null
+            ? Number.POSITIVE_INFINITY
+            : Math.abs((snapshot.prismGroupScale ?? 0) - (previousSnapshot.prismGroupScale ?? 0));
+
+        if (atBottom && coverReady && scaleReady && scaleDelta <= 0.0025) {
+          stableSamples += 1;
+        } else {
+          stableSamples = 0;
+        }
+
+        previousSnapshot = snapshot;
+
+        if (stableSamples >= 3) {
+          return snapshot;
+        }
+
+        await page.waitForTimeout(160);
+      }
+
+      return readSnapshot("vision-live-bottom-timeout");
+    };
+
+    const scrollTargets = await page.evaluate(() => {
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+      const viewportLine = window.innerHeight * 0.38;
+      const visionNode = document.querySelector('[data-top_section="vision"]');
+      if (!(visionNode instanceof HTMLElement)) {
+        return {
+          visionStart: null,
+          maxScroll,
+        };
+      }
+
+      const rect = visionNode.getBoundingClientRect();
+      return {
+        visionStart: Math.max(0, Math.min(maxScroll, Math.round(rect.top + window.scrollY - viewportLine))),
+        maxScroll,
+      };
+    });
+
+    if (scrollTargets.visionStart !== null) {
+      await page.evaluate((nextTop) => {
+        window.scrollTo(0, nextTop);
+      }, scrollTargets.visionStart);
+      await page
+        .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, scrollTargets.visionStart, {
+          timeout: 1600,
+        })
+        .catch(() => {});
+      await page.waitForTimeout(220);
+    }
+
+    await page.evaluate((nextTop) => {
+      window.scrollTo(0, nextTop);
+    }, scrollTargets.maxScroll);
+    await page
+      .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, scrollTargets.maxScroll, {
+        timeout: 2200,
+      })
+      .catch(() => {});
+
+    const bottomSnapshot = await settleAtBottom();
+
+    await page.screenshot({
+      path: path.join(outputDir, `vision-cover-live-wheel-bottom${fileSuffix}.png`),
+      fullPage: false,
+    });
+
+    assert((bottomSnapshot.visionCoverProgress ?? 0) >= 0.98, "Expected wide live end-state to reach full vision cover progress.");
+    assert((bottomSnapshot.prismGroupScale ?? 0) >= 3.95, "Expected wide live end-state to reach the configured prism group scale.");
+    assert(Math.abs((bottomSnapshot.scrollY ?? 0) - (bottomSnapshot.maxScroll ?? 0)) <= 2, "Expected wide live end-state capture to occur at the document bottom.");
+    assert(
+      bottomSnapshot.viewportWidth === viewport.width && bottomSnapshot.viewportHeight === viewport.height,
+      "Expected wide live end-state viewport debug to match the requested viewport.",
+    );
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const server = await createStaticServer(3000);
 
@@ -1548,6 +1689,23 @@ async function run() {
     const browser = await chromium.launch({ headless: true });
 
     try {
+      if (visionCoverLiveOnlyMode) {
+        await captureFixedStates(
+          browser,
+          activeFixedStateShots.filter((shot) => shot.name === "vision-cover-full"),
+          {
+            viewport: ultraWideViewport,
+            fileSuffix: "-desktop-2000x1080",
+          },
+        );
+        await captureVisionCoverLiveEndState(browser, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+        });
+        console.log("Playwright validation passed (vision-cover-live-only).");
+        return;
+      }
+
       if (!cardsOnlyMode) {
         const scenarios = [
           {
@@ -1602,7 +1760,7 @@ async function run() {
           viewport: { width: 2560, height: 1600 },
           fileSuffix: "-desktop-16x10",
         });
-        await captureRealWheelHandoff(browser, {
+        await captureVisionCoverLiveEndState(browser, {
           viewport: ultraWideViewport,
           fileSuffix: "-desktop-2000x1080",
         });

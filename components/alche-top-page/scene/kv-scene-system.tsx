@@ -1132,6 +1132,7 @@ function CenterHeroModel({
       if (layerDebugRef) {
         layerDebugRef.current.modelWorldZ = null;
         layerDebugRef.current.modelScale = null;
+        layerDebugRef.current.prismGroupScale = null;
       }
       return;
     }
@@ -1189,6 +1190,7 @@ function CenterHeroModel({
       const worldPosition = groupRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.modelWorldZ = worldPosition.z;
       layerDebugRef.current.modelScale = texturedScene.modelScale * groupRef.current.scale.x;
+      layerDebugRef.current.prismGroupScale = groupRef.current.scale.x;
     }
   });
 
