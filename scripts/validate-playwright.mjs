@@ -1586,7 +1586,7 @@ async function run() {
         ["cards-b-queue", "cards-handoff-mid", "cards-settled"].includes(shot.name),
       );
       const ultraWideTransitionShots = activeFixedStateShots.filter((shot) =>
-        ["works-outro-flatten", "mission-in-panel"].includes(shot.name),
+        ["works-outro-flatten", "mission-in-panel", "vision-cover-full"].includes(shot.name),
       );
       await captureFixedStates(browser, desktopWideShots, {
         viewport: { width: 2560, height: 1600 },
