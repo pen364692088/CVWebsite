@@ -358,6 +358,7 @@ export const ALCHE_TOP_CENTER_MODEL = {
   depthMix: 0.5,
   depthOffset: 0.38,
   targetHeight: 1.84,
+  rainbowFaceNormal: [-0.866025, 0.5, 0] as const,
   baseRotationX: -0.22,
   baseRotationY: 0.58,
   baseRotationZ: 0.18,

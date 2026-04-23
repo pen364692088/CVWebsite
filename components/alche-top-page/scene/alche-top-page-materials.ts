@@ -15,6 +15,7 @@ export interface PrismSideRainbowUniforms {
   uOpacity: { value: number };
   uRainbowMix: { value: number };
   uBlackMix: { value: number };
+  uTargetFaceNormal: { value: THREE.Vector3 };
 }
 
 function spectralPalette(t: number) {
@@ -261,6 +262,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uOpacity: { value: 0 },
       uRainbowMix: { value: 0 },
       uBlackMix: { value: 0 },
+      uTargetFaceNormal: { value: new THREE.Vector3(-0.866025, 0.5, 0) },
     };
 
   return new THREE.ShaderMaterial({
@@ -274,6 +276,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uOpacity: sharedUniforms.uOpacity,
       uRainbowMix: sharedUniforms.uRainbowMix,
       uBlackMix: sharedUniforms.uBlackMix,
+      uTargetFaceNormal: sharedUniforms.uTargetFaceNormal,
     },
     vertexShader: `
       varying vec2 vUv;
@@ -293,6 +296,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
       uniform float uOpacity;
       uniform float uRainbowMix;
       uniform float uBlackMix;
+      uniform vec3 uTargetFaceNormal;
 
       varying vec2 vUv;
       varying vec3 vModelPos;
@@ -312,7 +316,7 @@ export function createPrismSideRainbowMaterial(uniforms?: PrismSideRainbowUnifor
 
       void main() {
         vec3 faceNormalModel = normalize(cross(dFdx(vModelPos), dFdy(vModelPos)));
-        vec3 targetFaceNormal = normalize(vec3(-0.577, -0.577, -0.577));
+        vec3 targetFaceNormal = normalize(uTargetFaceNormal);
         float faceMask = smoothstep(0.985, 0.9985, dot(faceNormalModel, targetFaceNormal));
         if (faceMask <= 0.0001 || uOpacity <= 0.0001) discard;
 

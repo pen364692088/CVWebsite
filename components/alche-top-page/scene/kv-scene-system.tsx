@@ -881,6 +881,9 @@ function CenterHeroModel({
       uOpacity: { value: 0 },
       uRainbowMix: { value: 0 },
       uBlackMix: { value: 0 },
+      uTargetFaceNormal: {
+        value: new THREE.Vector3(...ALCHE_TOP_CENTER_MODEL.rainbowFaceNormal),
+      },
     };
     const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
