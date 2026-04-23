@@ -368,7 +368,7 @@ export const ALCHE_TOP_CENTER_MODEL = {
   baseRotationZ: Math.PI,
   missionTurnRadians: 1.57,
   missionTurnStartOffset: 0,
-  coverScale: 5.6,
+  coverScale: 6.2,
   pointerYawStrength: 0.18,
   pointerPitchStrength: 0.08,
   rotationDamp: 3.8,
