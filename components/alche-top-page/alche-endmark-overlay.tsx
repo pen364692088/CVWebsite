@@ -14,6 +14,14 @@ export interface AlcheEndmarkDebugState {
   visible: boolean;
   triggerActive: boolean;
   debugStage: AlcheEndmarkDebugStage | null;
+  overlayAlpha: number;
+  bgGlowAlpha: number;
+  gridAlpha: number;
+  guidePersistentAlpha: number;
+  guideFadeAlpha: number;
+  outlineAlpha: number;
+  fillAlpha: number;
+  fillRevealWidth: number;
 }
 
 interface AlcheEndmarkOverlayProps {
@@ -54,6 +62,19 @@ interface AlcheEndmarkRenderState {
   outlineAlpha: number;
   fillAlpha: number;
   fillRevealWidth: number;
+}
+
+function createDefaultRenderState(): AlcheEndmarkRenderState {
+  return {
+    overlayAlpha: 0,
+    bgGlowAlpha: 0,
+    gridAlpha: 0,
+    guidePersistentAlpha: 0,
+    guideFadeAlpha: 0,
+    outlineAlpha: 0,
+    fillAlpha: 0,
+    fillRevealWidth: 0,
+  };
 }
 
 function isGeometryElement(node: Element): node is SVGGeometryElement {
@@ -101,6 +122,15 @@ export function AlcheEndmarkOverlay({
   const handlesRef = useRef<AlcheEndmarkHandles | null>(null);
   const applyRenderStateRef = useRef<(() => void) | null>(null);
   const applyStageSnapshotRef = useRef<((stage: AlcheEndmarkDebugStage) => void) | null>(null);
+  const renderDebugRef = useRef<AlcheEndmarkRenderState>(createDefaultRenderState());
+  const latestDebugStateRef = useRef<AlcheEndmarkDebugState>({
+    stage: "idle",
+    ready: false,
+    visible: false,
+    triggerActive: false,
+    debugStage: null,
+    ...createDefaultRenderState(),
+  });
   const autoStartedRef = useRef(false);
   const reducedMotionTimeoutRef = useRef<number | null>(null);
   const [svgMarkup, setSvgMarkup] = useState<string | null>(null);
@@ -116,12 +146,18 @@ export function AlcheEndmarkOverlay({
       visible,
       triggerActive,
       debugStage,
+      ...renderDebugRef.current,
     }),
     [debugStage, ready, stage, triggerActive, visible],
   );
 
   useEffect(() => {
-    onDebugStateChange?.(debugState);
+    const nextDebugState = {
+      ...debugState,
+      ...renderDebugRef.current,
+    };
+    latestDebugStateRef.current = nextDebugState;
+    onDebugStateChange?.(nextDebugState);
   }, [debugState, onDebugStateChange]);
 
   useEffect(() => {
@@ -131,12 +167,15 @@ export function AlcheEndmarkOverlay({
       __getAlcheEndmarkDebugState?: () => AlcheEndmarkDebugState;
     };
 
-    host.__getAlcheEndmarkDebugState = () => debugState;
+    host.__getAlcheEndmarkDebugState = () => ({
+      ...latestDebugStateRef.current,
+      ...renderDebugRef.current,
+    });
 
     return () => {
       delete host.__getAlcheEndmarkDebugState;
     };
-  }, [debugState]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,6 +213,7 @@ export function AlcheEndmarkOverlay({
     }
 
     let animationFrame = 0;
+    let disposed = false;
 
     const build = () => {
       svgHost.innerHTML = svgMarkup;
@@ -211,20 +251,12 @@ export function AlcheEndmarkOverlay({
         length: Math.max(element.getTotalLength(), 1),
         offset: Math.max(element.getTotalLength(), 1),
       }));
-      const renderState: AlcheEndmarkRenderState = {
-        overlayAlpha: 0,
-        bgGlowAlpha: 0,
-        gridAlpha: 0,
-        guidePersistentAlpha: 0,
-        guideFadeAlpha: 0,
-        outlineAlpha: 0,
-        fillAlpha: 0,
-        fillRevealWidth: 0,
-      };
+      const renderState = createDefaultRenderState();
 
       const applyRenderState = () => {
         rootNode.style.opacity = renderState.overlayAlpha.toFixed(3);
         rootNode.style.visibility = renderState.overlayAlpha <= 0.001 ? "hidden" : "visible";
+        renderDebugRef.current = { ...renderState };
         setNodeAlpha(handles.bgGlow, renderState.bgGlowAlpha);
         setNodeAlpha(handles.grid, renderState.gridAlpha);
         setNodeAlpha(handles.guidePersistent, renderState.guidePersistentAlpha);
@@ -264,18 +296,18 @@ export function AlcheEndmarkOverlay({
         resetRenderState();
         renderState.overlayAlpha = targetStage === "black" ? 0.92 : 1;
         renderState.bgGlowAlpha = targetStage === "black" ? 0.22 : 1;
-        renderState.gridAlpha = targetStage === "black" ? 0.46 : 1;
+        renderState.gridAlpha = targetStage === "black" ? 0.46 : targetStage === "settled" ? 0 : 1;
 
         if (targetStage === "guides" || targetStage === "outline" || targetStage === "fill" || targetStage === "settled") {
-          renderState.guidePersistentAlpha = targetStage === "settled" ? 0.42 : 1;
-          renderState.guideFadeAlpha = targetStage === "settled" ? 0.18 : 1;
+          renderState.guidePersistentAlpha = targetStage === "settled" ? 0 : 1;
+          renderState.guideFadeAlpha = targetStage === "settled" ? 0 : 1;
           for (const drawState of guideDrawStates) {
             drawState.offset = 0;
           }
         }
 
         if (targetStage === "outline" || targetStage === "fill" || targetStage === "settled") {
-          renderState.outlineAlpha = 1;
+          renderState.outlineAlpha = targetStage === "settled" ? 0 : 1;
           for (const drawState of outlineDrawStates) {
             drawState.offset = 0;
           }
@@ -398,29 +430,40 @@ export function AlcheEndmarkOverlay({
       timeline.to(
         renderState,
         {
-          guideFadeAlpha: 0.18,
-          guidePersistentAlpha: 0.42,
-          duration: 0.42,
+          gridAlpha: 0,
+          guideFadeAlpha: 0,
+          guidePersistentAlpha: 0,
+          outlineAlpha: 0,
+          duration: 0.62,
           onUpdate: applyRenderState,
         },
-        2.36,
+        2.9,
       );
 
       timeline.call(() => {
         setStage("settled");
-      }, undefined, 2.92);
+      }, undefined, 3.56);
 
       timeline.timeScale(Math.max(timeScale, 0.1));
       applyRenderState();
       applyRenderStateRef.current = applyRenderState;
       applyStageSnapshotRef.current = applyStageSnapshot;
       timelineRef.current = timeline;
-      setReady(true);
+      const fontReady =
+        "fonts" in document
+          ? document.fonts.load("500 258px MoonflowEndmark", "MOONFLOW").then(() => document.fonts.ready)
+          : Promise.resolve();
+      void fontReady.finally(() => {
+        if (!disposed) {
+          setReady(true);
+        }
+      });
     };
 
     animationFrame = window.requestAnimationFrame(build);
 
     return () => {
+      disposed = true;
       window.cancelAnimationFrame(animationFrame);
       timelineRef.current?.kill();
       timelineRef.current = null;

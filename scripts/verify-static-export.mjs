@@ -35,7 +35,7 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes('id="works_cards"'), `Missing works_cards section in ${locale}`);
   assert(html.includes('id="works_outro"'), `Missing works_outro section in ${locale}`);
   assert(html.includes('id="mission_in"'), `Missing mission_in section in ${locale}`);
-  assert(html.includes("ALCHE"), `Missing ALCHE wordmark in ${locale}`);
+  assert(html.includes("MOONFLOW"), `Missing MOONFLOW wordmark in ${locale}`);
   assert(html.includes("data-top_section=\"kv\""), `Missing kv data-top_section marker in ${locale}`);
   assert(html.includes("data-top_section=\"works_intro\""), `Missing works_intro data-top_section marker in ${locale}`);
   assert(html.includes("data-top_section=\"works\""), `Missing works data-top_section marker in ${locale}`);

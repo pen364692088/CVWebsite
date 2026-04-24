@@ -225,6 +225,14 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     visible: false,
     triggerActive: false,
     debugStage: null,
+    overlayAlpha: 0,
+    bgGlowAlpha: 0,
+    gridAlpha: 0,
+    guidePersistentAlpha: 0,
+    guideFadeAlpha: 0,
+    outlineAlpha: 0,
+    fillAlpha: 0,
+    fillRevealWidth: 0,
   });
   const [debugOverrideVersion, setDebugOverrideVersion] = useState(0);
   const {
@@ -516,7 +524,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
 
           <header className={styles.header}>
             <button type="button" className={styles.headerBrand} onClick={() => scrollToSection(sectionRefs.current.kv)}>
-              <span className={styles.headerBrandWord}>ALCHE</span>
+              <span className={styles.headerBrandWord}>MOONFLOW</span>
             </button>
 
             <div className={styles.headerRight}>
@@ -606,7 +614,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem" }}>
-              <strong style={{ fontSize: "0.74rem" }}>{showShotSelector ? "ALCHE Shotbook" : "ALCHE Card Debug"}</strong>
+              <strong style={{ fontSize: "0.74rem" }}>{showShotSelector ? "MOONFLOW Shotbook" : "MOONFLOW Card Debug"}</strong>
               <span style={{ color: "rgba(255,255,255,0.62)" }}>
                 {currentShotId ?? "manual"} / {currentCardDebugMode}
               </span>

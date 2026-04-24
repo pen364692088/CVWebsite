@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "MoonflowEndmark";
+  src: url("/CVWebsite/fonts/space-grotesk-500.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 .root {
   position: relative;
   min-height: 100vh;

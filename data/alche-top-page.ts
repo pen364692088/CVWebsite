@@ -169,15 +169,15 @@ const sharedService = [
 export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
   en: {
     metadata: {
-      title: "Alche Top-Page",
-      description: "Alche top-page with a persistent single-canvas world, editorial DOM systems, and fine-grained top-page choreography.",
+      title: "MOONFLOW Top-Page",
+      description: "MOONFLOW top-page with a persistent single-canvas world, editorial DOM systems, and fine-grained top-page choreography.",
     },
     loading: {
       eyebrow: "Architect worlds",
       body: "that move hearts and spark hope.",
     },
     header: {
-      navAria: "Alche top-page navigation",
+      navAria: "MOONFLOW top-page navigation",
       localeLabel: "Language",
       navItems: [
         { id: "news", label: "News", target: "kv" },
@@ -204,9 +204,9 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: [...sharedNews],
     },
     hud: {
-      title: "ALCHE",
+      title: "MOONFLOW",
       subtitle: "Black stage / technical field / brand motion",
-      metrics: ["THICK REFRACTIVE A", "EMISSIVE ALCHE", "CYLINDRICAL MEDIA WALL"],
+      metrics: ["THICK REFRACTIVE A", "EMISSIVE MOONFLOW", "CYLINDRICAL MEDIA WALL"],
       note: "Signal folds through the A before the wall hands authority to works.",
     },
     works: {
@@ -240,26 +240,26 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
     outro: {
       eyebrow: "Outro",
       title: "The deep scene drains into a black brand stage.",
-      body: "The final read is ALCHE, then footer utility. This is an outro system, not a plain contact block.",
+      body: "The final read is MOONFLOW, then footer utility. This is an outro system, not a plain contact block.",
       linksTitle: "Links",
       legalTitle: "Legal",
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 ALCHE.",
+      copyright: "©2026 MOONFLOW.",
     },
   },
   "zh-CN": {
     metadata: {
-      title: "Alche 首页",
-      description: "Alche top-page，包含单 canvas 世界、编辑化 DOM 系统和细粒度转场状态图。",
+      title: "MOONFLOW 首页",
+      description: "MOONFLOW top-page，包含单 canvas 世界、编辑化 DOM 系统和细粒度转场状态图。",
     },
     loading: {
       eyebrow: "构筑世界",
       body: "让它打动人心，并点燃希望。",
     },
     header: {
-      navAria: "Alche 首页导航",
+      navAria: "MOONFLOW 首页导航",
       localeLabel: "语言",
       navItems: [
         { id: "news", label: "News", target: "kv" },
@@ -286,9 +286,9 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "ALCHE",
+      title: "MOONFLOW",
       subtitle: "黑色舞台 / 技术场 / 品牌运动",
-      metrics: ["厚实体折射 A", "发光 ALCHE 字层", "圆柱媒体墙"],
+      metrics: ["厚实体折射 A", "发光 MOONFLOW 字层", "圆柱媒体墙"],
       note: "信号先穿过 A，再把主读交给 works。",
     },
     works: {
@@ -322,26 +322,26 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
     outro: {
       eyebrow: "Outro",
       title: "深 3D 世界退场，收束为黑色品牌舞台。",
-      body: "最终先读到 ALCHE，再读页脚信息。这里是 outro，不是普通 contact 区块。",
+      body: "最终先读到 MOONFLOW，再读页脚信息。这里是 outro，不是普通 contact 区块。",
       linksTitle: "链接",
       legalTitle: "法律",
       companyLabel: "品牌系统 / Zhouyu Liao · 流月工作室",
       privacyLabel: "隐私政策",
       licenseLabel: "许可",
-      copyright: "©2026 ALCHE.",
+      copyright: "©2026 MOONFLOW.",
     },
   },
   ja: {
     metadata: {
-      title: "Alche Top-Page",
-      description: "Alche top-page。単一 canvas、編集的 DOM、細粒度セクション構造を持つ。",
+      title: "MOONFLOW Top-Page",
+      description: "MOONFLOW top-page。単一 canvas、編集的 DOM、細粒度セクション構造を持つ。",
     },
     loading: {
       eyebrow: "Architect worlds",
       body: "that move hearts and spark hope.",
     },
     header: {
-      navAria: "Alche top-page navigation",
+      navAria: "MOONFLOW top-page navigation",
       localeLabel: "Language",
       navItems: [
         { id: "news", label: "News", target: "kv" },
@@ -368,9 +368,9 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "ALCHE",
+      title: "MOONFLOW",
       subtitle: "黒いステージ / テクニカルフィールド / ブランドモーション",
-      metrics: ["厚い屈折 A", "発光する ALCHE", "円筒メディアウォール"],
+      metrics: ["厚い屈折 A", "発光する MOONFLOW", "円筒メディアウォール"],
       note: "信号はまず A を通り、その後 works へ主読を渡す。",
     },
     works: {
@@ -404,26 +404,26 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
     outro: {
       eyebrow: "Outro",
       title: "深い 3D は抜け、黒いブランドステージへ収束する。",
-      body: "最終読解は ALCHE、その後にフッター情報。ここは contact ではなく outro である。",
+      body: "最終読解は MOONFLOW、その後にフッター情報。ここは contact ではなく outro である。",
       linksTitle: "Links",
       legalTitle: "Legal",
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 ALCHE.",
+      copyright: "©2026 MOONFLOW.",
     },
   },
   ko: {
     metadata: {
-      title: "Alche Top-Page",
-      description: "Alche top-page. 단일 canvas, 편집형 DOM, 세분화된 section graph를 사용한다.",
+      title: "MOONFLOW Top-Page",
+      description: "MOONFLOW top-page. 단일 canvas, 편집형 DOM, 세분화된 section graph를 사용한다.",
     },
     loading: {
       eyebrow: "Architect worlds",
       body: "that move hearts and spark hope.",
     },
     header: {
-      navAria: "Alche top-page navigation",
+      navAria: "MOONFLOW top-page navigation",
       localeLabel: "Language",
       navItems: [
         { id: "news", label: "News", target: "kv" },
@@ -450,9 +450,9 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       items: sharedNews.map((item) => ({ ...item })),
     },
     hud: {
-      title: "ALCHE",
+      title: "MOONFLOW",
       subtitle: "블랙 스테이지 / 테크니컬 필드 / 브랜드 모션",
-      metrics: ["두꺼운 굴절 A", "발광 ALCHE", "원통형 미디어 월"],
+      metrics: ["두꺼운 굴절 A", "발광 MOONFLOW", "원통형 미디어 월"],
       note: "신호는 먼저 A를 통과하고, 그 다음 works로 권한을 넘긴다.",
     },
     works: {
@@ -486,13 +486,13 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
     outro: {
       eyebrow: "Outro",
       title: "깊은 3D 는 빠지고 검은 브랜드 스테이지로 수렴한다.",
-      body: "최종 읽기는 ALCHE, 그 다음이 푸터 유틸리티다. 이것은 단순 contact 블록이 아니다.",
+      body: "최종 읽기는 MOONFLOW, 그 다음이 푸터 유틸리티다. 이것은 단순 contact 블록이 아니다.",
       linksTitle: "Links",
       legalTitle: "Legal",
       companyLabel: "Brand system / Zhouyu Liao · 流月工作室",
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
-      copyright: "©2026 ALCHE.",
+      copyright: "©2026 MOONFLOW.",
     },
   },
 };

@@ -411,9 +411,19 @@ async function waitForEndmarkLiveStage(page, expectedStage, timeoutMs, pollMs = 
   );
 }
 
+function assertEndmarkSettledLineState(endmark, label) {
+  assert(endmark, `Missing endmark debug state for ${label}.`);
+  assert((endmark.gridAlpha ?? 1) <= 0.01, `Expected ${label} grid alpha to be cleared.`);
+  assert((endmark.guidePersistentAlpha ?? 1) <= 0.01, `Expected ${label} persistent guide alpha to be cleared.`);
+  assert((endmark.guideFadeAlpha ?? 1) <= 0.01, `Expected ${label} fade guide alpha to be cleared.`);
+  assert((endmark.outlineAlpha ?? 1) <= 0.01, `Expected ${label} outline alpha to be cleared.`);
+  assert((endmark.fillAlpha ?? 0) >= 0.99, `Expected ${label} fill alpha to stay visible.`);
+  assert((endmark.fillRevealWidth ?? 0) >= 1910, `Expected ${label} fill reveal to cover the viewport.`);
+}
+
 async function assertTopPageShell(page, scenarioName) {
   assert((await page.locator("canvas").count()) >= 1, `Expected at least one canvas for ${scenarioName}`);
-  assert((await page.locator("body").textContent())?.includes("ALCHE"), `Missing ALCHE branding for ${scenarioName}`);
+  assert((await page.locator("body").textContent())?.includes("MOONFLOW"), `Missing MOONFLOW branding for ${scenarioName}`);
 
   for (const sectionId of expectedSections) {
     assert((await page.locator(`[data-top_section="${sectionId}"]`).count()) === 1, `Missing ${sectionId} section for ${scenarioName}`);
@@ -737,7 +747,7 @@ async function writeReferenceBoard(layerStates) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Alche Cards Reference Board</title>
+    <title>MOONFLOW Cards Reference Board</title>
     <style>
       :root {
         color-scheme: dark;
@@ -814,7 +824,7 @@ async function writeReferenceBoard(layerStates) {
     </style>
   </head>
   <body>
-    <h1>ALCHE Cards Reference Board</h1>
+    <h1>MOONFLOW Cards Reference Board</h1>
     <p>Current shots, extracted video references, task stills, and the source video in one place.</p>
 
     <section class="section">
@@ -960,6 +970,10 @@ async function captureFixedStates(browser, shots, options = {}) {
           expectedStage,
           { timeout: 5000 },
         );
+        if (expectedStage === "settled") {
+          const endmarkState = await page.evaluate(() => window.__getAlcheEndmarkDebugState?.() ?? null);
+          assertEndmarkSettledLineState(endmarkState, shot.name);
+        }
       }
       await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
       if (shot.name in expectedShotStates) {
@@ -1899,6 +1913,7 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
   assert(settledCapture.finalSnapshot.endmark?.stage === "settled", "Expected live endmark capture to reach the settled stage.");
   assert(settledCapture.finalSnapshot.endmark?.visible === true, "Expected live endmark capture to stay visible.");
   assert(settledCapture.finalSnapshot.endmark?.ready === true, "Expected live endmark SVG to be ready.");
+  assertEndmarkSettledLineState(settledCapture.finalSnapshot.endmark, "live endmark settled");
   assert(
     (settledCapture.finalSnapshot.layerState?.visionCoverProgress ?? 0) >= 0.98,
     "Expected live endmark capture to keep full vision cover progress.",
