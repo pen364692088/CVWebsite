@@ -1,0 +1,114 @@
+<svg
+  id="alcheEndmarkSvg"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1920 1080"
+  fill="none"
+>
+  <defs>
+    <radialGradient id="alcheEndmarkGlowBlue" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1006 560) rotate(90) scale(340 520)">
+      <stop offset="0" stop-color="#2839ff" stop-opacity="0.42" />
+      <stop offset="0.56" stop-color="#16227a" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="alcheEndmarkGlowRed" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1116 560) rotate(90) scale(300 460)">
+      <stop offset="0" stop-color="#aa1f32" stop-opacity="0.32" />
+      <stop offset="0.58" stop-color="#4f0813" stop-opacity="0.14" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="alcheEndmarkFillRevealClip">
+      <rect id="fillRevealRect" x="0" y="0" width="0" height="1080" />
+    </clipPath>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#000000" />
+
+  <g id="bgGlow">
+    <ellipse cx="1010" cy="562" rx="530" ry="360" fill="url(#alcheEndmarkGlowBlue)" />
+    <ellipse cx="1112" cy="566" rx="460" ry="300" fill="url(#alcheEndmarkGlowRed)" />
+  </g>
+
+  <g id="grid" stroke="#f7f8fb" stroke-opacity="0.26" stroke-width="1.3">
+    <line x1="0" y1="420" x2="1920" y2="420" />
+    <line x1="0" y1="540" x2="1920" y2="540" />
+    <line x1="0" y1="660" x2="1920" y2="660" />
+    <line x1="0" y1="780" x2="1920" y2="780" />
+    <line x1="0" y1="900" x2="1920" y2="900" />
+    <line x1="120" y1="0" x2="120" y2="1080" />
+    <line x1="260" y1="0" x2="260" y2="1080" />
+    <line x1="500" y1="0" x2="500" y2="1080" />
+    <line x1="560" y1="0" x2="560" y2="1080" />
+    <line x1="620" y1="0" x2="620" y2="1080" />
+    <line x1="690" y1="0" x2="690" y2="1080" />
+    <line x1="845" y1="0" x2="845" y2="1080" />
+    <line x1="1040" y1="0" x2="1040" y2="1080" />
+    <line x1="1240" y1="0" x2="1240" y2="1080" />
+    <line x1="1300" y1="0" x2="1300" y2="1080" />
+    <line x1="1490" y1="0" x2="1490" y2="1080" />
+    <line x1="1610" y1="0" x2="1610" y2="1080" />
+    <line x1="1750" y1="0" x2="1750" y2="1080" />
+  </g>
+
+  <g id="guides" fill="none" stroke="#f7f8fb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <g id="guidePersistent" stroke-opacity="0.44">
+      <line data-draw="guide" x1="46" y1="-18" x2="692" y2="1098" />
+      <line data-draw="guide" x1="-14" y1="1098" x2="642" y2="-18" />
+      <line data-draw="guide" x1="0" y1="748" x2="620" y2="748" />
+      <line data-draw="guide" x1="0" y1="762" x2="1860" y2="762" />
+      <line data-draw="guide" x1="420" y1="344" x2="1380" y2="344" />
+      <circle data-draw="guide" cx="985" cy="540" r="184" stroke-dasharray="9 10" stroke-opacity="0.38" />
+    </g>
+    <g id="guideFade" stroke-opacity="0.3">
+      <line data-draw="guide" x1="420" y1="540" x2="1370" y2="540" />
+      <line data-draw="guide" x1="420" y1="660" x2="1765" y2="660" />
+      <line data-draw="guide" x1="560" y1="748" x2="1765" y2="748" />
+      <line data-draw="guide" x1="620" y1="344" x2="620" y2="760" />
+      <line data-draw="guide" x1="690" y1="344" x2="690" y2="760" />
+      <line data-draw="guide" x1="1240" y1="344" x2="1240" y2="760" />
+      <line data-draw="guide" x1="1300" y1="344" x2="1300" y2="760" />
+      <line data-draw="guide" x1="1490" y1="344" x2="1490" y2="760" />
+      <line data-draw="guide" x1="1610" y1="344" x2="1610" y2="760" />
+      <line data-draw="guide" x1="1750" y1="344" x2="1750" y2="760" />
+      <rect data-draw="guide" x="560" y="344" width="130" height="416" />
+      <rect data-draw="guide" x="1240" y="344" width="250" height="416" />
+      <rect data-draw="guide" x="1610" y="344" width="180" height="416" />
+    </g>
+  </g>
+
+  <g
+    id="outline"
+    stroke="#ffffff"
+    stroke-opacity="0.94"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path data-draw="outline" d="M320 340 L110 748 H530 Z" />
+    <path data-draw="outline" d="M320 474 L221 660 H419 Z" />
+    <path data-draw="outline" d="M560 344 V760 H780" />
+    <path data-draw="outline" d="M1126 420 A186 186 0 1 0 1126 660" />
+    <path data-draw="outline" d="M1240 344 V760" />
+    <path data-draw="outline" d="M1490 344 V760" />
+    <path data-draw="outline" d="M1240 540 H1490" />
+    <path data-draw="outline" d="M1610 344 V760" />
+    <path data-draw="outline" d="M1610 344 H1790" />
+    <path data-draw="outline" d="M1610 540 H1760" />
+    <path data-draw="outline" d="M1610 760 H1790" />
+  </g>
+
+  <g id="fill" clip-path="url(#alcheEndmarkFillRevealClip)">
+    <path
+      id="fillA"
+      fill="#ffffff"
+      fill-rule="evenodd"
+      d="M320 340 L110 748 H530 Z M320 474 L221 660 H419 Z"
+    />
+    <g fill="#adb1be" fill-opacity="0.7">
+      <path d="M560 344 H624 V696 H784 V760 H560 Z" />
+      <path
+        d="M1126 420 A186 186 0 1 0 1126 660 L1204 660 A108 108 0 1 1 1204 420 Z"
+      />
+      <path d="M1240 344 H1300 V508 H1430 V344 H1490 V760 H1430 V568 H1300 V760 H1240 Z" />
+      <path d="M1610 344 H1790 V404 H1670 V518 H1778 V576 H1670 V700 H1790 V760 H1610 Z" />
+    </g>
+  </g>
+</svg>

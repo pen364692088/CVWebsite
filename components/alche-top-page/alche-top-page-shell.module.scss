@@ -53,6 +53,31 @@
   clip-path: inset(100% 0 0 0);
 }
 
+.endmarkOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  overflow: hidden;
+
+  [data-endmark-overlay] {
+    position: absolute;
+    inset: 0;
+    background: #000;
+  }
+
+  [data-endmark-svg-host] {
+    position: absolute;
+    inset: 0;
+  }
+
+  [data-endmark-svg-host] :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .root[data-mission-panel-visible="true"] .edgeOverlayLayer {
   clip-path: inset(var(--alche-mission-panel-screen-top, 100vh) 0 0 0);
 }

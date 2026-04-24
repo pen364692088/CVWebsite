@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
 
+import {
+  ALCHE_ENDMARK_DEBUG_STAGES,
+  AlcheEndmarkOverlay,
+  type AlcheEndmarkDebugStage,
+  type AlcheEndmarkDebugState,
+} from "@/components/alche-top-page/alche-endmark-overlay";
 import { alcheTopPageCopy } from "@/data/alche-top-page";
 import type { ContactLink, StudioDossierAsset } from "@/data/profile";
 import {
@@ -171,6 +177,24 @@ function writeAlcheCardDebugModeToLocation(nextMode: AlcheWorksCardDebugMode) {
   window.history.replaceState(window.history.state, "", url.toString());
 }
 
+function readEndmarkDebugStage(params: Pick<URLSearchParams, "get"> | null): AlcheEndmarkDebugStage | null {
+  if (!params) return null;
+  const stage = params.get("alcheEndmarkStage");
+  if (!stage) return null;
+  return ALCHE_ENDMARK_DEBUG_STAGES.includes(stage as AlcheEndmarkDebugStage)
+    ? (stage as AlcheEndmarkDebugStage)
+    : null;
+}
+
+function readEndmarkTimeScale(params: Pick<URLSearchParams, "get"> | null) {
+  if (!params) return 1;
+  const rawValue = params.get("alcheEndmarkTimeScale");
+  if (!rawValue) return 1;
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(Math.max(parsed, 0.1), 40);
+}
+
 export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const copy = alcheTopPageCopy[locale];
   const router = useRouter();
@@ -195,6 +219,13 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const [captureMode, setCaptureMode] = useState(false);
   const [pointerDebugEnabled, setPointerDebugEnabled] = useState(false);
   const [pointerDebugState, setPointerDebugState] = useState<AlchePointerDebugState | null>(null);
+  const [endmarkDebugState, setEndmarkDebugState] = useState<AlcheEndmarkDebugState>({
+    stage: "idle",
+    ready: false,
+    visible: false,
+    triggerActive: false,
+    debugStage: null,
+  });
   const [debugOverrideVersion, setDebugOverrideVersion] = useState(0);
   const {
     reducedMotion,
@@ -214,6 +245,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     });
   const runtimeSearchParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const debugOverride = readShellDebugOverride(runtimeSearchParams);
+  const endmarkDebugStage = readEndmarkDebugStage(runtimeSearchParams);
+  const endmarkTimeScale = readEndmarkTimeScale(runtimeSearchParams);
+  const endmarkDisabled = runtimeSearchParams?.get("alcheDisableEndmark") === "1";
   const runtimeHostname = typeof window === "undefined" ? null : window.location.hostname;
   const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams, runtimeHostname);
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
@@ -233,6 +267,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   );
   const currentTrackedSection = currentActiveSection === "loading" ? "kv" : baseTrackedSection;
   const currentShotId = debugOverride?.shotId ?? null;
+  const endmarkBlueprintPath = assetPath("/alche-top-page/endmark/alche-wordmark-blueprint.svg");
+  const endmarkTriggerActive = !endmarkDisabled && visionCoverProgress >= 0.98;
   const showShotSelector = !captureMode && currentShotId !== null;
   const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const { missionPanelProgress } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
@@ -393,6 +429,9 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-pointer-debug={pointerDebugEnabled ? "true" : "false"}
       data-mission-panel-visible={missionPanelVisible ? "true" : "false"}
       data-mission-panel-progress={missionPanelProgress.toFixed(3)}
+      data-endmark-stage={endmarkDebugState.stage}
+      data-endmark-visible={endmarkDebugState.visible ? "true" : "false"}
+      data-endmark-ready={endmarkDebugState.ready ? "true" : "false"}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -462,6 +501,18 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               />
             </div>
           ) : null}
+
+          <div className={styles.endmarkOverlay}>
+            <AlcheEndmarkOverlay
+              assetUrl={endmarkBlueprintPath}
+              triggerActive={endmarkTriggerActive}
+              reducedMotion={reducedMotion}
+              captureMode={captureMode}
+              debugStage={endmarkDebugStage}
+              timeScale={endmarkTimeScale}
+              onDebugStateChange={setEndmarkDebugState}
+            />
+          </div>
 
           <header className={styles.header}>
             <button type="button" className={styles.headerBrand} onClick={() => scrollToSection(sectionRefs.current.kv)}>

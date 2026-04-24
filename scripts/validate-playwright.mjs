@@ -15,6 +15,7 @@ const baseUrl = "http://127.0.0.1:3000/CVWebsite";
 const cliArgs = new Set(process.argv.slice(2));
 const cardsOnlyMode = cliArgs.has("--cards-only");
 const visionCoverLiveOnlyMode = cliArgs.has("--vision-cover-live-only");
+const endmarkLiveOnlyMode = cliArgs.has("--endmark-live-only");
 const ultraWideViewport = { width: 2000, height: 1080 };
 
 fs.mkdirSync(outputDir, { recursive: true });
@@ -86,6 +87,36 @@ const fixedStateShots = [
     name: "vision-cover-full",
     search: withIdentityCardDebug(
       "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-black",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=black&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-guides",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=guides&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-outline",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=outline&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-fill",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=fill&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-settled",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=settled&alcheCapture=1",
     ),
   },
 ];
@@ -331,6 +362,53 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
   });
 
   assert(overflow <= 1, `Horizontal overflow detected for ${scenarioName}: ${overflow}px`);
+}
+
+async function sampleEndmarkLiveState(page) {
+  return page.evaluate(() => {
+    const endmark = window.__getAlcheEndmarkDebugState?.() ?? null;
+    const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+    return {
+      endmark,
+      layerState: layerState
+        ? {
+            activeSection: layerState.activeSection ?? null,
+            missionTurnProgress: layerState.missionTurnProgress ?? null,
+            visionCoverProgress: layerState.visionCoverProgress ?? null,
+            prismGroupScale: layerState.prismGroupScale ?? null,
+          }
+        : null,
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      scrollY: Math.round(window.scrollY),
+      maxScroll: Math.round(Math.max(document.documentElement.scrollHeight - window.innerHeight, 0)),
+    };
+  });
+}
+
+async function waitForEndmarkLiveStage(page, expectedStage, timeoutMs, pollMs = 250) {
+  const startedAt = Date.now();
+  let lastSnapshot = null;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    lastSnapshot = await sampleEndmarkLiveState(page);
+    if (
+      lastSnapshot.endmark?.stage === expectedStage &&
+      lastSnapshot.endmark?.visible === true &&
+      lastSnapshot.endmark?.ready === true &&
+      (lastSnapshot.layerState?.visionCoverProgress ?? 0) >= 0.98
+    ) {
+      return lastSnapshot;
+    }
+
+    await page.waitForTimeout(pollMs);
+  }
+
+  throw new Error(
+    `Timed out waiting for endmark stage "${expectedStage}". Last snapshot: ${JSON.stringify(lastSnapshot)}`,
+  );
 }
 
 async function assertTopPageShell(page, scenarioName) {
@@ -822,7 +900,7 @@ async function captureFixedStates(browser, shots, options = {}) {
         heroShotId: params.get("alcheHeroShot"),
       };
       const sectionId = override.section;
-      await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 5000 });
+      await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 12000 });
       await page.evaluate((nextOverride) => {
         window.__setAlcheDebugOverride?.(nextOverride);
       }, override);
@@ -872,6 +950,17 @@ async function captureFixedStates(browser, shots, options = {}) {
         }
       }
       await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
+      if (shot.name.startsWith("endmark-")) {
+        const expectedStage = shot.name.replace("endmark-", "");
+        await page.waitForFunction(
+          (stageName) => {
+            const state = window.__getAlcheEndmarkDebugState?.();
+            return state?.ready === true && state?.visible === true && state?.stage === stageName;
+          },
+          expectedStage,
+          { timeout: 5000 },
+        );
+      }
       await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
       if (shot.name in expectedShotStates) {
         await page.waitForFunction(
@@ -1120,7 +1209,7 @@ async function capturePointerInteraction(browser) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => document.querySelectorAll("canvas").length >= 1, undefined, { timeout: 5000 });
     await assertTopPageShell(page, "kv-pointer-interaction");
     await page.waitForFunction(
@@ -1209,7 +1298,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240`, { waitUntil: "networkidle" });
     await assertTopPageShell(page, "works-wheel-handoff");
     await page.waitForFunction(
       () =>
@@ -1551,6 +1640,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
 async function captureVisionCoverLiveEndState(browser, options = {}) {
   const viewport = options.viewport ?? ultraWideViewport;
   const fileSuffix = options.fileSuffix ?? "";
+  const disableEndmark = options.disableEndmark ?? false;
   const context = await browser.newContext({
     viewport,
     locale: "en-US",
@@ -1559,7 +1649,8 @@ async function captureVisionCoverLiveEndState(browser, options = {}) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1`, { waitUntil: "networkidle" });
+    const search = disableEndmark ? "?alchePointerDebug=1&alcheDisableEndmark=1" : "?alchePointerDebug=1";
+    await page.goto(`${baseUrl}/en/${search}`, { waitUntil: "networkidle" });
     await assertTopPageShell(page, "vision-cover-live-end");
     await page.waitForFunction(
       () =>
@@ -1680,6 +1771,149 @@ async function captureVisionCoverLiveEndState(browser, options = {}) {
   }
 }
 
+async function captureEndmarkLiveSequence(browser, options = {}) {
+  const viewport = options.viewport ?? ultraWideViewport;
+  const fileSuffix = options.fileSuffix ?? "";
+  const prepareLivePage = async (page, scenarioName, timeScale) => {
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=${timeScale}`, { waitUntil: "networkidle" });
+    await assertTopPageShell(page, scenarioName);
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-active-section]") !== null &&
+        typeof window.__getAlcheLayerDebugState === "function" &&
+        typeof window.__getAlcheEndmarkDebugState === "function",
+      undefined,
+      { timeout: 12000 },
+    );
+    await page.waitForTimeout(600);
+
+    const scrollTargets = await page.evaluate(() => {
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+      const viewportLine = window.innerHeight * 0.38;
+      const visionNode = document.querySelector('[data-top_section="vision"]');
+      if (!(visionNode instanceof HTMLElement)) {
+        return { visionStart: null, maxScroll };
+      }
+
+      const rect = visionNode.getBoundingClientRect();
+      return {
+        visionStart: Math.max(0, Math.min(maxScroll, Math.round(rect.top + window.scrollY - viewportLine))),
+        maxScroll,
+      };
+    });
+
+    if (scrollTargets.visionStart !== null) {
+      await page.evaluate((nextTop) => {
+        window.scrollTo(0, nextTop);
+      }, scrollTargets.visionStart);
+      await page
+        .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, scrollTargets.visionStart, {
+          timeout: 1600,
+        })
+        .catch(() => {});
+      await page.waitForTimeout(240);
+    }
+
+    await page.evaluate((nextTop) => {
+      window.scrollTo(0, nextTop);
+    }, scrollTargets.maxScroll);
+    await page
+      .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, scrollTargets.maxScroll, {
+        timeout: 2200,
+      })
+      .catch(() => {});
+
+    return scrollTargets;
+  };
+
+  const captureLiveStage = async ({
+    expectedStage,
+    screenshotName,
+    timeScale,
+    timeoutMs,
+    pollMs,
+    settleDelayMs = 0,
+  }) => {
+    const context = await browser.newContext({
+      viewport,
+      locale: "en-US",
+      reducedMotion: "no-preference",
+    });
+
+    try {
+      const page = await context.newPage();
+      const scenarioName = `${screenshotName}${fileSuffix}`;
+      const scrollTargets = await prepareLivePage(page, scenarioName, timeScale);
+      const stageSnapshot = await waitForEndmarkLiveStage(page, expectedStage, timeoutMs, pollMs);
+
+      if (settleDelayMs > 0) {
+        await page.waitForTimeout(settleDelayMs);
+      }
+
+      await page.screenshot({
+        path: path.join(outputDir, `${screenshotName}${fileSuffix}.png`),
+        fullPage: false,
+      });
+
+      const finalSnapshot = await sampleEndmarkLiveState(page);
+      return {
+        scrollTargets,
+        stageSnapshot,
+        finalSnapshot,
+      };
+    } finally {
+      await context.close();
+    }
+  };
+
+  const blackCapture = await captureLiveStage({
+    expectedStage: "black",
+    screenshotName: "endmark-live-black",
+    timeScale: 1,
+    timeoutMs: 8000,
+    pollMs: 80,
+    settleDelayMs: 40,
+  });
+
+  assert(blackCapture.stageSnapshot.endmark?.stage === "black", "Expected live endmark black capture to hit the black stage.");
+  assert(blackCapture.stageSnapshot.endmark?.visible === true, "Expected live endmark black capture to be visible.");
+  assert(blackCapture.stageSnapshot.endmark?.ready === true, "Expected live endmark black SVG to be ready.");
+  assert(
+    (blackCapture.stageSnapshot.layerState?.visionCoverProgress ?? 0) >= 0.98,
+    "Expected live endmark black capture to keep full vision cover progress.",
+  );
+  assert(
+    Math.abs((blackCapture.stageSnapshot.scrollY ?? 0) - (blackCapture.stageSnapshot.maxScroll ?? 0)) <= 2,
+    "Expected live endmark black capture to occur at the document bottom.",
+  );
+
+  const settledCapture = await captureLiveStage({
+    expectedStage: "settled",
+    screenshotName: "endmark-live-settled",
+    timeScale: 240,
+    timeoutMs: 36000,
+    pollMs: 1000,
+    settleDelayMs: 120,
+  });
+
+  assert(settledCapture.finalSnapshot.endmark?.stage === "settled", "Expected live endmark capture to reach the settled stage.");
+  assert(settledCapture.finalSnapshot.endmark?.visible === true, "Expected live endmark capture to stay visible.");
+  assert(settledCapture.finalSnapshot.endmark?.ready === true, "Expected live endmark SVG to be ready.");
+  assert(
+    (settledCapture.finalSnapshot.layerState?.visionCoverProgress ?? 0) >= 0.98,
+    "Expected live endmark capture to keep full vision cover progress.",
+  );
+  assert(
+    Math.abs((settledCapture.finalSnapshot.scrollY ?? 0) - (settledCapture.finalSnapshot.maxScroll ?? 0)) <= 2,
+    "Expected live endmark capture to occur at the document bottom.",
+  );
+  assert(
+    settledCapture.finalSnapshot.viewport.width === viewport.width &&
+      settledCapture.finalSnapshot.viewport.height === viewport.height,
+    "Expected live endmark capture viewport debug to match the requested viewport.",
+  );
+}
+
 async function run() {
   const server = await createStaticServer(3000);
 
@@ -1701,8 +1935,28 @@ async function run() {
         await captureVisionCoverLiveEndState(browser, {
           viewport: ultraWideViewport,
           fileSuffix: "-desktop-2000x1080",
+          disableEndmark: true,
         });
         console.log("Playwright validation passed (vision-cover-live-only).");
+        return;
+      }
+
+      if (endmarkLiveOnlyMode) {
+        await captureFixedStates(
+          browser,
+          activeFixedStateShots.filter((shot) =>
+            ["endmark-black", "endmark-guides", "endmark-outline", "endmark-fill", "endmark-settled"].includes(shot.name),
+          ),
+          {
+            viewport: ultraWideViewport,
+            fileSuffix: "-desktop-2000x1080",
+          },
+        );
+        await captureEndmarkLiveSequence(browser, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+        });
+        console.log("Playwright validation passed (endmark-live-only).");
         return;
       }
 
@@ -1744,7 +1998,7 @@ async function run() {
         ["cards-b-queue", "cards-handoff-mid", "cards-settled"].includes(shot.name),
       );
       const ultraWideTransitionShots = activeFixedStateShots.filter((shot) =>
-        ["works-outro-flatten", "mission-in-panel", "vision-cover-full"].includes(shot.name),
+        ["works-outro-flatten", "mission-in-panel", "vision-cover-full", "endmark-settled"].includes(shot.name),
       );
       await captureFixedStates(browser, desktopWideShots, {
         viewport: { width: 2560, height: 1600 },
@@ -1761,6 +2015,11 @@ async function run() {
           fileSuffix: "-desktop-16x10",
         });
         await captureVisionCoverLiveEndState(browser, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+          disableEndmark: true,
+        });
+        await captureEndmarkLiveSequence(browser, {
           viewport: ultraWideViewport,
           fileSuffix: "-desktop-2000x1080",
         });
