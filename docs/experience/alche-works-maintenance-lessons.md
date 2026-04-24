@@ -1,6 +1,6 @@
-# Alche Works Maintenance Lessons
+# Alche Top-Page Maintenance Lessons
 
-These are project-local lessons for the active `works -> works_cards` program.
+These are project-local lessons for the active `ALCHE` top-page program.
 
 ## `alche-exp-0001` Free Scroll And Named Shots Can Diverge
 
@@ -128,3 +128,53 @@ Default rule for this program:
 - clamp geometry flatten just below the degeneracy point instead of preserving large outer arcs
 - switch the main wall to a temporary cull-safe mode such as `DoubleSide` in the high-flatten window
 - validate on a wider real-scroll desktop path, not only `16:10` named shots
+
+## `alche-exp-0011` Live End-State Authority Must Outrank Query Fixed-State
+
+For `vision cover` and `endmark`, query-driven fixed states are useful diagnostics, but they are not the main truth source.
+The failure mode is easy to miss:
+
+- fixed-state `alcheVisionCoverProgress=1` looks correct
+- fixed-state `alcheEndmarkStage=settled` looks correct
+- user real scroll still lands in a different end state
+
+Default rule for this program:
+
+- use fixed-state screenshots as comparison artifacts
+- use live wide-scroll bottom captures as the authority for terminal states
+- if fixed-state passes but live-state fails, fix the validator chain before tuning visuals
+
+## `alche-exp-0012` Post-Cover Brand Sequences Belong In A Shell Overlay, Not A Reopened Three Runtime
+
+The `ALCHE` endmark sequence after prism cover was more stable and easier to art-direct once it moved out of the folded later-phase Three state machine.
+
+Default rule for this program:
+
+- keep the prism cover in the existing Three chain
+- let the shell own the black-screen takeover and post-cover brand sequence
+- prefer authored `SVG + DOM overlay + timeline` for geometric logo construction work
+- do not reopen legacy `vision / service / outro` scene branches unless the user explicitly wants that route
+
+## `alche-exp-0013` Animated SVG Overlays Should Mutate Real SVG State, Not Trust React To Hold InnerHTML
+
+The first endmark implementation had a false-positive validation trap:
+
+- React re-renders could wipe `dangerouslySetInnerHTML` mutations
+- fixed-stage screenshots could still be misleading if timeline progress and actual SVG draw state drifted apart
+
+Default rule for this program:
+
+- inject the authored SVG into a stable host ref
+- drive `opacity`, `visibility`, `stroke-dasharray`, `stroke-dashoffset`, and mask geometry directly on the real SVG nodes
+- for debug stages, apply explicit stage snapshots instead of pretending normalized progress equals a visual state
+
+## `alche-exp-0014` Separate Fresh Live Runs Are Safer Than Multi-Stage Captures In One Browser Session
+
+The endmark validator originally tried to capture `black` and `settled` in one live browser session.
+That produced a false failure even though the page could reach `settled` in isolation.
+
+Default rule for this program:
+
+- when validating staged live animations, capture early and late states in separate fresh runs if a single-session chain proves unstable
+- assert the real debug state at capture time
+- keep the screenshot authority tied to the same live path the user actually sees

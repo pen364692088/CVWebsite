@@ -1,36 +1,65 @@
-# ALCHE Cards Visual Loop
+# ALCHE Top-Page Visual Loop
 
-Use this loop for the active `works -> works_cards` program.
-Authority is:
+Use this doc for the active `ALCHE` top-page program.
 
-1. `Task/参考视频.mp4`
-2. the current shotbook
-3. fresh local and remote screenshots
+Current continuation chain is no longer only `works_cards`. The active visual loop now spans:
 
-Do not let raw wheel feel or old parity docs outrank those.
+1. `kv`
+2. `works_intro`
+3. `works`
+4. `works_cards`
+5. `works_outro`
+6. `mission_in`
+7. `mission -> vision` prism turn
+8. `vision` full-cover and rainbow-to-black face fade
+9. post-cover `ALCHE` endmark SVG overlay
 
-## Fast Path
+Authority order is:
 
-Focused cards loop:
+1. latest handoff:
+   - [`docs/handoff/alche-top-page-handoff-2026-04-23.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-23.md)
+2. current runtime code:
+   - [`lib/alche-top-page.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/alche-top-page.ts)
+   - [`components/alche-top-page/alche-top-page-shell.tsx`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/alche-top-page-shell.tsx)
+   - [`scripts/validate-playwright.mjs`](/mnt/d/Project/AIProject/MyProject/CVWebsite/scripts/validate-playwright.mjs)
+3. fresh local screenshots
+4. reference video and task screenshots
 
-1. `npm run verify:alche-cards`
+Do not let old `works_cards-only` assumptions outrank this broader chain.
 
-If you only need full page validation after a card change:
+## Validation Truth
+
+Default order:
 
 1. `npm run build`
 2. `npm run typecheck`
 3. `npm run verify:static`
-4. `npm run validate:playwright`
 
-If you only want to refresh extracted video references:
+Then pick the smallest decisive visual validator:
 
-1. `npm run reference:alche-cards`
+- cards / works loop:
+  - `npm run verify:alche-cards`
+  - or `npm run validate:playwright`
+- wide live vision cover:
+  - `node scripts/validate-playwright.mjs --vision-cover-live-only`
+- post-cover endmark:
+  - `node scripts/validate-playwright.mjs --endmark-live-only`
 
 Important:
 
-- do not run `typecheck` in parallel with `build` and interpret missing `.next/types` as a real regression
+- do not run `typecheck` in parallel with `build`
+- do not use fixed-state query screenshots as the authority for live end-state issues
+- for `vision cover` and `endmark`, the live-scroll bottom path outranks query overrides
 
-## Preferred Debug Entry
+Current known suite fact:
+
+- full `npm run validate:playwright` still contains an older blocker:
+  - `Expected mission_in settled to occur after mission_in panel`
+- treat that as a separate cleanup task unless you are actively fixing the wheel-handoff path
+
+## Preferred Debug Entries
+
+### Cards / works
 
 Use `alcheShot`, not raw `alcheProgress`.
 
@@ -44,16 +73,21 @@ Examples:
 
 Use `alcheCardDebug=identity` when order or ownership is in doubt.
 
-Debug mode defaults to identity for:
+### Mission / vision / endmark
 
-- `alcheShot`
-- `alcheCapture`
-- local `localhost` / `127.0.0.1`
-- GitHub Pages host
+Use the later-phase overrides when the issue is no longer a cards problem:
 
-Use `alcheCardDebug=poster` only when you specifically need poster art back.
+- `alcheMissionTurnProgress=...`
+- `alcheVisionCoverProgress=...`
+- `alcheEndmarkStage=black|guides|outline|fill|settled`
+- `alcheEndmarkTimeScale=...`
+- `alcheDisableEndmark=1`
+
+Use them as diagnostics or fixed-state comparison only. Do not treat them as the final proof for live behavior.
 
 ## What Must Be Proven
+
+### Works / cards
 
 Named-shot checks:
 
@@ -70,33 +104,42 @@ Free-scroll checks:
 - `A` appears before `B`
 - queue and handoff happen in the right order
 
-Geometry checks:
+### Vision cover
 
-- cards stay ahead of the center model
-- facing error remains near `0`
-- side-lane framing remains correct on both desktop baselines
+Live-scroll checks:
+
+- prism has already completed the right-facing side turn
+- bottom live scroll reaches full `visionCoverProgress`
+- final side face overscans the wide viewport with no residual white wedges
+- blackening begins after cover progress passes halfway
+
+### Endmark
+
+Live-scroll checks:
+
+- prism cover reaches terminal state first
+- black overlay really takes over before the SVG sequence starts
+- `grid -> guides -> outline -> fill -> settled` order is visible
+- final `ALCHE` geometry is present as a shell-level SVG overlay, not as a resurrected Three scene
 
 ## Desktop Validation Baselines
 
-Current desktop validation is not single-viewport anymore.
-
-Required local baselines:
+Current minimum desktop baselines are:
 
 - `1440×1080`
-- `2560×1600`
+- `2000×1080`
+- `2560×1600` for card side-lane framing taste
 
-For side lanes, validator uses normalized screen-space ratios instead of only fixed pixels:
+The `2000×1080` path is now the critical wide-screen truth source for:
 
-- `screenLeftRatio`
-- `screenRightRatio`
-- `widthRatio`
-- `centerYRatio`
-
-This is the current durable rule for desktop adaptation.
+- `vision cover`
+- `endmark live`
 
 ## Artifacts
 
-Primary local artifacts under `.playwright-artifacts/alche-top-page/`:
+Primary artifacts under `.playwright-artifacts/alche-top-page/`:
+
+### Cards / works
 
 - `cards-b-queue.png`
 - `cards-handoff-mid.png`
@@ -108,29 +151,45 @@ Primary local artifacts under `.playwright-artifacts/alche-top-page/`:
 - `cards-wheel-handoff.png`
 - `cards-wheel-queue-desktop-16x10.png`
 - `cards-wheel-handoff-desktop-16x10.png`
-- `reference-video/*.png`
 - `reference-board.html`
 
-`reference-board.html` is still the main manual review surface.
+### Vision cover
 
-## Remote Validation
+- `vision-cover-full.png`
+- `vision-cover-full-desktop-2000x1080.png`
+- `vision-cover-live-wheel-bottom-desktop-2000x1080.png`
+- `vision-cover-black-mid.png`
 
-If the user is looking at GitHub Pages, local proof is not enough.
+### Endmark
 
-Minimum remote checks:
+- `endmark-black-desktop-2000x1080.png`
+- `endmark-guides-desktop-2000x1080.png`
+- `endmark-outline-desktop-2000x1080.png`
+- `endmark-fill-desktop-2000x1080.png`
+- `endmark-settled-desktop-2000x1080.png`
+- `endmark-live-black-desktop-2000x1080.png`
+- `endmark-live-settled-desktop-2000x1080.png`
 
-- `/CVWebsite/en/?alcheShot=cards-b-queue`
-- `/CVWebsite/en/?alcheShot=cards-settled`
-- one real free-scroll capture on the production URL
+## Current Best Tuning Levers
 
-For the current desktop adaptation loop, remote validation should use `2560×1600`.
+If the issue is still in `works_cards`:
 
-## Current Best Tuning Lever
+1. side-lane desktop aspect compensation
+2. side-lane pose angle / radius offsets
+3. only then deeper card geometry changes
 
-If the side panels still feel too close on desktop:
+If the issue is in later phases:
 
-1. adjust side-lane desktop aspect compensation
-2. then side-lane pose angle/radius offsets
-3. only after that consider deeper geometry changes
+1. `ALCHE_TOP_CENTER_MODEL` constants in [`lib/alche-top-page.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/alche-top-page.ts)
+2. shell-owned overlay timing in [`components/alche-top-page/alche-top-page-shell.tsx`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/alche-top-page-shell.tsx)
+3. endmark SVG asset and overlay timeline
 
-Do **not** start with global `baseRadius` as the first lever.
+Do **not** start by reopening old `vision / service / outro` Three branches.
+
+## Known Traps
+
+1. Do not claim live success from `alcheVisionCoverProgress=1` or `alcheEndmarkStage=settled` fixed-state alone.
+2. Do not diagnose later-phase bugs as old cards bugs by default.
+3. Do not start with global `baseRadius` for wide-screen cover problems.
+4. Do not claim remote success for endmark or vision cover without fresh GitHub Pages screenshots.
+5. Do not let a full-suite failure in the old wheel-handoff assertion erase targeted live evidence for later-phase work.
