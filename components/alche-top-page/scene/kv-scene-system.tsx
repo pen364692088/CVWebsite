@@ -242,27 +242,61 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
   };
 }
 
-const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.44;
+const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.16;
+const ALCHE_TOP_WALL_ANGLE_OVERSCAN = 1.6;
+
+function createContinuousWallGeometry(radius: number) {
+  const angleStart = -Math.PI - ALCHE_TOP_WALL_ANGLE_OVERSCAN;
+  const angleEnd = Math.PI + ALCHE_TOP_WALL_ANGLE_OVERSCAN;
+  const angleSpan = angleEnd - angleStart;
+  const angleSegments = Math.ceil((ALCHE_TOP_MEDIA_WALL.radialSegments * angleSpan) / (Math.PI * 2));
+  const heightSegments = ALCHE_TOP_MEDIA_WALL.heightSegments;
+  const halfHeight = ALCHE_TOP_MEDIA_WALL.height * 0.5;
+
+  const positions: number[] = [];
+  const wallAngles: number[] = [];
+  const wallCore: number[] = [];
+  const indices: number[] = [];
+
+  for (let row = 0; row <= heightSegments; row += 1) {
+    const yRatio = row / Math.max(heightSegments, 1);
+    const y = -halfHeight + ALCHE_TOP_MEDIA_WALL.height * yRatio;
+
+    for (let column = 0; column <= angleSegments; column += 1) {
+      const angleRatio = column / Math.max(angleSegments, 1);
+      const angle = angleStart + angleSpan * angleRatio;
+      positions.push(Math.sin(angle) * radius, y, Math.cos(angle) * radius);
+      wallAngles.push(angle);
+      wallCore.push(angle >= -Math.PI && angle <= Math.PI ? 1 : 0);
+    }
+  }
+
+  const rowStride = angleSegments + 1;
+  for (let row = 0; row < heightSegments; row += 1) {
+    for (let column = 0; column < angleSegments; column += 1) {
+      const a = row * rowStride + column;
+      const b = row * rowStride + column + 1;
+      const c = (row + 1) * rowStride + column + 1;
+      const d = (row + 1) * rowStride + column;
+      indices.push(a, b, d, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setIndex(indices);
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("aWallAngle", new THREE.Float32BufferAttribute(wallAngles, 1));
+  geometry.setAttribute("aWallCore", new THREE.Float32BufferAttribute(wallCore, 1));
+  geometry.computeBoundingSphere();
+  return geometry;
+}
 
 function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
-  const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
+  const roomRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
-  const geometry = useMemo(
-    () =>
-      new THREE.CylinderGeometry(
-        effectiveRadius,
-        effectiveRadius,
-        ALCHE_TOP_MEDIA_WALL.height,
-        ALCHE_TOP_MEDIA_WALL.radialSegments,
-        ALCHE_TOP_MEDIA_WALL.heightSegments,
-        true,
-        Math.PI,
-        Math.PI * 2,
-      ),
-    [effectiveRadius],
-  );
+  const geometry = useMemo(() => createContinuousWallGeometry(effectiveRadius), [effectiveRadius]);
 
   useEffect(() => {
     wallTexture.colorSpace = THREE.SRGBColorSpace;

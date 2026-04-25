@@ -19,6 +19,7 @@ const visionCoverLiveOnlyMode = cliArgs.has("--vision-cover-live-only");
 const endmarkLiveOnlyMode = cliArgs.has("--endmark-live-only");
 const worksOutroLiveOnlyMode = cliArgs.has("--works-outro-live-only");
 const ultraWideViewport = { width: 2000, height: 1080 };
+const worksOutroEdgeViewport = { width: 2048, height: 1152 };
 
 fs.mkdirSync(outputDir, { recursive: true });
 
@@ -65,6 +66,10 @@ const fixedStateShots = [
       heroShotId: null,
     },
   })),
+  {
+    name: "works-outro-unroll-early",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.32&alcheIntro=1&alcheCapture=1"),
+  },
   {
     name: "works-outro-unroll-mid",
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.44&alcheIntro=1&alcheCapture=1"),
@@ -381,6 +386,55 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
   assert(overflow <= 1, `Horizontal overflow detected for ${scenarioName}: ${overflow}px`);
 }
 
+async function assertRightBandBlackRatio(page, screenshotBuffer, label, maxRatio = 0.03) {
+  const ratio = await page.evaluate(
+    async ({ source, region }) => {
+      const image = new Image();
+      image.src = source;
+      await image.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return 1;
+
+      context.drawImage(image, 0, 0);
+      const x = Math.floor(canvas.width * region.xRatio);
+      const y = Math.floor(canvas.height * region.yRatio);
+      const width = Math.max(1, Math.floor(canvas.width * region.widthRatio));
+      const height = Math.max(1, Math.floor(canvas.height * region.heightRatio));
+      const pixels = context.getImageData(x, y, width, height).data;
+      let blackPixels = 0;
+      const totalPixels = width * height;
+
+      for (let index = 0; index < pixels.length; index += 4) {
+        const alpha = pixels[index + 3];
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (alpha > 180 && red < 22 && green < 22 && blue < 22) {
+          blackPixels += 1;
+        }
+      }
+
+      return blackPixels / totalPixels;
+    },
+    {
+      source: `data:image/png;base64,${screenshotBuffer.toString("base64")}`,
+      region: {
+        xRatio: 0.92,
+        yRatio: 0.12,
+        widthRatio: 0.07,
+        heightRatio: 0.76,
+      },
+    },
+  );
+
+  assert(ratio <= maxRatio, `Expected ${label} right edge black ratio <= ${maxRatio}, got ${ratio.toFixed(4)}.`);
+  return ratio;
+}
+
 function isAlreadyClosedPlaywrightError(error) {
   return String(error?.message ?? error).includes("Target page, context or browser has been closed");
 }
@@ -393,6 +447,13 @@ async function closeBrowserIfOpen(browser) {
       throw error;
     }
   }
+}
+
+async function launchValidationBrowser() {
+  return chromium.launch({
+    headless: true,
+    args: ["--disable-dev-shm-usage"],
+  });
 }
 
 async function sampleEndmarkLiveState(page) {
@@ -1270,6 +1331,26 @@ async function captureFixedStates(browser, shots, options = {}) {
   return layerStates;
 }
 
+async function withFreshBrowser(callback) {
+  const freshBrowser = await launchValidationBrowser();
+  try {
+    return await callback(freshBrowser);
+  } finally {
+    await closeBrowserIfOpen(freshBrowser);
+  }
+}
+
+async function captureFixedStatesWithFreshBrowsers(shots, options = {}) {
+  const layerStates = new Map();
+  for (const shot of shots) {
+    const shotLayerStates = await withFreshBrowser((freshBrowser) => captureFixedStates(freshBrowser, [shot], options));
+    for (const [key, value] of shotLayerStates.entries()) {
+      layerStates.set(key, value);
+    }
+  }
+  return layerStates;
+}
+
 async function capturePointerInteraction(browser) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1080 },
@@ -1714,6 +1795,15 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
   const viewport = options.viewport ?? ultraWideViewport;
   const fileSuffix = options.fileSuffix ?? "";
   const requireMissionPanel = options.requireMissionPanel ?? true;
+  const captureMode = options.captureMode ?? true;
+  const captureEdgeState = options.captureEdgeState ?? false;
+  const captureEntryState = options.captureEntryState ?? true;
+  const captureFlattenState = options.captureFlattenState ?? true;
+  const requireEntryState = options.requireEntryState ?? true;
+  const requireFlattenState = options.requireFlattenState ?? true;
+  const pointerDebug = options.pointerDebug ?? true;
+  const captureSearch = captureMode ? "&alcheCapture=1" : "";
+  const pointerDebugSearch = pointerDebug ? "&alchePointerDebug=1" : "";
   const context = await browser.newContext({
     viewport,
     locale: "en-US",
@@ -1722,7 +1812,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240&alcheCapture=1`, {
+    await page.goto(`${baseUrl}/en/?alcheEndmarkTimeScale=240&alcheHideDebugUi=1${pointerDebugSearch}${captureSearch}`, {
       waitUntil: "networkidle",
     });
     await assertTopPageShell(page, `works-outro-wheel-focused${fileSuffix}`);
@@ -1800,6 +1890,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
       samples.push(snapshot);
 
       if (
+        captureEntryState &&
         !capturedStates.has("works-outro-wheel-entry") &&
         snapshot.active === "works_outro" &&
         snapshot.card0Visible === true &&
@@ -1816,6 +1907,28 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
       }
 
       if (
+        captureEdgeState &&
+        !capturedStates.has("works-outro-wheel-unroll-edge") &&
+        snapshot.active === "works_outro" &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === true &&
+        snapshot.cardsLeadIndex === 1 &&
+        (snapshot.cardsOpacity ?? 0) >= 0.45 &&
+        (snapshot.worksOutroClearMix ?? 0) >= 0.22 &&
+        (snapshot.worksOutroClearMix ?? 0) <= 0.74 &&
+        (snapshot.kvWallFlatten ?? 0) >= 0.08
+      ) {
+        console.log(`Capturing works-outro-wheel-unroll-edge${fileSuffix}...`);
+        const screenshot = await page.screenshot({
+          path: path.join(outputDir, `works-outro-wheel-unroll-edge${fileSuffix}.png`),
+          fullPage: false,
+        });
+        await assertRightBandBlackRatio(page, screenshot, `works-outro-wheel-unroll-edge${fileSuffix}`);
+        capturedStates.set("works-outro-wheel-unroll-edge", snapshot);
+      }
+
+      if (
+        captureFlattenState &&
         !capturedStates.has("works-outro-wheel-flatten") &&
         snapshot.active === "works_outro" &&
         (snapshot.worksOutroClearMix ?? 0) >= 0.88 &&
@@ -1845,8 +1958,9 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
       }
 
       if (
-        capturedStates.has("works-outro-wheel-entry") &&
-        capturedStates.has("works-outro-wheel-flatten") &&
+        (!captureEntryState || capturedStates.has("works-outro-wheel-entry")) &&
+        (!captureFlattenState || capturedStates.has("works-outro-wheel-flatten")) &&
+        (!captureEdgeState || capturedStates.has("works-outro-wheel-unroll-edge")) &&
         (!requireMissionPanel || capturedStates.has("mission-in-wheel-panel"))
       ) {
         break;
@@ -1854,34 +1968,46 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
     }
 
     const worksOutroWheelEntry = capturedStates.get("works-outro-wheel-entry");
+    const worksOutroWheelUnrollEdge = capturedStates.get("works-outro-wheel-unroll-edge");
     const worksOutroWheelFlatten = capturedStates.get("works-outro-wheel-flatten");
     const missionInWheelPanel = capturedStates.get("mission-in-wheel-panel");
 
-    assert(worksOutroWheelEntry, "Expected focused scrolling to capture works_outro entry.");
-    assert(worksOutroWheelFlatten, "Expected focused scrolling to capture works_outro flatten.");
-    assert(
-      worksOutroWheelEntry.step < worksOutroWheelFlatten.step,
-      "Expected focused works_outro flatten to occur after works_outro entry.",
-    );
-    assert(
-      (worksOutroWheelEntry.kvWallFlatten ?? 0) < (worksOutroWheelFlatten.kvWallFlatten ?? 0),
-      "Expected focused wall flatten to increase during works_outro.",
-    );
-    assert(
-      (worksOutroWheelFlatten.cardsOpacity ?? 0) < (worksOutroWheelEntry.cardsOpacity ?? 1),
-      "Expected focused cards opacity to clear during works_outro flatten.",
-    );
+    if (requireEntryState) {
+      assert(worksOutroWheelEntry, "Expected focused scrolling to capture works_outro entry.");
+    }
+    if (captureEdgeState) {
+      assert(worksOutroWheelUnrollEdge, "Expected focused scrolling to capture works_outro edge coverage state.");
+    }
+    if (requireFlattenState) {
+      assert(worksOutroWheelFlatten, "Expected focused scrolling to capture works_outro flatten.");
+    }
+    if (worksOutroWheelEntry && worksOutroWheelFlatten) {
+      assert(
+        worksOutroWheelEntry.step < worksOutroWheelFlatten.step,
+        "Expected focused works_outro flatten to occur after works_outro entry.",
+      );
+      assert(
+        (worksOutroWheelEntry.kvWallFlatten ?? 0) < (worksOutroWheelFlatten.kvWallFlatten ?? 0),
+        "Expected focused wall flatten to increase during works_outro.",
+      );
+      assert(
+        (worksOutroWheelFlatten.cardsOpacity ?? 0) < (worksOutroWheelEntry.cardsOpacity ?? 1),
+        "Expected focused cards opacity to clear during works_outro flatten.",
+      );
+    }
 
     if (requireMissionPanel) {
       assert(missionInWheelPanel, "Expected focused scrolling to capture mission_in panel takeover.");
-      assert(
-        worksOutroWheelFlatten.step < missionInWheelPanel.step,
-        "Expected focused mission panel to begin after works_outro flatten.",
-      );
-      assert(
-        (worksOutroWheelFlatten.kvWallFlatten ?? 0) <= (missionInWheelPanel.kvWallFlatten ?? 0),
-        "Expected focused mission_in flatten to inherit works_outro progress.",
-      );
+      if (worksOutroWheelFlatten) {
+        assert(
+          worksOutroWheelFlatten.step < missionInWheelPanel.step,
+          "Expected focused mission panel to begin after works_outro flatten.",
+        );
+        assert(
+          (worksOutroWheelFlatten.kvWallFlatten ?? 0) <= (missionInWheelPanel.kvWallFlatten ?? 0),
+          "Expected focused mission_in flatten to inherit works_outro progress.",
+        );
+      }
       assertRange(missionInWheelPanel.missionOutlineOpacity, { min: 0, max: 0.001 }, "focused mission panel outline opacity");
     }
 
@@ -2100,7 +2226,7 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
     pollMs,
     settleDelayMs = 0,
   }) => {
-    const stageBrowser = freshBrowserPerStage ? await chromium.launch({ headless: true }) : browser;
+    const stageBrowser = freshBrowserPerStage ? await launchValidationBrowser() : browser;
     const context = await stageBrowser.newContext({
       viewport,
       locale: "en-US",
@@ -2215,7 +2341,7 @@ async function run() {
   try {
     await waitForServer(`${baseUrl}/en/`);
     generateAlcheReferenceFrames({ root, outputDir: path.join(outputDir, "reference-video") });
-    const browser = await chromium.launch({ headless: true });
+    const browser = await launchValidationBrowser();
 
     try {
       if (visionCoverLiveOnlyMode) {
@@ -2248,7 +2374,7 @@ async function run() {
           },
         );
         await closeBrowserIfOpen(browser);
-        const liveBrowser = await chromium.launch({ headless: true });
+        const liveBrowser = await launchValidationBrowser();
         try {
           await captureEndmarkLiveSequence(liveBrowser, {
             viewport: ultraWideViewport,
@@ -2264,31 +2390,63 @@ async function run() {
 
       if (worksOutroLiveOnlyMode) {
         const worksOutroFixedShots = activeFixedStateShots.filter((shot) =>
-          ["works-outro-entry", "works-outro-unroll-mid", "works-outro-unroll-late", "works-outro-flatten", "mission-in-panel"].includes(
-            shot.name,
-          ),
+          [
+            "works-outro-entry",
+            "works-outro-unroll-early",
+            "works-outro-unroll-mid",
+            "works-outro-unroll-late",
+            "works-outro-flatten",
+          ].includes(shot.name),
         );
-        await captureFixedStates(browser, worksOutroFixedShots, {
+        const worksOutroFixedShots2000 = worksOutroFixedShots.filter((shot) =>
+          ["works-outro-unroll-early", "works-outro-unroll-mid"].includes(shot.name),
+        );
+        await closeBrowserIfOpen(browser);
+        await withFreshBrowser((freshBrowser) =>
+          captureWorksOutroWheelFocused(freshBrowser, {
+            viewport: worksOutroEdgeViewport,
+            fileSuffix: "-desktop-2048x1152",
+            captureMode: false,
+            captureEdgeState: true,
+            captureEntryState: false,
+            captureFlattenState: false,
+            requireEntryState: false,
+            requireFlattenState: false,
+            pointerDebug: false,
+            requireMissionPanel: false,
+          }),
+        );
+        await captureFixedStatesWithFreshBrowsers(worksOutroFixedShots2000, {
           viewport: ultraWideViewport,
           fileSuffix: "-desktop-2000x1080",
         });
-        await captureFixedStates(
-          browser,
-          worksOutroFixedShots.filter((shot) => ["works-outro-unroll-late", "works-outro-flatten"].includes(shot.name)),
+        await captureFixedStatesWithFreshBrowsers(
+          worksOutroFixedShots.filter((shot) => shot.name === "works-outro-unroll-early"),
+          {
+            viewport: worksOutroEdgeViewport,
+            fileSuffix: "-desktop-2048x1152",
+          },
+        );
+        await captureFixedStatesWithFreshBrowsers(
+          worksOutroFixedShots.filter((shot) => shot.name === "works-outro-unroll-late"),
           {
             viewport: { width: 2560, height: 1600 },
             fileSuffix: "-desktop-16x10",
           },
         );
-        await captureWorksOutroWheelFocused(browser, {
-          viewport: ultraWideViewport,
-          fileSuffix: "-desktop-2000x1080",
-        });
-        await captureWorksOutroWheelFocused(browser, {
-          viewport: { width: 2560, height: 1600 },
-          fileSuffix: "-desktop-16x10",
-          requireMissionPanel: false,
-        });
+        await withFreshBrowser((freshBrowser) =>
+          captureWorksOutroWheelFocused(freshBrowser, {
+            viewport: ultraWideViewport,
+            fileSuffix: "-desktop-2000x1080",
+          }),
+        );
+        await withFreshBrowser((freshBrowser) =>
+          captureWorksOutroWheelFocused(freshBrowser, {
+            viewport: { width: 2560, height: 1600 },
+            fileSuffix: "-desktop-16x10",
+            requireMissionPanel: false,
+          }),
+        );
         console.log("Playwright validation passed (works-outro-live-only).");
         return;
       }
@@ -2326,21 +2484,36 @@ async function run() {
         }
       }
 
-      const layerStates = await captureFixedStates(browser, activeFixedStateShots);
       const desktopWideShots = activeFixedStateShots.filter((shot) =>
         ["cards-b-queue", "cards-handoff-mid", "cards-settled"].includes(shot.name),
       );
       const ultraWideTransitionShots = activeFixedStateShots.filter((shot) =>
         ["works-outro-flatten", "mission-in-panel", "vision-cover-full", "endmark-settled"].includes(shot.name),
       );
-      await captureFixedStates(browser, desktopWideShots, {
-        viewport: { width: 2560, height: 1600 },
-        fileSuffix: "-desktop-16x10",
-      });
-      await captureFixedStates(browser, ultraWideTransitionShots, {
-        viewport: ultraWideViewport,
-        fileSuffix: "-desktop-2000x1080",
-      });
+      const layerStates = cardsOnlyMode
+        ? await captureFixedStatesWithFreshBrowsers(activeFixedStateShots)
+        : await captureFixedStates(browser, activeFixedStateShots);
+
+      if (cardsOnlyMode) {
+        await closeBrowserIfOpen(browser);
+        await captureFixedStatesWithFreshBrowsers(desktopWideShots, {
+          viewport: { width: 2560, height: 1600 },
+          fileSuffix: "-desktop-16x10",
+        });
+        await captureFixedStatesWithFreshBrowsers(ultraWideTransitionShots, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+        });
+      } else {
+        await captureFixedStates(browser, desktopWideShots, {
+          viewport: { width: 2560, height: 1600 },
+          fileSuffix: "-desktop-16x10",
+        });
+        await captureFixedStates(browser, ultraWideTransitionShots, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+        });
+      }
       if (!cardsOnlyMode) {
         await captureRealWheelHandoff(browser);
         await captureRealWheelHandoff(browser, {
