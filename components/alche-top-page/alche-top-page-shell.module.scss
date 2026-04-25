@@ -86,6 +86,104 @@
   }
 }
 
+.endmarkFooter {
+  position: absolute;
+  left: clamp(1rem, 2.2vw, 2.75rem);
+  right: clamp(1rem, 2.2vw, 2.75rem);
+  bottom: clamp(1rem, 3vh, 2rem);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(18rem, 28rem) minmax(18rem, 1fr);
+  align-items: end;
+  gap: clamp(1.5rem, 6vw, 7rem);
+  color: rgba(255, 255, 255, 0.88);
+  font-family: "IBM Plex Mono", "Courier New", monospace;
+  font-size: clamp(0.72rem, 0.88vw, 0.95rem);
+  line-height: 1.55;
+  letter-spacing: 0;
+  opacity: var(--alche-endmark-footer-progress, 0);
+  transform: translateY(var(--alche-endmark-footer-offset, 2rem));
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 80ms linear,
+    transform 140ms ease-out,
+    visibility 0s linear 140ms;
+
+  &[data-visible="true"] {
+    visibility: visible;
+    transition:
+      opacity 80ms linear,
+      transform 140ms ease-out;
+  }
+}
+
+.endmarkFooterColumns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2.5vw, 2.3rem);
+  max-width: 28rem;
+}
+
+.endmarkFooterColumn {
+  display: grid;
+  align-content: start;
+  gap: 0.54rem;
+  min-width: 0;
+}
+
+.endmarkFooterHeading,
+.endmarkFooterItem,
+.endmarkFooterAction,
+.endmarkFooterLegal,
+.endmarkFooterCopyright {
+  display: block;
+  white-space: nowrap;
+}
+
+.endmarkFooterHeading {
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.endmarkFooterItem {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.endmarkFooterAside {
+  display: grid;
+  justify-items: end;
+  gap: 1.05rem;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.endmarkFooterActions,
+.endmarkFooterLegal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: clamp(1.1rem, 2.2vw, 2.8rem);
+}
+
+.endmarkFooterAction {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.endmarkFooterLegal {
+  gap: clamp(1rem, 1.8vw, 2rem);
+}
+
+.endmarkFooterCopyright {
+  margin-top: clamp(1rem, 5vh, 3.2rem);
+  color: rgba(255, 255, 255, 0.95);
+  font-family: "Space Grotesk", "Arial", sans-serif;
+  font-size: clamp(1.25rem, 2.6vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .root[data-mission-panel-visible="true"] .edgeOverlayLayer {
   clip-path: inset(var(--alche-mission-panel-screen-top, 100vh) 0 0 0);
 }
@@ -821,6 +919,22 @@
   .footerTop {
     grid-template-columns: 1fr;
   }
+
+  .endmarkFooter {
+    grid-template-columns: 1fr;
+    align-items: end;
+    gap: 1.35rem;
+  }
+
+  .endmarkFooterAside {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .endmarkFooterActions,
+  .endmarkFooterLegal {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -881,5 +995,42 @@
   .footerBottom {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .endmarkFooter {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    font-size: 0.72rem;
+  }
+
+  .endmarkFooterColumns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    max-width: none;
+  }
+
+  .endmarkFooterHeading,
+  .endmarkFooterItem,
+  .endmarkFooterAction,
+  .endmarkFooterLegal,
+  .endmarkFooterCopyright {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .endmarkFooterAside {
+    gap: 0.65rem;
+  }
+
+  .endmarkFooterCopyright {
+    margin-top: 0.7rem;
+    font-size: clamp(1.05rem, 7vw, 1.55rem);
+  }
+}
+
+@media (max-width: 520px) {
+  .endmarkFooterColumns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

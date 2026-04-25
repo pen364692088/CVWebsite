@@ -244,6 +244,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
     introProgress,
     missionTurnProgress,
     visionCoverProgress,
+    endmarkFooterProgress,
     heroShotId,
     worksWordHandoff,
     scrollToSection,
@@ -256,6 +257,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const endmarkDebugStage = readEndmarkDebugStage(runtimeSearchParams);
   const endmarkTimeScale = readEndmarkTimeScale(runtimeSearchParams);
   const endmarkDisabled = runtimeSearchParams?.get("alcheDisableEndmark") === "1";
+  const debugUiHidden = runtimeSearchParams?.get("alcheHideDebugUi") === "1";
   const runtimeHostname = typeof window === "undefined" ? null : window.location.hostname;
   const currentCardDebugMode = resolveAlcheWorksCardDebugMode(runtimeSearchParams, runtimeHostname);
   const currentSectionProgress = debugOverride?.progress ?? sectionProgress;
@@ -277,8 +279,11 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentShotId = debugOverride?.shotId ?? null;
   const endmarkBlueprintPath = assetPath("/alche-top-page/endmark/alche-wordmark-blueprint.svg");
   const endmarkTriggerActive = !endmarkDisabled && visionCoverProgress >= 0.98;
-  const showShotSelector = !captureMode && currentShotId !== null;
-  const showCardDebugToggle = !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
+  const visibleEndmarkFooterProgress = endmarkDebugState.stage === "settled" ? endmarkFooterProgress : 0;
+  const endmarkFooterVisible = visibleEndmarkFooterProgress > 0.01;
+  const showShotSelector = !debugUiHidden && !captureMode && currentShotId !== null;
+  const showCardDebugToggle =
+    !debugUiHidden && !captureMode && (runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1" || currentShotId !== null);
   const { missionPanelProgress } = deriveMissionTransitionOverlayState(currentActiveSection, currentSectionProgress);
   const missionPanelVisible = missionPanelProgress > 0.001;
   const setRootRef = useCallback((node: HTMLDivElement | null) => {
@@ -418,8 +423,10 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
         "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
         "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
+        "--alche-endmark-footer-progress": visibleEndmarkFooterProgress.toFixed(3),
+        "--alche-endmark-footer-offset": `${((1 - visibleEndmarkFooterProgress) * 2).toFixed(3)}rem`,
       }) as CSSProperties,
-    [currentIntroProgress, missionPanelProgress],
+    [currentIntroProgress, missionPanelProgress, visibleEndmarkFooterProgress],
   );
 
   return (
@@ -440,6 +447,8 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-endmark-stage={endmarkDebugState.stage}
       data-endmark-visible={endmarkDebugState.visible ? "true" : "false"}
       data-endmark-ready={endmarkDebugState.ready ? "true" : "false"}
+      data-endmark-footer-progress={visibleEndmarkFooterProgress.toFixed(3)}
+      data-endmark-footer-visible={endmarkFooterVisible ? "true" : "false"}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -520,6 +529,41 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
               timeScale={endmarkTimeScale}
               onDebugStateChange={setEndmarkDebugState}
             />
+            <div
+              className={styles.endmarkFooter}
+              data-endmark-footer
+              data-visible={endmarkFooterVisible ? "true" : "false"}
+              aria-hidden="true"
+            >
+              <div className={styles.endmarkFooterColumns}>
+                {copy.outro.footer.columns.map((column) => (
+                  <div key={column.title} className={styles.endmarkFooterColumn}>
+                    <span className={styles.endmarkFooterHeading}>{column.title}</span>
+                    {column.items.map((item) => (
+                      <span key={item} className={styles.endmarkFooterItem}>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.endmarkFooterAside}>
+                <div className={styles.endmarkFooterActions}>
+                  {copy.outro.footer.actions.map((action) => (
+                    <span key={action} className={styles.endmarkFooterAction}>
+                      {action}
+                    </span>
+                  ))}
+                </div>
+                <div className={styles.endmarkFooterLegal}>
+                  {copy.outro.footer.legalLinks.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+                <span className={styles.endmarkFooterCopyright}>{copy.outro.footer.copyright}</span>
+              </div>
+            </div>
           </div>
 
           <header className={styles.header}>

@@ -40,6 +40,7 @@ export const ALCHE_TOP_SCROLL_TRACK_SECTIONS: readonly AlcheScrollableSectionId[
   ...ALCHE_TOP_RENDERABLE_SECTIONS,
   "mission",
   "vision",
+  "outro",
 ];
 
 export const ALCHE_TOP_GROUP_IDS = ["top", "works", "about", "vision", "service"] as const;

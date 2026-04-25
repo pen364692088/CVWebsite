@@ -11,11 +11,13 @@ const root = process.cwd();
 const exportDir = path.join(root, "out");
 const outputDir = path.join(root, ".playwright-artifacts", "alche-top-page");
 const basePath = "/CVWebsite";
-const baseUrl = "http://127.0.0.1:3000/CVWebsite";
+const preferredPort = Number(process.env.ALCHE_PLAYWRIGHT_PORT ?? "3000");
+let baseUrl = `http://127.0.0.1:${preferredPort}/CVWebsite`;
 const cliArgs = new Set(process.argv.slice(2));
 const cardsOnlyMode = cliArgs.has("--cards-only");
 const visionCoverLiveOnlyMode = cliArgs.has("--vision-cover-live-only");
 const endmarkLiveOnlyMode = cliArgs.has("--endmark-live-only");
+const worksOutroLiveOnlyMode = cliArgs.has("--works-outro-live-only");
 const ultraWideViewport = { width: 2000, height: 1080 };
 
 fs.mkdirSync(outputDir, { recursive: true });
@@ -44,7 +46,7 @@ const contentTypes = {
   ".woff2": "font/woff2",
 };
 
-const expectedSections = ["kv", "works_intro", "works", "works_cards", "works_outro", "mission_in"];
+const expectedSections = ["kv", "works_intro", "works", "works_cards", "works_outro", "mission_in", "outro"];
 
 const fixedStateShots = [
   { name: "loading-settled", search: withIdentityCardDebug("?alcheSection=loading&alcheIntro=0.4&alcheCapture=1") },
@@ -63,6 +65,14 @@ const fixedStateShots = [
       heroShotId: null,
     },
   })),
+  {
+    name: "works-outro-unroll-mid",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.44&alcheIntro=1&alcheCapture=1"),
+  },
+  {
+    name: "works-outro-unroll-late",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.56&alcheIntro=1&alcheCapture=1"),
+  },
   {
     name: "mission-turn-mid",
     search: withIdentityCardDebug("?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=0.5&alcheCapture=1"),
@@ -117,6 +127,13 @@ const fixedStateShots = [
     name: "endmark-settled",
     search: withIdentityCardDebug(
       "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=settled&alcheCapture=1",
+    ),
+  },
+  {
+    name: "endmark-footer-settled",
+    endmarkStage: "settled",
+    search: withIdentityCardDebug(
+      "?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=1&alcheVisionCoverProgress=1&alcheEndmarkStage=settled&alcheEndmarkFooterProgress=1&alcheCapture=1",
     ),
   },
 ];
@@ -364,10 +381,25 @@ async function expectNoHorizontalOverflow(page, scenarioName) {
   assert(overflow <= 1, `Horizontal overflow detected for ${scenarioName}: ${overflow}px`);
 }
 
+function isAlreadyClosedPlaywrightError(error) {
+  return String(error?.message ?? error).includes("Target page, context or browser has been closed");
+}
+
+async function closeBrowserIfOpen(browser) {
+  try {
+    await browser.close();
+  } catch (error) {
+    if (!isAlreadyClosedPlaywrightError(error)) {
+      throw error;
+    }
+  }
+}
+
 async function sampleEndmarkLiveState(page) {
   return page.evaluate(() => {
     const endmark = window.__getAlcheEndmarkDebugState?.() ?? null;
     const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+    const root = document.querySelector("[data-endmark-footer-progress]");
     return {
       endmark,
       layerState: layerState
@@ -384,6 +416,8 @@ async function sampleEndmarkLiveState(page) {
       },
       scrollY: Math.round(window.scrollY),
       maxScroll: Math.round(Math.max(document.documentElement.scrollHeight - window.innerHeight, 0)),
+      footerProgress: Number(root?.getAttribute("data-endmark-footer-progress") ?? "0"),
+      footerVisible: root?.getAttribute("data-endmark-footer-visible") === "true",
     };
   });
 }
@@ -431,6 +465,7 @@ async function assertTopPageShell(page, scenarioName) {
 
   assert((await page.locator("[data-mission-transition]").count()) === 1, `Expected mission transition overlay for ${scenarioName}`);
   assert((await page.locator("[data-mission-panel]").count()) === 1, `Expected mission transition panel for ${scenarioName}`);
+  assert((await page.locator("[data-endmark-footer]").count()) === 1, `Expected endmark footer overlay for ${scenarioName}`);
   assert((await page.locator("[data-mission-outline]").count()) === 0, `Unexpected mission transition outline for ${scenarioName}`);
   assert((await page.locator("[data-top-scroll-indicator]").count()) === 0, `Unexpected top scroll indicator for ${scenarioName}`);
   assert((await page.locator('[data-top-panel="works"]').count()) === 0, `Unexpected works panel for ${scenarioName}`);
@@ -960,19 +995,35 @@ async function captureFixedStates(browser, shots, options = {}) {
         }
       }
       await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
-      if (shot.name.startsWith("endmark-")) {
-        const expectedStage = shot.name.replace("endmark-", "");
+      const expectedEndmarkStage = shot.endmarkStage ?? (shot.name.startsWith("endmark-") ? shot.name.replace("endmark-", "") : null);
+      if (expectedEndmarkStage) {
         await page.waitForFunction(
           (stageName) => {
             const state = window.__getAlcheEndmarkDebugState?.();
             return state?.ready === true && state?.visible === true && state?.stage === stageName;
           },
-          expectedStage,
+          expectedEndmarkStage,
           { timeout: 5000 },
         );
-        if (expectedStage === "settled") {
+        if (expectedEndmarkStage === "settled") {
           const endmarkState = await page.evaluate(() => window.__getAlcheEndmarkDebugState?.() ?? null);
           assertEndmarkSettledLineState(endmarkState, shot.name);
+        }
+        if (shot.name === "endmark-settled") {
+          const footerState = await page.evaluate(() => ({
+            progress: Number(document.querySelector("[data-endmark-footer-progress]")?.getAttribute("data-endmark-footer-progress") ?? "0"),
+            visible: document.querySelector("[data-endmark-footer-progress]")?.getAttribute("data-endmark-footer-visible") === "true",
+          }));
+          assert(footerState.progress <= 0.01, "Expected fixed endmark-settled to keep footer hidden.");
+          assert(footerState.visible === false, "Expected fixed endmark-settled footer visibility to be false.");
+        }
+        if (shot.name === "endmark-footer-settled") {
+          const footerState = await page.evaluate(() => ({
+            progress: Number(document.querySelector("[data-endmark-footer-progress]")?.getAttribute("data-endmark-footer-progress") ?? "0"),
+            visible: document.querySelector("[data-endmark-footer-progress]")?.getAttribute("data-endmark-footer-visible") === "true",
+          }));
+          assert(footerState.progress >= 0.99, "Expected fixed endmark footer progress to be complete.");
+          assert(footerState.visible === true, "Expected fixed endmark footer to be visible.");
         }
       }
       await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
@@ -1062,9 +1113,14 @@ async function captureFixedStates(browser, shots, options = {}) {
         path: path.join(outputDir, `${shot.name}${fileSuffix}.png`),
         fullPage: false,
       });
-      await page.close();
     } finally {
-      await context.close();
+      try {
+        await context.close();
+      } catch (error) {
+        if (!isAlreadyClosedPlaywrightError(error)) {
+          throw error;
+        }
+      }
     }
   }
   const earlyState = layerStates.get("works-intro-enter-early");
@@ -1304,6 +1360,9 @@ async function capturePointerInteraction(browser) {
 async function captureRealWheelHandoff(browser, options = {}) {
   const viewport = options.viewport ?? { width: 1440, height: 1080 };
   const fileSuffix = options.fileSuffix ?? "";
+  const scrollSettleTimeoutMs = options.scrollSettleTimeoutMs ?? 1200;
+  const stepWaitMs = options.stepWaitMs ?? 140;
+  const captureSearch = options.captureMode ? "&alcheCapture=1" : "";
   const context = await browser.newContext({
     viewport,
     locale: "en-US",
@@ -1312,7 +1371,7 @@ async function captureRealWheelHandoff(browser, options = {}) {
 
   try {
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240${captureSearch}`, { waitUntil: "networkidle" });
     await assertTopPageShell(page, "works-wheel-handoff");
     await page.waitForFunction(
       () =>
@@ -1424,10 +1483,10 @@ async function captureRealWheelHandoff(browser, options = {}) {
       }, top);
       await page
         .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, top, {
-          timeout: 1200,
+          timeout: scrollSettleTimeoutMs,
         })
         .catch(() => {});
-      await page.waitForTimeout(140);
+      await page.waitForTimeout(stepWaitMs);
       const snapshot = await readLiveSnapshot(step);
       samples.push(snapshot);
 
@@ -1651,6 +1710,198 @@ async function captureRealWheelHandoff(browser, options = {}) {
   }
 }
 
+async function captureWorksOutroWheelFocused(browser, options = {}) {
+  const viewport = options.viewport ?? ultraWideViewport;
+  const fileSuffix = options.fileSuffix ?? "";
+  const requireMissionPanel = options.requireMissionPanel ?? true;
+  const context = await browser.newContext({
+    viewport,
+    locale: "en-US",
+    reducedMotion: "no-preference",
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=240&alcheCapture=1`, {
+      waitUntil: "networkidle",
+    });
+    await assertTopPageShell(page, `works-outro-wheel-focused${fileSuffix}`);
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-active-section]")?.getAttribute("data-intro-ready") === "true" &&
+        typeof window.__getAlcheLayerDebugState === "function",
+      undefined,
+      { timeout: 12000 },
+    );
+
+    const scrollPositions = await page.evaluate(() => {
+      const activeViewportLine = window.innerHeight * 0.38;
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+      const readSectionTop = (sectionId) => {
+        const node = document.querySelector(`[data-top_section="${sectionId}"]`);
+        if (!(node instanceof HTMLElement)) return null;
+        const rect = node.getBoundingClientRect();
+        return rect.top + window.scrollY - activeViewportLine;
+      };
+      const worksOutroStart = readSectionTop("works_outro");
+      const missionInStart = readSectionTop("mission_in");
+      if (worksOutroStart === null || missionInStart === null) return [];
+
+      const from = Math.max(0, Math.min(maxScroll, worksOutroStart - window.innerHeight * 0.04));
+      const to = Math.max(0, Math.min(maxScroll, missionInStart + window.innerHeight * 0.85));
+      const steps = 72;
+      return Array.from({ length: steps }, (_, index) => {
+        const ratio = index / Math.max(steps - 1, 1);
+        return Math.round(from + (to - from) * ratio);
+      });
+    });
+
+    assert(scrollPositions.length > 0, "Expected works_outro and mission_in scroll anchors for focused wheel validation.");
+
+    const readFocusedSnapshot = async (stepLabel) =>
+      page.evaluate((resolvedStepLabel) => {
+        const root = document.querySelector("[data-active-section]");
+        const layerState = window.__getAlcheLayerDebugState?.() ?? null;
+        return {
+          step: resolvedStepLabel,
+          scrollY: Math.round(window.scrollY),
+          active: root?.getAttribute("data-active-section"),
+          cardsOpacity: layerState?.cardsOpacity ?? null,
+          cardsLeadIndex: layerState?.cardsLeadIndex ?? null,
+          card0Visible: layerState?.card0Visible ?? false,
+          card1Visible: layerState?.card1Visible ?? false,
+          worksOutroClearMix: layerState?.worksOutroClearMix ?? null,
+          kvWallFlatten: layerState?.kvWallFlatten ?? null,
+          missionPanelProgress: layerState?.missionPanelProgress ?? null,
+          missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
+          card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
+          card0ScreenRight: layerState?.card0ScreenRight ?? null,
+          card1ScreenLeft: layerState?.card1ScreenLeft ?? null,
+          card1ScreenRight: layerState?.card1ScreenRight ?? null,
+        };
+      }, stepLabel);
+
+    const samples = [];
+    const capturedStates = new Map();
+
+    for (let step = 0; step < scrollPositions.length; step += 1) {
+      const top = scrollPositions[step];
+      await page.evaluate((nextTop) => {
+        window.scrollTo(0, nextTop);
+      }, top);
+      await page
+        .waitForFunction((expectedTop) => Math.abs(window.scrollY - expectedTop) <= 2, top, {
+          timeout: 180,
+        })
+        .catch(() => {});
+      await page.waitForTimeout(70);
+
+      const snapshot = await readFocusedSnapshot(step);
+      samples.push(snapshot);
+
+      if (
+        !capturedStates.has("works-outro-wheel-entry") &&
+        snapshot.active === "works_outro" &&
+        snapshot.card0Visible === true &&
+        snapshot.card1Visible === true &&
+        snapshot.cardsLeadIndex === 1 &&
+        (snapshot.cardsOpacity ?? 0) >= 0.55
+      ) {
+        console.log(`Capturing works-outro-wheel-entry${fileSuffix}...`);
+        await page.screenshot({
+          path: path.join(outputDir, `works-outro-wheel-entry${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedStates.set("works-outro-wheel-entry", snapshot);
+      }
+
+      if (
+        !capturedStates.has("works-outro-wheel-flatten") &&
+        snapshot.active === "works_outro" &&
+        (snapshot.worksOutroClearMix ?? 0) >= 0.88 &&
+        (snapshot.cardsOpacity ?? 0) <= 0.34 &&
+        snapshot.card0Visible === true
+      ) {
+        console.log(`Capturing works-outro-wheel-flatten${fileSuffix}...`);
+        await page.screenshot({
+          path: path.join(outputDir, `works-outro-wheel-flatten${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedStates.set("works-outro-wheel-flatten", snapshot);
+      }
+
+      if (
+        !capturedStates.has("mission-in-wheel-panel") &&
+        snapshot.active === "mission_in" &&
+        (snapshot.cardsOpacity ?? 0) <= 0.02 &&
+        (snapshot.missionPanelProgress ?? 0) >= 0.72
+      ) {
+        console.log(`Capturing mission-in-wheel-panel${fileSuffix}...`);
+        await page.screenshot({
+          path: path.join(outputDir, `mission-in-wheel-panel${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedStates.set("mission-in-wheel-panel", snapshot);
+      }
+
+      if (
+        capturedStates.has("works-outro-wheel-entry") &&
+        capturedStates.has("works-outro-wheel-flatten") &&
+        (!requireMissionPanel || capturedStates.has("mission-in-wheel-panel"))
+      ) {
+        break;
+      }
+    }
+
+    const worksOutroWheelEntry = capturedStates.get("works-outro-wheel-entry");
+    const worksOutroWheelFlatten = capturedStates.get("works-outro-wheel-flatten");
+    const missionInWheelPanel = capturedStates.get("mission-in-wheel-panel");
+
+    assert(worksOutroWheelEntry, "Expected focused scrolling to capture works_outro entry.");
+    assert(worksOutroWheelFlatten, "Expected focused scrolling to capture works_outro flatten.");
+    assert(
+      worksOutroWheelEntry.step < worksOutroWheelFlatten.step,
+      "Expected focused works_outro flatten to occur after works_outro entry.",
+    );
+    assert(
+      (worksOutroWheelEntry.kvWallFlatten ?? 0) < (worksOutroWheelFlatten.kvWallFlatten ?? 0),
+      "Expected focused wall flatten to increase during works_outro.",
+    );
+    assert(
+      (worksOutroWheelFlatten.cardsOpacity ?? 0) < (worksOutroWheelEntry.cardsOpacity ?? 1),
+      "Expected focused cards opacity to clear during works_outro flatten.",
+    );
+
+    if (requireMissionPanel) {
+      assert(missionInWheelPanel, "Expected focused scrolling to capture mission_in panel takeover.");
+      assert(
+        worksOutroWheelFlatten.step < missionInWheelPanel.step,
+        "Expected focused mission panel to begin after works_outro flatten.",
+      );
+      assert(
+        (worksOutroWheelFlatten.kvWallFlatten ?? 0) <= (missionInWheelPanel.kvWallFlatten ?? 0),
+        "Expected focused mission_in flatten to inherit works_outro progress.",
+      );
+      assertRange(missionInWheelPanel.missionOutlineOpacity, { min: 0, max: 0.001 }, "focused mission panel outline opacity");
+    }
+
+    const flattenSamples = samples.filter((sample) => sample.kvWallFlatten !== null);
+    for (let index = 1; index < flattenSamples.length; index += 1) {
+      const previous = flattenSamples[index - 1].kvWallFlatten ?? 0;
+      const next = flattenSamples[index].kvWallFlatten ?? 0;
+      assert(next + 0.02 >= previous, "Expected focused kvWallFlatten to stay monotonic while scrolling down.");
+    }
+  } finally {
+    try {
+      await context.close();
+    } catch (error) {
+      if (!isAlreadyClosedPlaywrightError(error)) {
+        throw error;
+      }
+    }
+  }
+}
+
 async function captureVisionCoverLiveEndState(browser, options = {}) {
   const viewport = options.viewport ?? ultraWideViewport;
   const fileSuffix = options.fileSuffix ?? "";
@@ -1788,8 +2039,9 @@ async function captureVisionCoverLiveEndState(browser, options = {}) {
 async function captureEndmarkLiveSequence(browser, options = {}) {
   const viewport = options.viewport ?? ultraWideViewport;
   const fileSuffix = options.fileSuffix ?? "";
+  const freshBrowserPerStage = options.freshBrowserPerStage ?? false;
   const prepareLivePage = async (page, scenarioName, timeScale) => {
-    await page.goto(`${baseUrl}/en/?alchePointerDebug=1&alcheEndmarkTimeScale=${timeScale}`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/en/?alcheEndmarkTimeScale=${timeScale}&alcheHideDebugUi=1`, { waitUntil: "networkidle" });
     await assertTopPageShell(page, scenarioName);
     await page.waitForFunction(
       () =>
@@ -1848,7 +2100,8 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
     pollMs,
     settleDelayMs = 0,
   }) => {
-    const context = await browser.newContext({
+    const stageBrowser = freshBrowserPerStage ? await chromium.launch({ headless: true }) : browser;
+    const context = await stageBrowser.newContext({
       viewport,
       locale: "en-US",
       reducedMotion: "no-preference",
@@ -1876,7 +2129,16 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
         finalSnapshot,
       };
     } finally {
-      await context.close();
+      try {
+        await context.close();
+      } catch (error) {
+        if (!isAlreadyClosedPlaywrightError(error)) {
+          throw error;
+        }
+      }
+      if (freshBrowserPerStage) {
+        await closeBrowserIfOpen(stageBrowser);
+      }
     }
   };
 
@@ -1900,6 +2162,7 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
     Math.abs((blackCapture.stageSnapshot.scrollY ?? 0) - (blackCapture.stageSnapshot.maxScroll ?? 0)) <= 2,
     "Expected live endmark black capture to occur at the document bottom.",
   );
+  assert(blackCapture.stageSnapshot.footerVisible === false, "Expected live endmark black capture to keep footer hidden.");
 
   const settledCapture = await captureLiveStage({
     expectedStage: "settled",
@@ -1922,6 +2185,8 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
     Math.abs((settledCapture.finalSnapshot.scrollY ?? 0) - (settledCapture.finalSnapshot.maxScroll ?? 0)) <= 2,
     "Expected live endmark capture to occur at the document bottom.",
   );
+  assert((settledCapture.finalSnapshot.footerProgress ?? 0) >= 0.99, "Expected live endmark footer progress to complete at bottom.");
+  assert(settledCapture.finalSnapshot.footerVisible === true, "Expected live endmark footer to be visible at bottom.");
   assert(
     settledCapture.finalSnapshot.viewport.width === viewport.width &&
       settledCapture.finalSnapshot.viewport.height === viewport.height,
@@ -1930,7 +2195,22 @@ async function captureEndmarkLiveSequence(browser, options = {}) {
 }
 
 async function run() {
-  const server = await createStaticServer(3000);
+  let server;
+  try {
+    server = await createStaticServer(preferredPort);
+  } catch (error) {
+    if (error?.code !== "EADDRINUSE") {
+      throw error;
+    }
+
+    server = await createStaticServer(0);
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Unable to resolve fallback Playwright validation server port.");
+    }
+    baseUrl = `http://127.0.0.1:${address.port}${basePath}`;
+    console.warn(`Port ${preferredPort} is busy; using ${address.port} for Playwright validation.`);
+  }
 
   try {
     await waitForServer(`${baseUrl}/en/`);
@@ -1960,18 +2240,56 @@ async function run() {
         await captureFixedStates(
           browser,
           activeFixedStateShots.filter((shot) =>
-            ["endmark-black", "endmark-guides", "endmark-outline", "endmark-fill", "endmark-settled"].includes(shot.name),
+            ["endmark-black", "endmark-guides", "endmark-outline", "endmark-fill", "endmark-settled", "endmark-footer-settled"].includes(shot.name),
           ),
           {
             viewport: ultraWideViewport,
             fileSuffix: "-desktop-2000x1080",
           },
         );
-        await captureEndmarkLiveSequence(browser, {
+        await closeBrowserIfOpen(browser);
+        const liveBrowser = await chromium.launch({ headless: true });
+        try {
+          await captureEndmarkLiveSequence(liveBrowser, {
+            viewport: ultraWideViewport,
+            fileSuffix: "-desktop-2000x1080",
+            freshBrowserPerStage: true,
+          });
+        } finally {
+          await closeBrowserIfOpen(liveBrowser);
+        }
+        console.log("Playwright validation passed (endmark-live-only).");
+        return;
+      }
+
+      if (worksOutroLiveOnlyMode) {
+        const worksOutroFixedShots = activeFixedStateShots.filter((shot) =>
+          ["works-outro-entry", "works-outro-unroll-mid", "works-outro-unroll-late", "works-outro-flatten", "mission-in-panel"].includes(
+            shot.name,
+          ),
+        );
+        await captureFixedStates(browser, worksOutroFixedShots, {
           viewport: ultraWideViewport,
           fileSuffix: "-desktop-2000x1080",
         });
-        console.log("Playwright validation passed (endmark-live-only).");
+        await captureFixedStates(
+          browser,
+          worksOutroFixedShots.filter((shot) => ["works-outro-unroll-late", "works-outro-flatten"].includes(shot.name)),
+          {
+            viewport: { width: 2560, height: 1600 },
+            fileSuffix: "-desktop-16x10",
+          },
+        );
+        await captureWorksOutroWheelFocused(browser, {
+          viewport: ultraWideViewport,
+          fileSuffix: "-desktop-2000x1080",
+        });
+        await captureWorksOutroWheelFocused(browser, {
+          viewport: { width: 2560, height: 1600 },
+          fileSuffix: "-desktop-16x10",
+          requireMissionPanel: false,
+        });
+        console.log("Playwright validation passed (works-outro-live-only).");
         return;
       }
 
@@ -2042,7 +2360,7 @@ async function run() {
       }
       await writeReferenceBoard(layerStates);
     } finally {
-      await browser.close();
+      await closeBrowserIfOpen(browser);
     }
   } finally {
     await new Promise((resolve, reject) => {

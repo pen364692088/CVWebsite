@@ -35,6 +35,7 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes('id="works_cards"'), `Missing works_cards section in ${locale}`);
   assert(html.includes('id="works_outro"'), `Missing works_outro section in ${locale}`);
   assert(html.includes('id="mission_in"'), `Missing mission_in section in ${locale}`);
+  assert(html.includes('id="outro"'), `Missing outro section in ${locale}`);
   assert(html.includes("MOONFLOW"), `Missing MOONFLOW wordmark in ${locale}`);
   assert(html.includes("data-top_section=\"kv\""), `Missing kv data-top_section marker in ${locale}`);
   assert(html.includes("data-top_section=\"works_intro\""), `Missing works_intro data-top_section marker in ${locale}`);
@@ -42,8 +43,12 @@ for (const locale of ["en", "zh-CN", "ja", "ko"]) {
   assert(html.includes("data-top_section=\"works_cards\""), `Missing works_cards data-top_section marker in ${locale}`);
   assert(html.includes("data-top_section=\"works_outro\""), `Missing works_outro data-top_section marker in ${locale}`);
   assert(html.includes("data-top_section=\"mission_in\""), `Missing mission_in data-top_section marker in ${locale}`);
+  assert(html.includes("data-top_section=\"outro\""), `Missing outro data-top_section marker in ${locale}`);
   assert(html.includes("data-mission-transition"), `Missing mission transition overlay in ${locale}`);
   assert(html.includes("data-mission-panel"), `Missing mission panel in ${locale}`);
+  assert(html.includes("data-endmark-footer"), `Missing endmark footer overlay in ${locale}`);
+  assert(html.includes("data-endmark-footer-progress"), `Missing endmark footer progress marker in ${locale}`);
+  assert(html.includes("data-endmark-footer-visible"), `Missing endmark footer visible marker in ${locale}`);
   assert(!html.includes("data-mission-outline"), `Unexpected mission outline in ${locale}`);
   assert(!html.includes("data-top-scroll-indicator"), `Unexpected top scroll indicator in ${locale}`);
 }

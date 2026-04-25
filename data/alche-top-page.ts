@@ -22,6 +22,18 @@ export interface AlcheServiceItem {
   body: string;
 }
 
+export interface AlcheEndmarkFooterColumn {
+  title: string;
+  items: readonly string[];
+}
+
+export interface AlcheEndmarkFooterCopy {
+  columns: readonly AlcheEndmarkFooterColumn[];
+  actions: readonly string[];
+  legalLinks: readonly string[];
+  copyright: string;
+}
+
 export interface AlcheTopPageCopy {
   metadata: {
     title: string;
@@ -95,6 +107,7 @@ export interface AlcheTopPageCopy {
     privacyLabel: string;
     licenseLabel: string;
     copyright: string;
+    footer: AlcheEndmarkFooterCopy;
   };
 }
 
@@ -165,6 +178,17 @@ const sharedService = [
     body: "A reusable metaverse platform layer for fashion, live events, and industrial-grade digital spaces.",
   },
 ] as const;
+
+const sharedEndmarkFooter = {
+  columns: [
+    { title: "Top", items: ["News", "Works"] },
+    { title: "About", items: ["stellla", "Contact"] },
+    { title: "Links ▼", items: ["TECH BLOG", "note", "X", "YouTube"] },
+  ],
+  actions: ["Contact ↗", "Recruit ↗"],
+  legalLinks: ["Privacy Policy", "License"],
+  copyright: "©2026 MOONFLOW.",
+} as const satisfies AlcheEndmarkFooterCopy;
 
 export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
   en: {
@@ -247,6 +271,7 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
       copyright: "©2026 MOONFLOW.",
+      footer: sharedEndmarkFooter,
     },
   },
   "zh-CN": {
@@ -329,6 +354,7 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       privacyLabel: "隐私政策",
       licenseLabel: "许可",
       copyright: "©2026 MOONFLOW.",
+      footer: sharedEndmarkFooter,
     },
   },
   ja: {
@@ -411,6 +437,7 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
       copyright: "©2026 MOONFLOW.",
+      footer: sharedEndmarkFooter,
     },
   },
   ko: {
@@ -493,6 +520,7 @@ export const alcheTopPageCopy: Record<Locale, AlcheTopPageCopy> = {
       privacyLabel: "Privacy Policy",
       licenseLabel: "License",
       copyright: "©2026 MOONFLOW.",
+      footer: sharedEndmarkFooter,
     },
   },
 };

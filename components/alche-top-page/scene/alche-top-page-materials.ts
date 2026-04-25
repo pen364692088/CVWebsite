@@ -5,6 +5,8 @@ import * as THREE from "three";
 import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
 const ALCHE_TOP_WALL_SAFE_FLATTEN = 0.997;
+const ALCHE_TOP_WALL_UNROLL_MIN_CURVE = 0.018;
+const ALCHE_TOP_WALL_UNROLL_OVERSCAN = 1.26;
 
 export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
@@ -56,11 +58,18 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
         float angleUv = angle / 6.28318530718 + 0.5;
         float heightUv = position.y / ${Number(ALCHE_TOP_MEDIA_WALL.height / 2).toFixed(4)} * 0.5 + 0.5;
 
-        vec3 transformed = position;
-        float planarX = angle * ${effectiveRadius.toFixed(4)};
         float safeFlatten = min(uFlatten, ${ALCHE_TOP_WALL_SAFE_FLATTEN.toFixed(3)});
-        transformed.x = mix(position.x, planarX, safeFlatten);
-        transformed.z = mix(position.z, -${effectiveRadius.toFixed(4)}, safeFlatten);
+        float unrollMix = smoothstep(0.0, 1.0, safeFlatten);
+        float curve = max(1.0 - safeFlatten, ${ALCHE_TOP_WALL_UNROLL_MIN_CURVE.toFixed(3)});
+        float unrollRadius = ${effectiveRadius.toFixed(4)} / curve;
+        float unrollAngle = angle * curve;
+        float overscan = mix(1.0, ${ALCHE_TOP_WALL_UNROLL_OVERSCAN.toFixed(2)}, smoothstep(0.0, 0.85, safeFlatten));
+
+        vec3 unrolled = position;
+        unrolled.x = sin(unrollAngle) * unrollRadius * overscan;
+        unrolled.z = cos(unrollAngle) * unrollRadius - unrollRadius - ${effectiveRadius.toFixed(4)};
+
+        vec3 transformed = mix(position, unrolled, unrollMix);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(angleUv, heightUv);

@@ -242,7 +242,7 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
   };
 }
 
-const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.72;
+const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.44;
 
 function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
   const roomRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.ShaderMaterial>>(null);
