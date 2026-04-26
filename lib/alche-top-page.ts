@@ -708,9 +708,8 @@ export function deriveMissionTransitionOverlayState(activeSection: AlcheTopSecti
   const runtimeSection = normalizeTopRuntimeSection(activeSection);
 
   if (runtimeSection === "works_outro") {
-    const worksOutro = deriveWorksOutroState(sectionProgress);
     return {
-      missionPanelProgress: worksOutro.clearMix * 0.42,
+      missionPanelProgress: 0,
       missionOutlineOpacity: 0,
     };
   }

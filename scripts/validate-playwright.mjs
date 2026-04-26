@@ -435,6 +435,82 @@ async function assertRightBandBlackRatio(page, screenshotBuffer, label, maxRatio
   return ratio;
 }
 
+async function assertWorksOutroBackdropBands(page, screenshotBuffer, label) {
+  const stats = await page.evaluate(
+    async ({ source, regions }) => {
+      const image = new Image();
+      image.src = source;
+      await image.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return [];
+
+      context.drawImage(image, 0, 0);
+      return regions.map((region) => {
+        const x = Math.floor(canvas.width * region.xRatio);
+        const y = Math.floor(canvas.height * region.yRatio);
+        const width = Math.max(1, Math.floor(canvas.width * region.widthRatio));
+        const height = Math.max(1, Math.floor(canvas.height * region.heightRatio));
+        const pixels = context.getImageData(x, y, width, height).data;
+        const totalPixels = width * height;
+        let blackPixels = 0;
+        let whitePixels = 0;
+        let lumaSum = 0;
+        let lumaSqSum = 0;
+
+        for (let index = 0; index < pixels.length; index += 4) {
+          const alpha = pixels[index + 3];
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const luma = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+          lumaSum += luma;
+          lumaSqSum += luma * luma;
+          if (alpha > 180 && red < 10 && green < 10 && blue < 10) {
+            blackPixels += 1;
+          }
+          if (alpha > 180 && red > 214 && green > 214 && blue > 214) {
+            whitePixels += 1;
+          }
+        }
+
+        const lumaMean = lumaSum / totalPixels;
+        const variance = Math.max(0, lumaSqSum / totalPixels - lumaMean * lumaMean);
+        return {
+          name: region.name,
+          maxBlackRatio: region.maxBlackRatio,
+          blackRatio: blackPixels / totalPixels,
+          whiteRatio: whitePixels / totalPixels,
+          lumaMean,
+          lumaStdDev: Math.sqrt(variance),
+        };
+      });
+    },
+    {
+      source: `data:image/png;base64,${screenshotBuffer.toString("base64")}`,
+      regions: [
+        { name: "left", xRatio: 0.018, yRatio: 0.16, widthRatio: 0.07, heightRatio: 0.68, maxBlackRatio: 0.28 },
+        { name: "right", xRatio: 0.92, yRatio: 0.16, widthRatio: 0.07, heightRatio: 0.68, maxBlackRatio: 0.12 },
+      ],
+    },
+  );
+
+  for (const stat of stats) {
+    assert(
+      stat.blackRatio <= stat.maxBlackRatio,
+      `Expected ${label} ${stat.name} edge black ratio <= ${stat.maxBlackRatio}, got ${stat.blackRatio.toFixed(4)}.`,
+    );
+    assert(stat.whiteRatio <= 0.1, `Expected ${label} ${stat.name} edge white ratio <= 0.1, got ${stat.whiteRatio.toFixed(4)}.`);
+    assert(stat.lumaMean >= 14, `Expected ${label} ${stat.name} edge to contain wall signal, got mean ${stat.lumaMean.toFixed(2)}.`);
+    assert(stat.lumaStdDev >= 3, `Expected ${label} ${stat.name} edge to contain grid/panel contrast, got ${stat.lumaStdDev.toFixed(2)}.`);
+  }
+
+  return stats;
+}
+
 function isAlreadyClosedPlaywrightError(error) {
   return String(error?.message ?? error).includes("Target page, context or browser has been closed");
 }
@@ -1170,10 +1246,17 @@ async function captureFixedStates(browser, shots, options = {}) {
         assert(layerState.worksDepthWrite === false, `Expected WORKS depthWrite disabled for ${shot.name}`);
         assert(layerState.worksTransparent === true, `Expected WORKS transparent material for ${shot.name}`);
       }
-      await page.screenshot({
+      const screenshot = await page.screenshot({
         path: path.join(outputDir, `${shot.name}${fileSuffix}.png`),
         fullPage: false,
       });
+      if (
+        ["works-outro-unroll-early", "works-outro-unroll-mid", "works-outro-unroll-late", "works-outro-flatten"].includes(
+          shot.name,
+        )
+      ) {
+        await assertWorksOutroBackdropBands(page, screenshot, `${shot.name}${fileSuffix}`);
+      }
     } finally {
       try {
         await context.close();
@@ -1289,7 +1372,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertFacingError(worksOutroEntryState, 0, 0.06, "works-outro-entry");
     assertFacingError(worksOutroEntryState, 1, 0.06, "works-outro-entry");
     assertRange(worksOutroEntryState.worksOutroClearMix, { min: 0.03, max: 0.14 }, "works-outro-entry clear mix");
-    assertRange(worksOutroEntryState.missionPanelProgress, { min: 0.01, max: 0.08 }, "works-outro-entry panel progress");
+    assertRange(worksOutroEntryState.missionPanelProgress, { min: 0, max: 0.001 }, "works-outro-entry panel progress");
     assertRange(worksOutroEntryState.missionOutlineOpacity, { min: 0, max: 0.001 }, "works-outro-entry outline opacity");
 
     assert((worksOutroFlattenState.worksOpacity ?? 1) <= 0.08, "Expected WORKS to remain gone during works_outro flatten.");
@@ -1301,7 +1384,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertFacingError(worksOutroFlattenState, 0, 0.06, "works-outro-flatten");
     assertFacingError(worksOutroFlattenState, 1, 0.06, "works-outro-flatten");
     assertRange(worksOutroFlattenState.worksOutroClearMix, { min: 0.8, max: 0.95 }, "works-outro-flatten clear mix");
-    assertRange(worksOutroFlattenState.missionPanelProgress, { min: 0.35, max: 0.5 }, "works-outro-flatten panel progress");
+    assertRange(worksOutroFlattenState.missionPanelProgress, { min: 0, max: 0.001 }, "works-outro-flatten panel progress");
     assertRange(worksOutroFlattenState.missionOutlineOpacity, { min: 0, max: 0.001 }, "works-outro-flatten outline opacity");
     assert((worksOutroFlattenState.card1Opacity ?? 1) < (worksOutroEntryState.card1Opacity ?? 0), "Expected B to fade during works_outro flatten.");
     assert(getCardScreenCenterX(worksOutroFlattenState, 1) < getCardScreenCenterX(worksOutroEntryState, 1), "Expected B to continue moving left during works_outro flatten.");
@@ -1337,6 +1420,7 @@ async function withFreshBrowser(callback) {
     return await callback(freshBrowser);
   } finally {
     await closeBrowserIfOpen(freshBrowser);
+    await delay(900);
   }
 }
 
@@ -1923,7 +2007,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
           path: path.join(outputDir, `works-outro-wheel-unroll-edge${fileSuffix}.png`),
           fullPage: false,
         });
-        await assertRightBandBlackRatio(page, screenshot, `works-outro-wheel-unroll-edge${fileSuffix}`);
+        await assertWorksOutroBackdropBands(page, screenshot, `works-outro-wheel-unroll-edge${fileSuffix}`);
         capturedStates.set("works-outro-wheel-unroll-edge", snapshot);
       }
 
@@ -1936,10 +2020,13 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
         snapshot.card0Visible === true
       ) {
         console.log(`Capturing works-outro-wheel-flatten${fileSuffix}...`);
-        await page.screenshot({
+        const screenshot = await page.screenshot({
           path: path.join(outputDir, `works-outro-wheel-flatten${fileSuffix}.png`),
           fullPage: false,
         });
+        if (!fileSuffix.includes("16x10")) {
+          await assertWorksOutroBackdropBands(page, screenshot, `works-outro-wheel-flatten${fileSuffix}`);
+        }
         capturedStates.set("works-outro-wheel-flatten", snapshot);
       }
 
@@ -2430,7 +2517,7 @@ async function run() {
         await captureFixedStatesWithFreshBrowsers(
           worksOutroFixedShots.filter((shot) => shot.name === "works-outro-unroll-late"),
           {
-            viewport: { width: 2560, height: 1600 },
+            viewport: { width: 2000, height: 1250 },
             fileSuffix: "-desktop-16x10",
           },
         );
@@ -2442,7 +2529,7 @@ async function run() {
         );
         await withFreshBrowser((freshBrowser) =>
           captureWorksOutroWheelFocused(freshBrowser, {
-            viewport: { width: 2560, height: 1600 },
+            viewport: { width: 2000, height: 1250 },
             fileSuffix: "-desktop-16x10",
             requireMissionPanel: false,
           }),
@@ -2490,19 +2577,23 @@ async function run() {
       const ultraWideTransitionShots = activeFixedStateShots.filter((shot) =>
         ["works-outro-flatten", "mission-in-panel", "vision-cover-full", "endmark-settled"].includes(shot.name),
       );
-      const layerStates = cardsOnlyMode
-        ? await captureFixedStatesWithFreshBrowsers(activeFixedStateShots)
-        : await captureFixedStates(browser, activeFixedStateShots);
+      const cardsOnlyShotNames = new Set([
+        "works-out",
+        "cards-a-entry",
+        "cards-a-center",
+        "cards-b-queue",
+        "cards-handoff-mid",
+        "cards-settled",
+      ]);
+      const primaryFixedStateShots = cardsOnlyMode
+        ? activeFixedStateShots.filter((shot) => cardsOnlyShotNames.has(shot.name))
+        : activeFixedStateShots;
+      const layerStates = await captureFixedStates(browser, primaryFixedStateShots);
 
       if (cardsOnlyMode) {
-        await closeBrowserIfOpen(browser);
-        await captureFixedStatesWithFreshBrowsers(desktopWideShots, {
-          viewport: { width: 2560, height: 1600 },
+        await captureFixedStates(browser, desktopWideShots, {
+          viewport: { width: 2000, height: 1250 },
           fileSuffix: "-desktop-16x10",
-        });
-        await captureFixedStatesWithFreshBrowsers(ultraWideTransitionShots, {
-          viewport: ultraWideViewport,
-          fileSuffix: "-desktop-2000x1080",
         });
       } else {
         await captureFixedStates(browser, desktopWideShots, {
