@@ -4,6 +4,8 @@ import * as THREE from "three";
 
 import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
+const ALCHE_TOP_WALL_CURVED_GRID_DENSITY_SCALE = 1.55;
+
 export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
 }
@@ -94,13 +96,16 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
 
       void main() {
         vec2 uv = vMediaUv;
+        float flattenMix = smoothstep(0.0, 1.0, clamp(uFlatten, 0.0, 1.0));
+        float gridDensityScale = mix(${ALCHE_TOP_WALL_CURVED_GRID_DENSITY_SCALE.toFixed(2)}, 1.0, flattenMix);
+        vec2 gridUv = (uv - 0.5) * gridDensityScale + 0.5;
         vec2 microGridUv = vec2(
-          uv.x * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
-          uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
+          gridUv.x * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
+          gridUv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
         vec2 frameGridUv = vec2(
-          uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
-          uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
+          gridUv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
+          gridUv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);
         float microH = linePulse(microGridUv.y, 1.05);

@@ -516,6 +516,126 @@ async function assertLightWallContinuity(page, screenshotBuffer, label) {
   return stats;
 }
 
+async function sampleVerticalFrameSpacing(page, screenshotPath, label) {
+  assert(fs.existsSync(screenshotPath), `Expected ${label} screenshot to exist for grid-density comparison.`);
+  const screenshotBuffer = fs.readFileSync(screenshotPath);
+  const stats = await page.evaluate(
+    async ({ source, region }) => {
+      const image = new Image();
+      image.src = source;
+      await image.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return null;
+
+      context.drawImage(image, 0, 0);
+      const x = Math.floor(canvas.width * region.xRatio);
+      const y = Math.floor(canvas.height * region.yRatio);
+      const width = Math.max(1, Math.floor(canvas.width * region.widthRatio));
+      const height = Math.max(1, Math.floor(canvas.height * region.heightRatio));
+      const pixels = context.getImageData(x, y, width, height).data;
+      const columns = [];
+
+      for (let column = 0; column < width; column += 1) {
+        let darkness = 0;
+        for (let row = 0; row < height; row += 1) {
+          const index = (row * width + column) * 4;
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const luma = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+          darkness += Math.max(0, 190 - luma);
+        }
+        columns.push(darkness / height);
+      }
+
+      const smoothed = columns.map((_, index) => {
+        const start = Math.max(0, index - 3);
+        const end = Math.min(columns.length - 1, index + 3);
+        let sum = 0;
+        for (let sampleIndex = start; sampleIndex <= end; sampleIndex += 1) {
+          sum += columns[sampleIndex];
+        }
+        return sum / (end - start + 1);
+      });
+      const mean = smoothed.reduce((sum, value) => sum + value, 0) / smoothed.length;
+      const variance = smoothed.reduce((sum, value) => sum + (value - mean) ** 2, 0) / smoothed.length;
+      const sorted = [...smoothed].sort((a, b) => a - b);
+      const threshold = Math.max(mean + Math.sqrt(variance) * 1.35, sorted[Math.floor(sorted.length * 0.88)] ?? 0);
+      const minGap = Math.max(42, width * 0.035);
+      const peaks = [];
+
+      for (let index = 1; index < smoothed.length - 1; index += 1) {
+        if (smoothed[index] < threshold || smoothed[index] < smoothed[index - 1] || smoothed[index] < smoothed[index + 1]) {
+          continue;
+        }
+        const lastPeak = peaks[peaks.length - 1];
+        if (lastPeak !== undefined && index - lastPeak < minGap) {
+          if (smoothed[index] > smoothed[lastPeak]) {
+            peaks[peaks.length - 1] = index;
+          }
+        } else {
+          peaks.push(index);
+        }
+      }
+
+      const spacings = [];
+      for (let index = 1; index < peaks.length; index += 1) {
+        const spacing = peaks[index] - peaks[index - 1];
+        if (spacing >= minGap * 0.75) {
+          spacings.push(spacing);
+        }
+      }
+      spacings.sort((a, b) => a - b);
+      const spacingMedian = spacings.length > 0 ? spacings[Math.floor(spacings.length / 2)] : null;
+
+      return {
+        peakCount: peaks.length,
+        spacingMedian,
+      };
+    },
+    {
+      source: `data:image/png;base64,${screenshotBuffer.toString("base64")}`,
+      region: { xRatio: 0.18, yRatio: 0.08, widthRatio: 0.64, heightRatio: 0.16 },
+    },
+  );
+
+  assert(stats, `Expected ${label} grid-density sampling to return stats.`);
+  assert(stats.peakCount >= 4, `Expected ${label} to expose at least 4 vertical frame lines, got ${stats.peakCount}.`);
+  assert(stats.spacingMedian !== null, `Expected ${label} to expose measurable vertical frame spacing.`);
+  return stats;
+}
+
+async function assertWorksOutroGridDensityRatio() {
+  await withFreshBrowser(async (freshBrowser) => {
+    const context = await freshBrowser.newContext({ viewport: ultraWideViewport, locale: "en-US", reducedMotion: "reduce" });
+    try {
+      const page = await context.newPage();
+      const early = await sampleVerticalFrameSpacing(
+        page,
+        path.join(outputDir, "works-outro-curvature-early-desktop-2000x1080.png"),
+        "works-outro-curvature-early",
+      );
+      const flatten = await sampleVerticalFrameSpacing(
+        page,
+        path.join(outputDir, "works-outro-wheel-flatten-desktop-2000x1080.png"),
+        "works-outro-wheel-flatten",
+      );
+      const ratio = early.spacingMedian / flatten.spacingMedian;
+      assert(
+        ratio >= 0.8 && ratio <= 1.25,
+        `Expected works outro early/flatten frame grid spacing ratio to stay within 0.8..1.25, got ${ratio.toFixed(3)}.`,
+      );
+      console.log(`Works outro grid density ratio early/flatten: ${ratio.toFixed(3)}`);
+    } finally {
+      await context.close();
+    }
+  });
+}
+
 function isAlreadyClosedPlaywrightError(error) {
   return String(error?.message ?? error).includes("Target page, context or browser has been closed");
 }
@@ -533,7 +653,7 @@ async function closeBrowserIfOpen(browser) {
 async function launchValidationBrowser() {
   return chromium.launch({
     headless: true,
-    args: ["--disable-dev-shm-usage"],
+    args: ["--disable-dev-shm-usage", "--use-gl=swiftshader", "--disable-gpu-sandbox"],
   });
 }
 
@@ -2540,6 +2660,7 @@ async function run() {
             requireMissionPanel: false,
           }),
         );
+        await assertWorksOutroGridDensityRatio();
         console.log("Playwright validation passed (works-outro-live-only).");
         return;
       }
