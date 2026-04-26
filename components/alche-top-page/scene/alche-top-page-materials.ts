@@ -4,8 +4,6 @@ import * as THREE from "three";
 
 import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
-const ALCHE_TOP_WALL_CURVATURE_EPSILON = 0.0008;
-
 export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
 }
@@ -31,7 +29,7 @@ function spectralPalette(t: number) {
 
 export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
   return new THREE.ShaderMaterial({
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide,
     transparent: true,
     depthWrite: false,
     uniforms: {
@@ -61,24 +59,16 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
       void main() {
         float safeFlatten = clamp(uFlatten, 0.0, 1.0);
         float flattenMix = smoothstep(0.0, 1.0, safeFlatten);
+        float curveMix = 1.0 - flattenMix;
         float radius = max(uWallRadius, 0.001);
-        float curvature = (1.0 - flattenMix) / radius;
         float wallU = aWallU * uWallHalfWidth;
         float wallV = aWallV * uWallHalfHeight;
         float planeZ = mix(radius, -radius, flattenMix);
-        float x;
-        float z;
+        float curveDepth = radius * 0.52;
+        float edgeSag = (1.0 - cos(min(abs(aWallU), 1.0) * 1.5707963)) * curveDepth * curveMix;
+        float z = planeZ - curveDepth * curveMix + edgeSag;
 
-        if (abs(curvature) <= ${ALCHE_TOP_WALL_CURVATURE_EPSILON.toFixed(4)}) {
-          x = wallU;
-          z = planeZ;
-        } else {
-          float theta = wallU * curvature;
-          x = sin(theta) / curvature;
-          z = planeZ + (cos(theta) - 1.0) / curvature;
-        }
-
-        vec3 transformed = vec3(x, wallV, z);
+        vec3 transformed = vec3(wallU, wallV, z);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
         vMediaUv = vec2(aWallU * 0.5 + 0.5, aWallV * 0.5 + 0.5);

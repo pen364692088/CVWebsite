@@ -71,6 +71,10 @@ const fixedStateShots = [
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.32&alcheIntro=1&alcheCapture=1"),
   },
   {
+    name: "works-outro-curvature-early",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.28&alcheIntro=1&alcheCapture=1"),
+  },
+  {
     name: "works-outro-unroll-mid",
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.44&alcheIntro=1&alcheCapture=1"),
   },
@@ -495,6 +499,8 @@ async function assertLightWallContinuity(page, screenshotBuffer, label) {
       source: `data:image/png;base64,${screenshotBuffer.toString("base64")}`,
       regions: [
         { name: "upper-center", xRatio: 0.46, yRatio: 0.04, widthRatio: 0.08, heightRatio: 0.16 },
+        { name: "left-upper-sidewall", xRatio: 0.12, yRatio: 0.06, widthRatio: 0.1, heightRatio: 0.42 },
+        { name: "right-upper-sidewall", xRatio: 0.78, yRatio: 0.06, widthRatio: 0.1, heightRatio: 0.42 },
         { name: "right-center", xRatio: 0.76, yRatio: 0.34, widthRatio: 0.16, heightRatio: 0.2 },
         { name: "lower-right", xRatio: 0.78, yRatio: 0.68, widthRatio: 0.14, heightRatio: 0.2 },
       ],
@@ -1249,7 +1255,7 @@ async function captureFixedStates(browser, shots, options = {}) {
         path: path.join(outputDir, `${shot.name}${fileSuffix}.png`),
         fullPage: false,
       });
-      if (["works-outro-curvature-mid", "works-outro-curvature-late"].includes(shot.name)) {
+      if (["works-outro-curvature-early", "works-outro-curvature-mid", "works-outro-curvature-late"].includes(shot.name)) {
         await assertLightWallContinuity(page, screenshot, `${shot.name}${fileSuffix}`);
       }
     } finally {
@@ -2471,6 +2477,7 @@ async function run() {
           [
             "works-outro-entry",
             "works-outro-unroll-early",
+            "works-outro-curvature-early",
             "works-outro-unroll-mid",
             "works-outro-curvature-mid",
             "works-outro-unroll-late",
@@ -2481,6 +2488,7 @@ async function run() {
         const worksOutroFixedShots2000 = worksOutroFixedShots.filter((shot) =>
           [
             "works-outro-unroll-early",
+            "works-outro-curvature-early",
             "works-outro-unroll-mid",
             "works-outro-curvature-mid",
             "works-outro-curvature-late",
