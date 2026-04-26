@@ -75,8 +75,16 @@ const fixedStateShots = [
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.44&alcheIntro=1&alcheCapture=1"),
   },
   {
+    name: "works-outro-curvature-mid",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.48&alcheIntro=1&alcheCapture=1"),
+  },
+  {
     name: "works-outro-unroll-late",
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.56&alcheIntro=1&alcheCapture=1"),
+  },
+  {
+    name: "works-outro-curvature-late",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.68&alcheIntro=1&alcheCapture=1"),
   },
   {
     name: "mission-turn-mid",
@@ -433,6 +441,73 @@ async function assertRightBandBlackRatio(page, screenshotBuffer, label, maxRatio
 
   assert(ratio <= maxRatio, `Expected ${label} right edge black ratio <= ${maxRatio}, got ${ratio.toFixed(4)}.`);
   return ratio;
+}
+
+async function assertLightWallContinuity(page, screenshotBuffer, label) {
+  const stats = await page.evaluate(
+    async ({ source, regions }) => {
+      const image = new Image();
+      image.src = source;
+      await image.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return [];
+
+      context.drawImage(image, 0, 0);
+      return regions.map((region) => {
+        const x = Math.floor(canvas.width * region.xRatio);
+        const y = Math.floor(canvas.height * region.yRatio);
+        const width = Math.max(1, Math.floor(canvas.width * region.widthRatio));
+        const height = Math.max(1, Math.floor(canvas.height * region.heightRatio));
+        const pixels = context.getImageData(x, y, width, height).data;
+        const totalPixels = width * height;
+        let blackPixels = 0;
+        let lumaSum = 0;
+        let lumaSqSum = 0;
+
+        for (let index = 0; index < pixels.length; index += 4) {
+          const alpha = pixels[index + 3];
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const luma = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+          lumaSum += luma;
+          lumaSqSum += luma * luma;
+          if (alpha > 180 && red < 28 && green < 28 && blue < 28) {
+            blackPixels += 1;
+          }
+        }
+
+        const lumaMean = lumaSum / totalPixels;
+        const variance = Math.max(0, lumaSqSum / totalPixels - lumaMean * lumaMean);
+        return {
+          name: region.name,
+          blackRatio: blackPixels / totalPixels,
+          lumaMean,
+          lumaStdDev: Math.sqrt(variance),
+        };
+      });
+    },
+    {
+      source: `data:image/png;base64,${screenshotBuffer.toString("base64")}`,
+      regions: [
+        { name: "upper-center", xRatio: 0.46, yRatio: 0.04, widthRatio: 0.08, heightRatio: 0.16 },
+        { name: "right-center", xRatio: 0.76, yRatio: 0.34, widthRatio: 0.16, heightRatio: 0.2 },
+        { name: "lower-right", xRatio: 0.78, yRatio: 0.68, widthRatio: 0.14, heightRatio: 0.2 },
+      ],
+    },
+  );
+
+  for (const stat of stats) {
+    assert(stat.blackRatio <= 0.035, `Expected ${label} ${stat.name} black ratio <= 0.035, got ${stat.blackRatio.toFixed(4)}.`);
+    assert(stat.lumaMean >= 96, `Expected ${label} ${stat.name} to remain a light wall region, got mean ${stat.lumaMean.toFixed(2)}.`);
+    assert(stat.lumaStdDev <= 58, `Expected ${label} ${stat.name} to avoid harsh seam/shadow contrast, got ${stat.lumaStdDev.toFixed(2)}.`);
+  }
+
+  return stats;
 }
 
 function isAlreadyClosedPlaywrightError(error) {
@@ -1170,10 +1245,13 @@ async function captureFixedStates(browser, shots, options = {}) {
         assert(layerState.worksDepthWrite === false, `Expected WORKS depthWrite disabled for ${shot.name}`);
         assert(layerState.worksTransparent === true, `Expected WORKS transparent material for ${shot.name}`);
       }
-      await page.screenshot({
+      const screenshot = await page.screenshot({
         path: path.join(outputDir, `${shot.name}${fileSuffix}.png`),
         fullPage: false,
       });
+      if (["works-outro-curvature-mid", "works-outro-curvature-late"].includes(shot.name)) {
+        await assertLightWallContinuity(page, screenshot, `${shot.name}${fileSuffix}`);
+      }
     } finally {
       try {
         await context.close();
@@ -2394,12 +2472,19 @@ async function run() {
             "works-outro-entry",
             "works-outro-unroll-early",
             "works-outro-unroll-mid",
+            "works-outro-curvature-mid",
             "works-outro-unroll-late",
+            "works-outro-curvature-late",
             "works-outro-flatten",
           ].includes(shot.name),
         );
         const worksOutroFixedShots2000 = worksOutroFixedShots.filter((shot) =>
-          ["works-outro-unroll-early", "works-outro-unroll-mid"].includes(shot.name),
+          [
+            "works-outro-unroll-early",
+            "works-outro-unroll-mid",
+            "works-outro-curvature-mid",
+            "works-outro-curvature-late",
+          ].includes(shot.name),
         );
         await closeBrowserIfOpen(browser);
         await withFreshBrowser((freshBrowser) =>

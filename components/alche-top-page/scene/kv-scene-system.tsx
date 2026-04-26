@@ -242,38 +242,32 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
   };
 }
 
-const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.16;
-const ALCHE_TOP_WALL_ANGLE_OVERSCAN = 1.6;
+const ALCHE_TOP_WALL_PARAMETRIC_WIDTH_RATIO = 2.25;
+const ALCHE_TOP_WALL_PARAMETRIC_HEIGHT_RATIO = 1.04;
 
-function createContinuousWallGeometry(radius: number) {
-  const angleStart = -Math.PI - ALCHE_TOP_WALL_ANGLE_OVERSCAN;
-  const angleEnd = Math.PI + ALCHE_TOP_WALL_ANGLE_OVERSCAN;
-  const angleSpan = angleEnd - angleStart;
-  const angleSegments = Math.ceil((ALCHE_TOP_MEDIA_WALL.radialSegments * angleSpan) / (Math.PI * 2));
-  const heightSegments = ALCHE_TOP_MEDIA_WALL.heightSegments;
-  const halfHeight = ALCHE_TOP_MEDIA_WALL.height * 0.5;
+function createParametricWallGeometry() {
+  const widthSegments = ALCHE_TOP_MEDIA_WALL.radialSegments * 2;
+  const heightSegments = ALCHE_TOP_MEDIA_WALL.heightSegments * 2;
 
   const positions: number[] = [];
-  const wallAngles: number[] = [];
-  const wallCore: number[] = [];
+  const wallU: number[] = [];
+  const wallV: number[] = [];
   const indices: number[] = [];
 
   for (let row = 0; row <= heightSegments; row += 1) {
-    const yRatio = row / Math.max(heightSegments, 1);
-    const y = -halfHeight + ALCHE_TOP_MEDIA_WALL.height * yRatio;
+    const v = row / Math.max(heightSegments, 1) * 2 - 1;
 
-    for (let column = 0; column <= angleSegments; column += 1) {
-      const angleRatio = column / Math.max(angleSegments, 1);
-      const angle = angleStart + angleSpan * angleRatio;
-      positions.push(Math.sin(angle) * radius, y, Math.cos(angle) * radius);
-      wallAngles.push(angle);
-      wallCore.push(angle >= -Math.PI && angle <= Math.PI ? 1 : 0);
+    for (let column = 0; column <= widthSegments; column += 1) {
+      const u = column / Math.max(widthSegments, 1) * 2 - 1;
+      positions.push(u, v, 0);
+      wallU.push(u);
+      wallV.push(v);
     }
   }
 
-  const rowStride = angleSegments + 1;
+  const rowStride = widthSegments + 1;
   for (let row = 0; row < heightSegments; row += 1) {
-    for (let column = 0; column < angleSegments; column += 1) {
+    for (let column = 0; column < widthSegments; column += 1) {
       const a = row * rowStride + column;
       const b = row * rowStride + column + 1;
       const c = (row + 1) * rowStride + column + 1;
@@ -285,8 +279,8 @@ function createContinuousWallGeometry(radius: number) {
   const geometry = new THREE.BufferGeometry();
   geometry.setIndex(indices);
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("aWallAngle", new THREE.Float32BufferAttribute(wallAngles, 1));
-  geometry.setAttribute("aWallCore", new THREE.Float32BufferAttribute(wallCore, 1));
+  geometry.setAttribute("aWallU", new THREE.Float32BufferAttribute(wallU, 1));
+  geometry.setAttribute("aWallV", new THREE.Float32BufferAttribute(wallV, 1));
   geometry.computeBoundingSphere();
   return geometry;
 }
@@ -296,7 +290,7 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
-  const geometry = useMemo(() => createContinuousWallGeometry(effectiveRadius), [effectiveRadius]);
+  const geometry = useMemo(() => createParametricWallGeometry(), []);
 
   useEffect(() => {
     wallTexture.colorSpace = THREE.SRGBColorSpace;
@@ -332,12 +326,10 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
     material.uniforms.uWhiteMix.value = THREE.MathUtils.damp(material.uniforms.uWhiteMix.value, sceneState.kv.wallWhiteMix, 3.4, delta);
     material.uniforms.uFlatten.value = THREE.MathUtils.damp(material.uniforms.uFlatten.value, sceneState.kv.wallFlatten, 3.2, delta);
     material.uniforms.uSceneFade.value = THREE.MathUtils.damp(material.uniforms.uSceneFade.value, wallVisible, 3.2, delta);
+    material.uniforms.uWallRadius.value = effectiveRadius;
+    material.uniforms.uWallHalfWidth.value = effectiveRadius * ALCHE_TOP_WALL_PARAMETRIC_WIDTH_RATIO;
+    material.uniforms.uWallHalfHeight.value = ALCHE_TOP_MEDIA_WALL.height * 0.5 * ALCHE_TOP_WALL_PARAMETRIC_HEIGHT_RATIO;
     material.uniforms.uViewportPx.value.set(state.size.width, state.size.height);
-    const nextSide = material.uniforms.uFlatten.value >= ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD ? THREE.DoubleSide : THREE.BackSide;
-    if (material.side !== nextSide) {
-      material.side = nextSide;
-      material.needsUpdate = true;
-    }
     if (layerDebugRef) {
       const worldPosition = roomRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.wallWorldZ = worldPosition.z;
@@ -346,7 +338,7 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
   });
 
   return (
-    <mesh ref={roomRef} geometry={geometry} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]}>
+    <mesh ref={roomRef} geometry={geometry} position={[0, 0, ALCHE_TOP_MEDIA_WALL.worldZ]} frustumCulled={false}>
       <primitive object={material} attach="material" />
     </mesh>
   );

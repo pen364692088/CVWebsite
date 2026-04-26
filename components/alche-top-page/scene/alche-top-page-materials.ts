@@ -2,12 +2,9 @@
 
 import * as THREE from "three";
 
-import { ALCHE_TOP_KV_WALL_ARC_STRENGTH, ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
+import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
-const ALCHE_TOP_WALL_SAFE_FLATTEN = 0.997;
-const ALCHE_TOP_WALL_UNROLL_MIN_CURVE = 0.018;
-const ALCHE_TOP_WALL_CURVED_OVERSCAN = 1.24;
-const ALCHE_TOP_WALL_UNROLL_OVERSCAN = 1.2;
+const ALCHE_TOP_WALL_CURVATURE_EPSILON = 0.0008;
 
 export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
@@ -33,10 +30,8 @@ function spectralPalette(t: number) {
 }
 
 export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
-  const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
-
   return new THREE.ShaderMaterial({
-    side: THREE.BackSide,
+    side: THREE.DoubleSide,
     transparent: true,
     depthWrite: false,
     uniforms: {
@@ -47,48 +42,51 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
       uExposure: { value: 1 },
       uFlatten: { value: 0 },
       uSceneFade: { value: 1 },
+      uWallRadius: { value: 5 },
+      uWallHalfWidth: { value: 11 },
+      uWallHalfHeight: { value: 5.7 },
       uViewportPx: { value: new THREE.Vector2(1, 1) },
     },
     vertexShader: `
-      attribute float aWallAngle;
-      attribute float aWallCore;
+      attribute float aWallU;
+      attribute float aWallV;
 
       uniform float uFlatten;
+      uniform float uWallRadius;
+      uniform float uWallHalfWidth;
+      uniform float uWallHalfHeight;
 
       varying vec2 vMediaUv;
-      varying float vWallCore;
 
       void main() {
-        float angle = aWallAngle;
-        float angleUv = fract(angle / 6.28318530718 + 0.5);
-        float heightUv = position.y / ${Number(ALCHE_TOP_MEDIA_WALL.height / 2).toFixed(4)} * 0.5 + 0.5;
+        float safeFlatten = clamp(uFlatten, 0.0, 1.0);
+        float flattenMix = smoothstep(0.0, 1.0, safeFlatten);
+        float radius = max(uWallRadius, 0.001);
+        float curvature = (1.0 - flattenMix) / radius;
+        float wallU = aWallU * uWallHalfWidth;
+        float wallV = aWallV * uWallHalfHeight;
+        float planeZ = mix(radius, -radius, flattenMix);
+        float x;
+        float z;
 
-        float safeFlatten = min(uFlatten, ${ALCHE_TOP_WALL_SAFE_FLATTEN.toFixed(3)});
-        float unrollMix = smoothstep(0.0, 1.0, safeFlatten);
-        float curve = max(1.0 - safeFlatten, ${ALCHE_TOP_WALL_UNROLL_MIN_CURVE.toFixed(3)});
-        float unrollRadius = ${effectiveRadius.toFixed(4)} / curve;
-        float unrollAngle = angle * curve;
-        float curvedOverscan = mix(1.0, ${ALCHE_TOP_WALL_CURVED_OVERSCAN.toFixed(2)}, smoothstep(0.015, 0.12, safeFlatten));
-        float overscan = mix(1.0, ${ALCHE_TOP_WALL_UNROLL_OVERSCAN.toFixed(2)}, smoothstep(0.0, 0.85, safeFlatten));
+        if (abs(curvature) <= ${ALCHE_TOP_WALL_CURVATURE_EPSILON.toFixed(4)}) {
+          x = wallU;
+          z = planeZ;
+        } else {
+          float theta = wallU * curvature;
+          x = sin(theta) / curvature;
+          z = planeZ + (cos(theta) - 1.0) / curvature;
+        }
 
-        vec3 curved = position;
-        curved.x *= curvedOverscan;
-
-        vec3 unrolled = position;
-        unrolled.x = sin(unrollAngle) * unrollRadius * overscan;
-        unrolled.z = cos(unrollAngle) * unrollRadius - unrollRadius - ${effectiveRadius.toFixed(4)};
-
-        vec3 transformed = mix(curved, unrolled, unrollMix);
+        vec3 transformed = vec3(x, wallV, z);
 
         vec4 world = modelMatrix * vec4(transformed, 1.0);
-        vMediaUv = vec2(angleUv, heightUv);
-        vWallCore = aWallCore;
+        vMediaUv = vec2(aWallU * 0.5 + 0.5, aWallV * 0.5 + 0.5);
         gl_Position = projectionMatrix * viewMatrix * world;
       }
     `,
     fragmentShader: `
       varying vec2 vMediaUv;
-      varying float vWallCore;
 
       uniform float uTime;
       uniform float uIntro;
@@ -106,14 +104,13 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
 
       void main() {
         vec2 uv = vMediaUv;
-        float projectedX = gl_FragCoord.x / max(uViewportPx.x, 1.0);
         vec2 microGridUv = vec2(
-          projectedX * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
+          uv.x * ${(ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)},
           uv.y * ${(ALCHE_TOP_MEDIA_WALL.cellRows * ALCHE_TOP_WALL_TILE_DENSITY).toFixed(1)}
         );
         vec2 frameGridUv = vec2(
-          projectedX * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)},
-          uv.y * ${((ALCHE_TOP_MEDIA_WALL.cellColumns * ALCHE_TOP_WALL_TILE_DENSITY) / 16).toFixed(1)}
+          uv.x * ${ALCHE_TOP_MEDIA_WALL.cellColumns.toFixed(1)},
+          uv.y * ${ALCHE_TOP_MEDIA_WALL.cellRows.toFixed(1)}
         );
         float microV = linePulse(microGridUv.x, 1.05);
         float microH = linePulse(microGridUv.y, 1.05);
@@ -131,11 +128,9 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
         color = mix(color, frameLineColor, frameGrid * 0.9);
         color *= verticalShade * introExposure * uExposure;
         color = mix(color, vec3(dot(color, vec3(0.3333333))), uWhiteMix * 0.06);
-        color *= mix(1.0, 0.97, uFlatten * 0.1);
+        color *= mix(1.0, 0.992, uFlatten);
 
-        float edgeReveal = smoothstep(0.015, 0.08, uFlatten);
-        float wallCoverageAlpha = mix(edgeReveal, 1.0, vWallCore);
-        float alpha = 0.995 * uIntro * uSceneFade * wallCoverageAlpha;
+        float alpha = 0.995 * uIntro * uSceneFade;
         gl_FragColor = vec4(color, alpha);
       }
     `,
