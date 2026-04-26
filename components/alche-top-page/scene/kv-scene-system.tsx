@@ -242,18 +242,61 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
   };
 }
 
-const ALCHE_TOP_VIEWPORT_WALL_OVERSCAN_X = 1.34;
-const ALCHE_TOP_VIEWPORT_WALL_OVERSCAN_Y = 1.38;
+const ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD = 0.16;
+const ALCHE_TOP_WALL_ANGLE_OVERSCAN = 1.6;
+
+function createContinuousWallGeometry(radius: number) {
+  const angleStart = -Math.PI - ALCHE_TOP_WALL_ANGLE_OVERSCAN;
+  const angleEnd = Math.PI + ALCHE_TOP_WALL_ANGLE_OVERSCAN;
+  const angleSpan = angleEnd - angleStart;
+  const angleSegments = Math.ceil((ALCHE_TOP_MEDIA_WALL.radialSegments * angleSpan) / (Math.PI * 2));
+  const heightSegments = ALCHE_TOP_MEDIA_WALL.heightSegments;
+  const halfHeight = ALCHE_TOP_MEDIA_WALL.height * 0.5;
+
+  const positions: number[] = [];
+  const wallAngles: number[] = [];
+  const wallCore: number[] = [];
+  const indices: number[] = [];
+
+  for (let row = 0; row <= heightSegments; row += 1) {
+    const yRatio = row / Math.max(heightSegments, 1);
+    const y = -halfHeight + ALCHE_TOP_MEDIA_WALL.height * yRatio;
+
+    for (let column = 0; column <= angleSegments; column += 1) {
+      const angleRatio = column / Math.max(angleSegments, 1);
+      const angle = angleStart + angleSpan * angleRatio;
+      positions.push(Math.sin(angle) * radius, y, Math.cos(angle) * radius);
+      wallAngles.push(angle);
+      wallCore.push(angle >= -Math.PI && angle <= Math.PI ? 1 : 0);
+    }
+  }
+
+  const rowStride = angleSegments + 1;
+  for (let row = 0; row < heightSegments; row += 1) {
+    for (let column = 0; column < angleSegments; column += 1) {
+      const a = row * rowStride + column;
+      const b = row * rowStride + column + 1;
+      const c = (row + 1) * rowStride + column + 1;
+      const d = (row + 1) * rowStride + column;
+      indices.push(a, b, d, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setIndex(indices);
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("aWallAngle", new THREE.Float32BufferAttribute(wallAngles, 1));
+  geometry.setAttribute("aWallCore", new THREE.Float32BufferAttribute(wallCore, 1));
+  geometry.computeBoundingSphere();
+  return geometry;
+}
 
 function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedMediaWallProps) {
   const roomRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
   const wallTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const material = useMemo(() => createCurvedGridMaterial(wallTexture), [wallTexture]);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
-  const geometry = useMemo(
-    () => new THREE.PlaneGeometry(1, 1, ALCHE_TOP_MEDIA_WALL.radialSegments * 2, ALCHE_TOP_MEDIA_WALL.heightSegments * 2),
-    [],
-  );
+  const geometry = useMemo(() => createContinuousWallGeometry(effectiveRadius), [effectiveRadius]);
 
   useEffect(() => {
     wallTexture.colorSpace = THREE.SRGBColorSpace;
@@ -287,25 +330,14 @@ function CurvedMediaWall({ sceneState, wallTexturePath, layerDebugRef }: CurvedM
     material.uniforms.uGlow.value = THREE.MathUtils.damp(material.uniforms.uGlow.value, sceneState.kv.wallGlow, 3.4, delta);
     material.uniforms.uExposure.value = THREE.MathUtils.damp(material.uniforms.uExposure.value, sceneState.kv.wallExposure, 3.4, delta);
     material.uniforms.uWhiteMix.value = THREE.MathUtils.damp(material.uniforms.uWhiteMix.value, sceneState.kv.wallWhiteMix, 3.4, delta);
-    const darkTarget =
-      sceneState.activeSection === "works_outro"
-        ? 1
-        : sceneState.activeSection === "mission_in"
-          ? 1 - sceneState.missionIn.whiteMix
-          : 0;
-    material.uniforms.uDarkMix.value = THREE.MathUtils.damp(material.uniforms.uDarkMix.value, darkTarget, 6, delta);
     material.uniforms.uFlatten.value = THREE.MathUtils.damp(material.uniforms.uFlatten.value, sceneState.kv.wallFlatten, 3.2, delta);
     material.uniforms.uSceneFade.value = THREE.MathUtils.damp(material.uniforms.uSceneFade.value, wallVisible, 3.2, delta);
     material.uniforms.uViewportPx.value.set(state.size.width, state.size.height);
-    const perspectiveCamera = state.camera as THREE.PerspectiveCamera;
-    const cameraDistance = Math.max(1, Math.abs(perspectiveCamera.position.z - ALCHE_TOP_MEDIA_WALL.worldZ));
-    const fovRadians = THREE.MathUtils.degToRad(perspectiveCamera.fov);
-    const viewportHeight = 2 * Math.tan(fovRadians * 0.5) * cameraDistance;
-    const viewportWidth = viewportHeight * (state.size.width / Math.max(state.size.height, 1));
-    material.uniforms.uWallScale.value.set(
-      Math.max(viewportWidth * ALCHE_TOP_VIEWPORT_WALL_OVERSCAN_X, effectiveRadius * 3.8),
-      Math.max(viewportHeight * ALCHE_TOP_VIEWPORT_WALL_OVERSCAN_Y, ALCHE_TOP_MEDIA_WALL.height * 1.08),
-    );
+    const nextSide = material.uniforms.uFlatten.value >= ALCHE_TOP_WALL_CULL_SAFE_THRESHOLD ? THREE.DoubleSide : THREE.BackSide;
+    if (material.side !== nextSide) {
+      material.side = nextSide;
+      material.needsUpdate = true;
+    }
     if (layerDebugRef) {
       const worldPosition = roomRef.current.getWorldPosition(new THREE.Vector3());
       layerDebugRef.current.wallWorldZ = worldPosition.z;
