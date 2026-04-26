@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { ALCHE_TOP_MEDIA_WALL, ALCHE_TOP_WALL_TILE_DENSITY } from "@/lib/alche-top-page";
 
 const ALCHE_TOP_WALL_CURVED_GRID_DENSITY_SCALE = 1.55;
+const ALCHE_TOP_WALL_CURVE_DEPTH_SCALE = 0.78;
 
 export interface MaskedPrismLineArtUniforms {
   uOpacity: { value: number };
@@ -66,7 +67,7 @@ export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {
         float wallU = aWallU * uWallHalfWidth;
         float wallV = aWallV * uWallHalfHeight;
         float planeZ = mix(radius, -radius, flattenMix);
-        float curveDepth = radius * 0.52;
+        float curveDepth = radius * ${ALCHE_TOP_WALL_CURVE_DEPTH_SCALE.toFixed(2)};
         float edgeSag = (1.0 - cos(min(abs(aWallU), 1.0) * 1.5707963)) * curveDepth * curveMix;
         float z = planeZ - curveDepth * curveMix + edgeSag;
 
