@@ -717,6 +717,49 @@ function assertEndmarkSettledLineState(endmark, label) {
   assert((endmark.fillRevealWidth ?? 0) >= 1910, `Expected ${label} fill reveal to cover the viewport.`);
 }
 
+async function assertHeaderBrandHiddenForEndmarkFooter(page, label) {
+  const state = await page.evaluate(() => {
+    const root = document.querySelector("[data-header-brand-hidden]");
+    const brand = document.querySelector("[data-header-brand]");
+    if (!(brand instanceof HTMLElement)) return null;
+    const style = window.getComputedStyle(brand);
+    return {
+      rootHidden: root?.getAttribute("data-header-brand-hidden") === "true",
+      visibility: style.visibility,
+      opacity: Number(style.opacity),
+      pointerEvents: style.pointerEvents,
+      tabIndex: brand.tabIndex,
+      ariaHidden: brand.getAttribute("aria-hidden"),
+    };
+  });
+
+  assert(state, `Expected ${label} header brand state.`);
+  assert(state.rootHidden === true, `Expected ${label} root header brand hidden marker.`);
+  assert(state.visibility === "hidden" || state.opacity <= 0.01, `Expected ${label} header brand to be invisible.`);
+  assert(state.pointerEvents === "none", `Expected ${label} header brand pointer-events to be none.`);
+  assert(state.tabIndex === -1, `Expected ${label} header brand to be removed from tab order.`);
+  assert(state.ariaHidden === "true", `Expected ${label} header brand aria-hidden.`);
+}
+
+async function assertMissionGridPanelBackground(page, label) {
+  const state = await page.evaluate(() => {
+    const panel = document.querySelector("[data-mission-panel]");
+    if (!(panel instanceof HTMLElement)) return null;
+    const style = window.getComputedStyle(panel);
+    return {
+      backgroundImage: style.backgroundImage,
+      backgroundRepeat: style.backgroundRepeat,
+    };
+  });
+
+  assert(state, `Expected ${label} mission panel background state.`);
+  assert(
+    state.backgroundImage.includes("mission-grid-tile.png"),
+    `Expected ${label} mission panel to use mission grid tile, got ${state.backgroundImage}`,
+  );
+  assert(state.backgroundRepeat.includes("repeat"), `Expected ${label} mission panel grid to repeat.`);
+}
+
 async function assertTopPageShell(page, scenarioName) {
   assert((await page.locator("canvas").count()) >= 1, `Expected at least one canvas for ${scenarioName}`);
   assert((await page.locator("body").textContent())?.includes("MOONFLOW"), `Missing MOONFLOW branding for ${scenarioName}`);
@@ -1286,7 +1329,11 @@ async function captureFixedStates(browser, shots, options = {}) {
           }));
           assert(footerState.progress >= 0.99, "Expected fixed endmark footer progress to be complete.");
           assert(footerState.visible === true, "Expected fixed endmark footer to be visible.");
+          await assertHeaderBrandHiddenForEndmarkFooter(page, shot.name);
         }
+      }
+      if (["mission-turn-side", "mission-in-panel"].includes(shot.name)) {
+        await assertMissionGridPanelBackground(page, shot.name);
       }
       await waitForShotLayerState(page, shot.name, expectedShotStates[shot.name]);
       if (shot.name in expectedShotStates) {

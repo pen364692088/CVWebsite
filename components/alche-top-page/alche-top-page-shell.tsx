@@ -278,6 +278,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
   const currentTrackedSection = currentActiveSection === "loading" ? "kv" : baseTrackedSection;
   const currentShotId = debugOverride?.shotId ?? null;
   const endmarkBlueprintPath = assetPath("/alche-top-page/endmark/alche-wordmark-blueprint.svg");
+  const missionGridTexturePath = assetPath("/alche-top-page/mission/mission-grid-tile.png");
   const endmarkTriggerActive = !endmarkDisabled && visionCoverProgress >= 0.98;
   const visibleEndmarkFooterProgress = endmarkDebugState.stage === "settled" ? endmarkFooterProgress : 0;
   const endmarkFooterVisible = visibleEndmarkFooterProgress > 0.01;
@@ -423,10 +424,11 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
         "--alche-mission-panel-top-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.topVh.toString(),
         "--alche-mission-panel-travel-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.travelVh.toString(),
         "--alche-mission-panel-bottom-vh": ALCHE_TOP_MISSION_PANEL_LAYOUT.bottomVh.toString(),
+        "--alche-mission-grid-url": `url("${missionGridTexturePath}")`,
         "--alche-endmark-footer-progress": visibleEndmarkFooterProgress.toFixed(3),
         "--alche-endmark-footer-offset": `${((1 - visibleEndmarkFooterProgress) * 2).toFixed(3)}rem`,
       }) as CSSProperties,
-    [currentIntroProgress, missionPanelProgress, visibleEndmarkFooterProgress],
+    [currentIntroProgress, missionGridTexturePath, missionPanelProgress, visibleEndmarkFooterProgress],
   );
 
   return (
@@ -449,6 +451,7 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
       data-endmark-ready={endmarkDebugState.ready ? "true" : "false"}
       data-endmark-footer-progress={visibleEndmarkFooterProgress.toFixed(3)}
       data-endmark-footer-visible={endmarkFooterVisible ? "true" : "false"}
+      data-header-brand-hidden={endmarkFooterVisible ? "true" : "false"}
     >
       <div className={styles.stage}>
         <div className={styles.canvasLayer}>
@@ -567,7 +570,14 @@ export function AlcheTopPageShell({ locale }: AlcheTopPageShellProps) {
           </div>
 
           <header className={styles.header}>
-            <button type="button" className={styles.headerBrand} onClick={() => scrollToSection(sectionRefs.current.kv)}>
+            <button
+              type="button"
+              className={styles.headerBrand}
+              data-header-brand
+              aria-hidden={endmarkFooterVisible ? "true" : undefined}
+              tabIndex={endmarkFooterVisible ? -1 : undefined}
+              onClick={() => scrollToSection(sectionRefs.current.kv)}
+            >
               <span className={styles.headerBrandWord}>MOONFLOW</span>
             </button>
 
