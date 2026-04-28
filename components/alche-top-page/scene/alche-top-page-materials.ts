@@ -39,7 +39,7 @@ function spectralPalette(t: number) {
 export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUniforms) {
   const material = new THREE.MeshStandardMaterial({
     color: "#ffffff",
-    emissive: "#d4fbff",
+    emissive: "#fff3df",
     emissiveIntensity: 0,
     roughness: 0.18,
     metalness: 0.02,
@@ -116,18 +116,18 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             );
             float lensTransition = smoothstep(0.0, 1.0, glassBody + glassBorder);
             vec3 lensColor = lensMap.rgb;
-            lensColor += vec3(0.82, 0.96, 1.0) * glassBody * 0.1;
-            lensColor += vec3(0.92, 0.98, 1.0) * glassBorder * 0.34;
-            lensColor += vec3(0.16, 0.28, 0.38) * glassShadow * 0.16;
+            lensColor += vec3(1.0, 0.96, 0.88) * glassBody * 0.1;
+            lensColor += vec3(1.0, 0.94, 0.84) * glassBorder * 0.34;
+            lensColor += vec3(0.38, 0.33, 0.27) * glassShadow * 0.14;
             gl_FragColor.rgb = mix(gl_FragColor.rgb, lensColor, lensTransition * 0.34);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.32, 0.38), iceCloud * 0.14);
-            gl_FragColor.rgb += vec3(0.72, 0.96, 1.0) * iceBand * 0.2;
-            gl_FragColor.rgb += vec3(1.0, 0.72, 0.28) * iceBand * iceFresnel * 0.11;
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.07, 0.14, 0.21), iceCrack * 0.24);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.38, 0.34, 0.29), iceCloud * 0.12);
+            gl_FragColor.rgb += vec3(1.0, 0.93, 0.78) * iceBand * 0.18;
+            gl_FragColor.rgb += vec3(1.0, 0.72, 0.34) * iceBand * iceFresnel * 0.1;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.17, 0.14), iceCrack * 0.22);
             gl_FragColor.a = min(iceBaseAlpha + iceBaseAlpha * (iceCloud * 0.1 + iceBand * 0.08 + glassBorder * 0.15), 0.62);
           #endif
-          gl_FragColor.rgb += vec3(0.13, 0.42, 0.62) * iceFresnel * 0.42;
-          gl_FragColor.rgb += vec3(0.86, 0.97, 1.0) * iceFresnel * 0.22;
+          gl_FragColor.rgb += vec3(0.72, 0.58, 0.42) * iceFresnel * 0.22;
+          gl_FragColor.rgb += vec3(1.0, 0.96, 0.88) * iceFresnel * 0.24;
           gl_FragColor.a = min(gl_FragColor.a + iceBaseAlpha * iceFresnel * 0.16, 0.62);
           #include <dithering_fragment>
         `,
