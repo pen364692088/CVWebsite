@@ -19,6 +19,12 @@ export interface PrismSideRainbowUniforms {
   uTargetFaceNormal: { value: THREE.Vector3 };
 }
 
+export interface PrismIceUniforms {
+  uViewportPx: { value: THREE.Vector2 };
+  uMaskBoundary: { value: number };
+  uClipMode: { value: number };
+}
+
 function spectralPalette(t: number) {
   const a = new THREE.Color("#89f2ff");
   const b = new THREE.Color("#f8fbff");
@@ -28,6 +34,84 @@ function spectralPalette(t: number) {
   if (t < 0.33) return a.clone().lerp(b, t / 0.33);
   if (t < 0.66) return b.clone().lerp(c, (t - 0.33) / 0.33);
   return c.clone().lerp(d, (t - 0.66) / 0.34);
+}
+
+export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUniforms) {
+  const material = new THREE.MeshStandardMaterial({
+    color: "#ffffff",
+    emissive: "#d4fbff",
+    emissiveIntensity: 0,
+    roughness: 0.18,
+    metalness: 0.02,
+    map,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    depthTest: true,
+    toneMapped: false,
+  });
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uViewportPx = uniforms.uViewportPx;
+    shader.uniforms.uMaskBoundary = uniforms.uMaskBoundary;
+    shader.uniforms.uClipMode = uniforms.uClipMode;
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "void main() {",
+        `
+          uniform vec2 uViewportPx;
+          uniform float uMaskBoundary;
+          uniform float uClipMode;
+
+          void main() {
+            float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
+            float epsilon = 0.75 / max(uViewportPx.y, 1.0);
+            if (uClipMode < 0.5) {
+              if (screenY < uMaskBoundary - epsilon) discard;
+            } else {
+              if (screenY >= uMaskBoundary - epsilon) discard;
+            }
+        `,
+      )
+      .replace(
+        "#include <dithering_fragment>",
+        `
+          float iceFresnel = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 1.65);
+          #ifdef USE_MAP
+            vec2 iceUv = vMapUv;
+            float iceBand = smoothstep(
+              0.76,
+              0.98,
+              sin((iceUv.y + iceUv.x * 0.34) * 31.0 + sin(iceUv.x * 19.0) * 2.1) * 0.5 + 0.5
+            );
+            float iceCloud = smoothstep(
+              0.52,
+              1.0,
+              sin(iceUv.x * 12.0 + sin(iceUv.y * 10.0) * 2.8) * sin(iceUv.y * 15.0 + 1.7) * 0.5 + 0.5
+            );
+            float iceCrack = smoothstep(
+              0.965,
+              0.998,
+              sin((iceUv.x * 1.4 + iceUv.y * 0.92) * 93.0 + sin(iceUv.x * 41.0) * 3.0) * 0.5 + 0.5
+            );
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.24, 0.37, 0.43), iceCloud * 0.14);
+            gl_FragColor.rgb += vec3(0.72, 0.96, 1.0) * iceBand * 0.18;
+            gl_FragColor.rgb += vec3(1.0, 0.74, 0.3) * iceBand * iceFresnel * 0.08;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.08, 0.17, 0.24), iceCrack * 0.22);
+            gl_FragColor.a = min(gl_FragColor.a + iceCloud * 0.045 + iceBand * 0.035, 0.6);
+          #endif
+          gl_FragColor.rgb += vec3(0.13, 0.42, 0.62) * iceFresnel * 0.42;
+          gl_FragColor.rgb += vec3(0.86, 0.97, 1.0) * iceFresnel * 0.22;
+          gl_FragColor.a = min(gl_FragColor.a + iceFresnel * 0.1, 0.56);
+          #include <dithering_fragment>
+        `,
+      );
+  };
+  material.customProgramCacheKey = () => `alche-prism-ice:${uniforms.uClipMode.value}`;
+  material.needsUpdate = true;
+
+  return material;
 }
 
 export function createCurvedGridMaterial(_wallTexture: THREE.Texture) {

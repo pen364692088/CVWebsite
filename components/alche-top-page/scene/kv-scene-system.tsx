@@ -31,6 +31,8 @@ import {
 } from "@/lib/alche-top-page";
 import {
   createCurvedGridMaterial,
+  createPrismIceMaterial,
+  type PrismIceUniforms,
   createMaskedPrismLineArtMaterial,
   type MaskedPrismLineArtUniforms,
   createPrismSideRainbowMaterial,
@@ -74,19 +76,13 @@ interface WorksCardPose {
   scale: number;
 }
 
-interface ScreenSpaceClipUniforms {
-  uViewportPx: { value: THREE.Vector2 };
-  uMaskBoundary: { value: number };
-  uClipMode: { value: number };
-}
-
 interface CenterHeroRenderState {
   shadedScene: THREE.Group;
   edgeScene: THREE.Group;
   maskedLineArtScene: THREE.Group;
   rainbowScene: THREE.Group;
-  map: THREE.Texture;
   modelScale: number;
+  iceTexture: THREE.Texture;
   shadedMaterials: THREE.MeshStandardMaterial[];
   hiddenMaterial: THREE.MeshBasicMaterial;
   edgeMaterial: THREE.LineBasicMaterial;
@@ -94,53 +90,15 @@ interface CenterHeroRenderState {
   rainbowMaterial: THREE.ShaderMaterial;
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
-  shadedClipUniforms: ScreenSpaceClipUniforms;
+  prismIceUniforms: PrismIceUniforms;
   maskedLineArtUniforms: MaskedPrismLineArtUniforms;
   rainbowUniforms: PrismSideRainbowUniforms;
 }
 
+const ALCHE_TOP_PRISM_ICE_OPACITY = 0.46;
+
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
-
-function createScreenSpaceClipUniforms(clipMode: 0 | 1): ScreenSpaceClipUniforms {
-  return {
-    uViewportPx: { value: new THREE.Vector2(1, 1) },
-    uMaskBoundary: { value: -1 },
-    uClipMode: { value: clipMode },
-  };
-}
-
-function applyScreenSpaceClip(
-  material: THREE.MeshStandardMaterial | THREE.LineBasicMaterial | THREE.MeshBasicMaterial,
-  uniforms: ScreenSpaceClipUniforms,
-) {
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uViewportPx = uniforms.uViewportPx;
-    shader.uniforms.uMaskBoundary = uniforms.uMaskBoundary;
-    shader.uniforms.uClipMode = uniforms.uClipMode;
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "void main() {",
-      `
-        uniform vec2 uViewportPx;
-        uniform float uMaskBoundary;
-        uniform float uClipMode;
-
-        void main() {
-          float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
-          float epsilon = 0.75 / max(uViewportPx.y, 1.0);
-          float clipBoundary = uMaskBoundary;
-
-          if (uClipMode < 0.5) {
-            if (screenY < clipBoundary - epsilon) discard;
-          } else {
-            if (screenY >= clipBoundary - epsilon) discard;
-          }
-      `,
-    );
-  };
-  material.customProgramCacheKey = () => `${material.type}:alche-mission-mask:${uniforms.uClipMode.value}`;
-  material.needsUpdate = true;
-}
 
 function configureCardTexture(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -174,6 +132,121 @@ function createIdentityCardTexture(label: "A" | "B", background: string) {
 
   const texture = new THREE.CanvasTexture(canvas);
   configureCardTexture(texture);
+  return texture;
+}
+
+function createIcePrismTexture() {
+  if (typeof document === "undefined") {
+    const data = new Uint8Array([235, 250, 255, 255]);
+    const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Failed to create prism ice texture canvas context.");
+  }
+
+  let seed = 0x5d2f3a91;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
+  };
+
+  const { width, height } = canvas;
+  const base = context.createLinearGradient(0, 0, width, height);
+  base.addColorStop(0, "#fbfeff");
+  base.addColorStop(0.42, "#dff7ff");
+  base.addColorStop(0.7, "#f8fdff");
+  base.addColorStop(1, "#c8efff");
+  context.fillStyle = base;
+  context.fillRect(0, 0, width, height);
+
+  context.globalCompositeOperation = "multiply";
+  for (let index = 0; index < 22; index += 1) {
+    const x = random() * width;
+    const y = random() * height;
+    const radius = 90 + random() * 240;
+    const cloud = context.createRadialGradient(x, y, 0, x, y, radius);
+    cloud.addColorStop(0, `rgba(22, 48, 70, ${0.17 + random() * 0.18})`);
+    cloud.addColorStop(0.62, `rgba(52, 104, 132, ${0.08 + random() * 0.12})`);
+    cloud.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = cloud;
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.globalCompositeOperation = "multiply";
+  for (let index = 0; index < 10; index += 1) {
+    const y = height * (0.08 + random() * 0.84);
+    const slope = -0.34 + random() * 0.68;
+    context.lineWidth = 30 + random() * 82;
+    context.strokeStyle = `rgba(18, 38, 56, ${0.08 + random() * 0.11})`;
+    context.beginPath();
+    context.moveTo(-160, y - slope * 160);
+    context.lineTo(width + 160, y + slope * (width + 160));
+    context.stroke();
+  }
+
+  context.globalCompositeOperation = "screen";
+  for (let index = 0; index < 14; index += 1) {
+    const y = height * (0.12 + random() * 0.78);
+    const slope = -0.28 + random() * 0.56;
+    context.lineWidth = 42 + random() * 72;
+    context.strokeStyle = `rgba(255,255,255, ${0.3 + random() * 0.3})`;
+    context.beginPath();
+    context.moveTo(-120, y - slope * 120);
+    context.lineTo(width + 120, y + slope * (width + 120));
+    context.stroke();
+  }
+
+  context.globalCompositeOperation = "source-over";
+  for (let index = 0; index < 18; index += 1) {
+    const x = random() * width;
+    const y = random() * height;
+    const length = 180 + random() * 520;
+    const angle = -0.9 + random() * 1.8;
+    const endX = x + Math.cos(angle) * length;
+    const endY = y + Math.sin(angle) * length;
+    context.lineWidth = 1.5 + random() * 3.8;
+    context.strokeStyle =
+      index % 3 === 0
+        ? `rgba(255, 187, 86, ${0.12 + random() * 0.12})`
+        : `rgba(72, 190, 255, ${0.16 + random() * 0.18})`;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(endX, endY);
+    context.stroke();
+  }
+
+  for (let index = 0; index < 42; index += 1) {
+    const x = random() * width;
+    const y = random() * height;
+    const length = 70 + random() * 220;
+    const angle = -0.65 + random() * 1.3;
+    context.lineWidth = 0.8 + random() * 1.8;
+    context.strokeStyle = `rgba(44, 76, 106, ${0.1 + random() * 0.14})`;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    context.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.flipY = false;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
   return texture;
 }
 
@@ -933,7 +1006,6 @@ function WorksCardPair({
 function CenterHeroModel({
   sceneState,
   reducedMotion: _reducedMotion,
-  wallTexturePath,
   renderMode,
   pointerOverride: _pointerOverride,
   pointerDebugRef,
@@ -941,7 +1013,6 @@ function CenterHeroModel({
 }: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "renderMode" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef">) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
-  const baseTexture = useLoader(THREE.TextureLoader, wallTexturePath);
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
   const targetPosition = useMemo(
     () =>
@@ -957,10 +1028,15 @@ function CenterHeroModel({
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
     const maskedLineArtScene = gltf.scene.clone(true) as THREE.Group;
     const rainbowScene = gltf.scene.clone(true) as THREE.Group;
-    const map = baseTexture.clone();
+    const iceTexture = createIcePrismTexture();
     const shadedMaterials: THREE.MeshStandardMaterial[] = [];
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
+    const prismIceUniforms: PrismIceUniforms = {
+      uViewportPx: { value: new THREE.Vector2(1, 1) },
+      uMaskBoundary: { value: -1 },
+      uClipMode: { value: 0 },
+    };
     const maskedLineArtUniforms: MaskedPrismLineArtUniforms = {
       uOpacity: { value: 0 },
     };
@@ -973,7 +1049,6 @@ function CenterHeroModel({
         value: new THREE.Vector3(...ALCHE_TOP_CENTER_MODEL.rainbowFaceNormal),
       },
     };
-    const shadedClipUniforms = createScreenSpaceClipUniforms(0);
     const hiddenMaterial = new THREE.MeshBasicMaterial({
       transparent: false,
       opacity: 1,
@@ -995,14 +1070,8 @@ function CenterHeroModel({
     });
     const maskedLineArtMaterial = createMaskedPrismLineArtMaterial(maskedLineArtUniforms);
     const rainbowMaterial = createPrismSideRainbowMaterial(rainbowUniforms);
-    map.colorSpace = THREE.SRGBColorSpace;
-    map.flipY = false;
-    map.wrapS = THREE.ClampToEdgeWrapping;
-    map.wrapT = THREE.ClampToEdgeWrapping;
-    map.minFilter = THREE.LinearFilter;
-    map.magFilter = THREE.LinearFilter;
-    map.generateMipmaps = false;
-    map.needsUpdate = true;
+    const prismIceMaterial = createPrismIceMaterial(iceTexture, prismIceUniforms);
+    shadedMaterials.push(prismIceMaterial);
 
     shadedScene.traverse((child) => {
       if (!("isMesh" in child) || child.isMesh !== true) return;
@@ -1010,20 +1079,7 @@ function CenterHeroModel({
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.renderOrder = 4;
-      const material = new THREE.MeshStandardMaterial({
-        color: "#fff8f8",
-        emissive: "#8f1228",
-        emissiveIntensity: 0,
-        roughness: 0.68,
-        metalness: 0.04,
-        map,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0,
-      });
-      applyScreenSpaceClip(material, shadedClipUniforms);
-      mesh.material = material;
-      shadedMaterials.push(material);
+      mesh.material = prismIceMaterial;
       shadedGeometries.add(mesh.geometry as THREE.BufferGeometry);
     });
 
@@ -1081,8 +1137,8 @@ function CenterHeroModel({
       edgeScene,
       maskedLineArtScene,
       rainbowScene,
-      map,
       modelScale: scale,
+      iceTexture,
       shadedMaterials,
       hiddenMaterial,
       edgeMaterial,
@@ -1090,11 +1146,11 @@ function CenterHeroModel({
       rainbowMaterial,
       shadedGeometries,
       edgeGeometries,
-      shadedClipUniforms,
+      prismIceUniforms,
       maskedLineArtUniforms,
       rainbowUniforms,
     };
-  }, [baseTexture, gltf.scene]);
+  }, [gltf.scene]);
 
   useEffect(() => {
     if (renderMode !== "full") return;
@@ -1120,7 +1176,7 @@ function CenterHeroModel({
 
   useEffect(
     () => () => {
-      texturedScene.map.dispose();
+      texturedScene.iceTexture.dispose();
       texturedScene.shadedMaterials.forEach((material) => material.dispose());
       texturedScene.hiddenMaterial.dispose();
       texturedScene.edgeMaterial.dispose();
@@ -1150,18 +1206,19 @@ function CenterHeroModel({
       pointerDebugRef.current.r3fPointerY = state.pointer.y;
     }
 
-    texturedScene.shadedClipUniforms.uViewportPx.value.set(state.size.width, state.size.height);
-    texturedScene.shadedClipUniforms.uMaskBoundary.value = maskBoundary;
+    texturedScene.prismIceUniforms.uViewportPx.value.set(state.size.width, state.size.height);
+    texturedScene.prismIceUniforms.uMaskBoundary.value = maskBoundary;
     texturedScene.rainbowUniforms.uTime.value = state.clock.elapsedTime;
 
+    const iceVisibilityTarget = renderMode === "full" && !splitEnabled ? visibility : 0;
     texturedScene.shadedMaterials.forEach((material) => {
-      material.opacity = THREE.MathUtils.damp(material.opacity, renderMode === "full" ? visibility : 0, 4, delta);
-      material.emissiveIntensity = THREE.MathUtils.damp(
-        material.emissiveIntensity,
-        renderMode === "full" ? 0.28 * visibility : 0,
-        4,
-        delta,
-      );
+      if (splitEnabled) {
+        material.opacity = 0;
+        material.emissiveIntensity = 0;
+        return;
+      }
+      material.opacity = THREE.MathUtils.damp(material.opacity, iceVisibilityTarget * ALCHE_TOP_PRISM_ICE_OPACITY, 4, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.18, 4, delta);
     });
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
       texturedScene.edgeMaterial.opacity,
@@ -1195,7 +1252,7 @@ function CenterHeroModel({
     );
 
     const shadedVisible =
-      renderMode === "full" && (visibility > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
+      renderMode === "full" && (iceVisibilityTarget > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
     const edgeVisible =
       renderMode === "edge-overlay" &&
       splitEnabled &&
