@@ -137,7 +137,7 @@ function createIdentityCardTexture(label: "A" | "B", background: string) {
 
 function createIcePrismTexture() {
   if (typeof document === "undefined") {
-    const data = new Uint8Array([252, 248, 238, 255]);
+    const data = new Uint8Array([246, 250, 252, 255]);
     const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
@@ -160,10 +160,10 @@ function createIcePrismTexture() {
 
   const { width, height } = canvas;
   const base = context.createLinearGradient(0, 0, width, height);
-  base.addColorStop(0, "#fffdf8");
-  base.addColorStop(0.42, "#fff8ef");
-  base.addColorStop(0.7, "#f6f0e6");
-  base.addColorStop(1, "#ded8cc");
+  base.addColorStop(0, "#fbfdff");
+  base.addColorStop(0.42, "#f3f7fa");
+  base.addColorStop(0.7, "#e6edf0");
+  base.addColorStop(1, "#d8dee1");
   context.fillStyle = base;
   context.fillRect(0, 0, width, height);
 
@@ -173,8 +173,8 @@ function createIcePrismTexture() {
     const y = random() * height;
     const radius = 90 + random() * 240;
     const cloud = context.createRadialGradient(x, y, 0, x, y, radius);
-    cloud.addColorStop(0, `rgba(82, 70, 58, ${0.16 + random() * 0.16})`);
-    cloud.addColorStop(0.62, `rgba(132, 116, 96, ${0.07 + random() * 0.1})`);
+    cloud.addColorStop(0, `rgba(54, 62, 68, ${0.15 + random() * 0.14})`);
+    cloud.addColorStop(0.62, `rgba(102, 112, 120, ${0.06 + random() * 0.09})`);
     cloud.addColorStop(1, "rgba(255,255,255,0)");
     context.fillStyle = cloud;
     context.beginPath();
@@ -187,7 +187,7 @@ function createIcePrismTexture() {
     const y = height * (0.08 + random() * 0.84);
     const slope = -0.34 + random() * 0.68;
     context.lineWidth = 30 + random() * 82;
-    context.strokeStyle = `rgba(72, 60, 48, ${0.07 + random() * 0.1})`;
+    context.strokeStyle = `rgba(48, 54, 58, ${0.06 + random() * 0.09})`;
     context.beginPath();
     context.moveTo(-160, y - slope * 160);
     context.lineTo(width + 160, y + slope * (width + 160));
@@ -217,8 +217,8 @@ function createIcePrismTexture() {
     context.lineWidth = 1.5 + random() * 3.8;
     context.strokeStyle =
       index % 3 === 0
-        ? `rgba(255, 187, 86, ${0.12 + random() * 0.12})`
-        : `rgba(214, 196, 166, ${0.14 + random() * 0.16})`;
+        ? `rgba(236, 242, 245, ${0.12 + random() * 0.12})`
+        : `rgba(156, 172, 184, ${0.1 + random() * 0.12})`;
     context.beginPath();
     context.moveTo(x, y);
     context.lineTo(endX, endY);
@@ -231,7 +231,28 @@ function createIcePrismTexture() {
     const length = 70 + random() * 220;
     const angle = -0.65 + random() * 1.3;
     context.lineWidth = 0.8 + random() * 1.8;
-    context.strokeStyle = `rgba(94, 80, 66, ${0.08 + random() * 0.12})`;
+    context.strokeStyle = `rgba(70, 78, 84, ${0.07 + random() * 0.1})`;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    context.stroke();
+  }
+
+  context.globalCompositeOperation = "source-over";
+  for (let index = 0; index < 1400; index += 1) {
+    const alpha = 0.01 + random() * 0.018;
+    const value = 64 + Math.floor(random() * 90);
+    context.fillStyle = `rgba(${value}, ${value + 6}, ${value + 10}, ${alpha})`;
+    context.fillRect(random() * width, random() * height, 1 + random() * 1.6, 1 + random() * 1.6);
+  }
+
+  for (let index = 0; index < 90; index += 1) {
+    const x = random() * width;
+    const y = random() * height;
+    const length = 18 + random() * 72;
+    const angle = random() * Math.PI * 2;
+    context.lineWidth = 0.5 + random() * 1.2;
+    context.strokeStyle = `rgba(82, 92, 100, ${0.025 + random() * 0.045})`;
     context.beginPath();
     context.moveTo(x, y);
     context.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
