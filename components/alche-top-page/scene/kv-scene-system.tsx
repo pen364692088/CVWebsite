@@ -99,7 +99,6 @@ interface CenterHeroRenderState {
   rainbowUniforms: PrismSideRainbowUniforms;
 }
 
-const entryRightLowerPose = getAlcheWorksCardPoseDefinition("entry-right-lower");
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
 
@@ -240,6 +239,55 @@ function lerpWorksCardPose(from: WorksCardPose, to: WorksCardPose, mix: number):
     yOffset: THREE.MathUtils.lerp(from.yOffset, to.yOffset, mix),
     scale: THREE.MathUtils.lerp(from.scale, to.scale, mix),
   };
+}
+
+interface WorksCardTrackTiming {
+  queueStart: number;
+  queueEnd: number;
+  leadEnd: number;
+  supportStart: number | null;
+  supportEnd: number | null;
+}
+
+interface ResolveWorksCardTrackPoseOptions {
+  progress: number;
+  timing: WorksCardTrackTiming;
+  queueOffscreenPose: WorksCardPose;
+  queuePose: WorksCardPose;
+  leadPose: WorksCardPose;
+  supportPose: WorksCardPose;
+}
+
+function normalizeTrackWindow(progress: number, start: number, end: number) {
+  return smoothstep(clamp01((progress - start) / Math.max(end - start, 0.0001)));
+}
+
+function resolveWorksCardTrackPose({
+  progress,
+  timing,
+  queueOffscreenPose,
+  queuePose,
+  leadPose,
+  supportPose,
+}: ResolveWorksCardTrackPoseOptions): WorksCardPose {
+  if (progress <= timing.queueEnd) {
+    return lerpWorksCardPose(queueOffscreenPose, queuePose, normalizeTrackWindow(progress, timing.queueStart, timing.queueEnd));
+  }
+
+  if (progress <= timing.leadEnd) {
+    return lerpWorksCardPose(queuePose, leadPose, normalizeTrackWindow(progress, timing.queueEnd, timing.leadEnd));
+  }
+
+  if (timing.supportStart !== null && timing.supportEnd !== null && progress >= timing.supportStart) {
+    return lerpWorksCardPose(leadPose, supportPose, normalizeTrackWindow(progress, timing.supportStart, timing.supportEnd));
+  }
+
+  return leadPose;
+}
+
+function isWorksCardTrackVisible(progress: number, timing: WorksCardTrackTiming) {
+  const queueMix = normalizeTrackWindow(progress, timing.queueStart, timing.queueEnd);
+  return progress > timing.queueStart && queueMix >= 0.18;
 }
 
 const ALCHE_TOP_WALL_PARAMETRIC_WIDTH_RATIO = 2.25;
@@ -629,8 +677,6 @@ function WorksCardPair({
     const cardsVisible = worksWordHandoff >= 0.985 && (inWorksCards || inWorksOutro) && outroMix < 0.999;
     const progress = sceneState.worksCardsProgress;
     const segment = getAlcheWorksCardsSegment(progress);
-    const entryMix = smoothstep(clamp01(segment.phase === "entry" ? segment.mix : 1));
-    const queueMix = smoothstep(clamp01(segment.phase === "queue" ? segment.mix : segment.phase === "handoff" || segment.phase === "settled" ? 1 : 0));
     const handoffMix = smoothstep(clamp01(segment.phase === "handoff" ? segment.mix : segment.phase === "settled" ? 1 : 0));
     const cardsSequenceVisible = cardsVisible && inWorksCards;
     const compensatedQueueRightLowerOffscreenPose = getCompensatedAlcheWorksCardPoseDefinition(
@@ -654,34 +700,50 @@ function WorksCardPair({
       radiusOffset: compensatedSupportLeftUpperPose.radiusOffset + 0.18,
       yOffset: compensatedSupportLeftUpperPose.yOffset + 0.04,
     };
-    const card0Visible = cardsVisible;
+    const card0Timing: WorksCardTrackTiming = {
+      queueStart: 0,
+      queueEnd: segment.entryShot.progress,
+      leadEnd: segment.centerShot.progress,
+      supportStart: segment.queueShot.progress,
+      supportEnd: segment.settledShot.progress,
+    };
+    const card1Timing: WorksCardTrackTiming = {
+      queueStart: segment.centerShot.progress,
+      queueEnd: segment.queueShot.progress,
+      leadEnd: segment.settledShot.progress,
+      supportStart: null,
+      supportEnd: null,
+    };
+    const card0Visible =
+      inWorksOutro || !cardsSequenceVisible ? cardsVisible : cardsSequenceVisible && isWorksCardTrackVisible(progress, card0Timing);
     const card1Visible =
       inWorksOutro
         ? cardsVisible && outroMix < 0.985
-        : cardsSequenceVisible &&
-          (segment.phase === "handoff" || segment.phase === "settled" || (segment.phase === "queue" && queueMix >= 0.18));
+        : cardsSequenceVisible && isWorksCardTrackVisible(progress, card1Timing);
     const leadIndex = !cardsVisible ? null : inWorksOutro ? 1 : segment.phase === "entry" || segment.phase === "queue" ? 0 : handoffMix >= 0.5 ? 1 : 0;
     const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
     const card0Pose =
       inWorksOutro
         ? compensatedSupportLeftUpperPose
-        : segment.phase === "entry"
-          ? lerpWorksCardPose(entryRightLowerPose, leadCenterPose, entryMix)
-          : segment.phase === "queue"
-            ? leadCenterPose
-          : segment.phase === "handoff"
-              ? lerpWorksCardPose(leadCenterPose, compensatedSupportLeftUpperPose, handoffMix)
-              : compensatedSupportLeftUpperPose;
+        : resolveWorksCardTrackPose({
+            progress,
+            timing: card0Timing,
+            queueOffscreenPose: compensatedQueueRightLowerOffscreenPose,
+            queuePose: compensatedQueueRightLowerPose,
+            leadPose: leadCenterPose,
+            supportPose: compensatedSupportLeftUpperPose,
+          });
     const card1Pose =
       inWorksOutro
         ? lerpWorksCardPose(leadCenterPose, compensatedWorksOutroLeftClearPose, outroMix)
-        : segment.phase === "entry"
-          ? compensatedQueueRightLowerOffscreenPose
-          : segment.phase === "queue"
-            ? lerpWorksCardPose(compensatedQueueRightLowerOffscreenPose, compensatedQueueRightLowerPose, queueMix)
-            : segment.phase === "handoff"
-              ? lerpWorksCardPose(compensatedQueueRightLowerPose, leadCenterPose, handoffMix)
-              : leadCenterPose;
+        : resolveWorksCardTrackPose({
+            progress,
+            timing: card1Timing,
+            queueOffscreenPose: compensatedQueueRightLowerOffscreenPose,
+            queuePose: compensatedQueueRightLowerPose,
+            leadPose: leadCenterPose,
+            supportPose: compensatedSupportLeftUpperPose,
+          });
 
     groupRef.current.visible = cardsVisible && (card0Visible || card1Visible);
     leftRef.current.visible = card0Visible;

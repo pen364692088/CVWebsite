@@ -1,7 +1,6 @@
 import shotbookJson from "@/data/alche-works-shotbook.json";
 
 export const ALCHE_WORKS_CARD_POSE_IDS = [
-  "entry-right-lower",
   "lead-center",
   "queue-right-lower-offscreen",
   "queue-right-lower",

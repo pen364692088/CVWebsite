@@ -1,11 +1,5 @@
 {
   "poses": {
-    "entry-right-lower": {
-      "angle": 0.66,
-      "radiusOffset": 0.26,
-      "yOffset": -0.88,
-      "scale": 0.46
-    },
     "lead-center": {
       "angle": -0.04,
       "radiusOffset": 0.08,
@@ -52,11 +46,11 @@
     {
       "id": "cards-a-entry",
       "section": "works_cards",
-      "progress": 0.04,
+      "progress": 0.24,
       "intro": 1,
       "card0": {
         "visible": true,
-        "poseId": "entry-right-lower"
+        "poseId": "queue-right-lower"
       },
       "card1": {
         "visible": false,

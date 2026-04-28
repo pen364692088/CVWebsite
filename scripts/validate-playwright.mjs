@@ -283,11 +283,6 @@ const expectedShotStates = {
 };
 
 const laneTargets = {
-  entryRightLower: {
-    centerXRatio: { min: 0.68, max: 0.92 },
-    centerYRatio: { min: 0.56, max: 0.8 },
-    widthRatio: { min: 0.12, max: 0.28 },
-  },
   leadCenter: {
     centerXRatio: { min: 0.36, max: 0.6 },
     centerYRatio: { min: 0.26, max: 0.48 },
@@ -840,6 +835,22 @@ function getCardScreenWidth(layerState, cardIndex) {
   const right = layerState[`card${cardIndex}ScreenRight`];
   assert(left !== null && right !== null, `Missing card${cardIndex} screen width`);
   return right - left;
+}
+
+function assertCardQueueEntryParity(entryState, queueState) {
+  const entryWidthRatio = getCardScreenWidth(entryState, 0) / getViewportWidth(entryState);
+  const queueWidthRatio = getCardScreenWidth(queueState, 1) / getViewportWidth(queueState);
+  const widthRatio = entryWidthRatio / Math.max(queueWidthRatio, 0.0001);
+  assertRange(widthRatio, { min: 0.88, max: 1.12 }, "A/B queue entry width parity");
+
+  const entryYRatio = getCardScreenCenterY(entryState, 0) / getViewportHeight(entryState);
+  const queueYRatio = getCardScreenCenterY(queueState, 1) / getViewportHeight(queueState);
+  assert(Math.abs(entryYRatio - queueYRatio) <= 0.08, "Expected A queue entry vertical lane to match B queue entry.");
+
+  const entryAngle = entryState.card0ArcAngle;
+  const queueAngle = queueState.card1ArcAngle;
+  assert(entryAngle !== null && queueAngle !== null, "Missing A/B queue entry arc angles.");
+  assert(Math.abs(entryAngle - queueAngle) <= 0.08, "Expected A queue entry arc angle to match B queue entry.");
 }
 
 function getViewportWidth(layerState) {
@@ -1480,10 +1491,11 @@ async function captureFixedStates(browser, shots, options = {}) {
       "Expected card B to remain unloaded until the queue phase.",
     );
     assert(cardsBQueueState.card1Visible === true, "Expected card B to load only during queue.");
-    assertCardInLane(cardsAEntryState, 0, laneTargets.entryRightLower, "cards-a-entry");
+    assertCardInLane(cardsAEntryState, 0, laneTargets.queueRight, "cards-a-entry");
     assertCardInLane(cardsACenterState, 0, laneTargets.leadCenter, "cards-a-center");
     assertCardInLane(cardsBQueueState, 0, laneTargets.leadCenter, "cards-b-queue");
     assertCardInLane(cardsBQueueState, 1, laneTargets.queueRight, "cards-b-queue");
+    assertCardQueueEntryParity(cardsAEntryState, cardsBQueueState);
     assertCardInLane(cardsSettledState, 0, laneTargets.supportLeft, "cards-settled");
     assertCardInLane(cardsSettledState, 1, laneTargets.leadCenter, "cards-settled");
     assertCardSeparation(cardsBQueueState, 12, "cards-b-queue");
