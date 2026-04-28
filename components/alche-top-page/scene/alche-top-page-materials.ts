@@ -78,32 +78,57 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
         "#include <dithering_fragment>",
         `
           float iceFresnel = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 1.65);
+          float iceBaseAlpha = gl_FragColor.a;
           #ifdef USE_MAP
             vec2 iceUv = vMapUv;
+            vec2 paneUv = iceUv - 0.5;
+            float roundedBox = pow(abs(paneUv.x), 8.0) + pow(abs(paneUv.y), 8.0);
+            float glassBody = clamp((1.0 - roundedBox * 190.0) * 3.0, 0.0, 1.0);
+            float glassBorder =
+              clamp((0.95 - roundedBox * 178.0) * 8.0, 0.0, 1.0) -
+              clamp((0.78 - roundedBox * 178.0) * 8.0, 0.0, 1.0);
+            float glassShadow =
+              clamp((1.5 - roundedBox * 210.0) * 1.35, 0.0, 1.0) -
+              clamp((1.0 - roundedBox * 210.0) * 1.35, 0.0, 1.0);
+            float lensStrength = clamp((1.0 - roundedBox * 90.0) * 0.18, -0.22, 0.22);
+            vec2 lensUv = clamp((iceUv - 0.5) * (1.0 - lensStrength) + 0.5, vec2(0.001), vec2(0.999));
+            vec2 blurStep = vec2(1.0 / 1024.0);
+            vec4 lensMap =
+              texture2D(map, lensUv) * 0.4 +
+              texture2D(map, clamp(lensUv + vec2(blurStep.x * 3.0, 0.0), vec2(0.001), vec2(0.999))) * 0.15 +
+              texture2D(map, clamp(lensUv - vec2(blurStep.x * 3.0, 0.0), vec2(0.001), vec2(0.999))) * 0.15 +
+              texture2D(map, clamp(lensUv + vec2(0.0, blurStep.y * 3.0), vec2(0.001), vec2(0.999))) * 0.15 +
+              texture2D(map, clamp(lensUv - vec2(0.0, blurStep.y * 3.0), vec2(0.001), vec2(0.999))) * 0.15;
             float iceBand = smoothstep(
               0.76,
-              0.98,
-              sin((iceUv.y + iceUv.x * 0.34) * 31.0 + sin(iceUv.x * 19.0) * 2.1) * 0.5 + 0.5
+              0.985,
+              sin((lensUv.y + lensUv.x * 0.34) * 31.0 + sin(lensUv.x * 19.0) * 2.1) * 0.5 + 0.5
             );
             float iceCloud = smoothstep(
               0.52,
               1.0,
-              sin(iceUv.x * 12.0 + sin(iceUv.y * 10.0) * 2.8) * sin(iceUv.y * 15.0 + 1.7) * 0.5 + 0.5
+              sin(lensUv.x * 12.0 + sin(lensUv.y * 10.0) * 2.8) * sin(lensUv.y * 15.0 + 1.7) * 0.5 + 0.5
             );
             float iceCrack = smoothstep(
               0.965,
               0.998,
-              sin((iceUv.x * 1.4 + iceUv.y * 0.92) * 93.0 + sin(iceUv.x * 41.0) * 3.0) * 0.5 + 0.5
+              sin((lensUv.x * 1.4 + lensUv.y * 0.92) * 93.0 + sin(lensUv.x * 41.0) * 3.0) * 0.5 + 0.5
             );
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.24, 0.37, 0.43), iceCloud * 0.14);
-            gl_FragColor.rgb += vec3(0.72, 0.96, 1.0) * iceBand * 0.18;
-            gl_FragColor.rgb += vec3(1.0, 0.74, 0.3) * iceBand * iceFresnel * 0.08;
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.08, 0.17, 0.24), iceCrack * 0.22);
-            gl_FragColor.a = min(gl_FragColor.a + iceCloud * 0.045 + iceBand * 0.035, 0.6);
+            float lensTransition = smoothstep(0.0, 1.0, glassBody + glassBorder);
+            vec3 lensColor = lensMap.rgb;
+            lensColor += vec3(0.82, 0.96, 1.0) * glassBody * 0.1;
+            lensColor += vec3(0.92, 0.98, 1.0) * glassBorder * 0.34;
+            lensColor += vec3(0.16, 0.28, 0.38) * glassShadow * 0.16;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, lensColor, lensTransition * 0.34);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.32, 0.38), iceCloud * 0.14);
+            gl_FragColor.rgb += vec3(0.72, 0.96, 1.0) * iceBand * 0.2;
+            gl_FragColor.rgb += vec3(1.0, 0.72, 0.28) * iceBand * iceFresnel * 0.11;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.07, 0.14, 0.21), iceCrack * 0.24);
+            gl_FragColor.a = min(iceBaseAlpha + iceBaseAlpha * (iceCloud * 0.1 + iceBand * 0.08 + glassBorder * 0.15), 0.62);
           #endif
           gl_FragColor.rgb += vec3(0.13, 0.42, 0.62) * iceFresnel * 0.42;
           gl_FragColor.rgb += vec3(0.86, 0.97, 1.0) * iceFresnel * 0.22;
-          gl_FragColor.a = min(gl_FragColor.a + iceFresnel * 0.1, 0.56);
+          gl_FragColor.a = min(gl_FragColor.a + iceBaseAlpha * iceFresnel * 0.16, 0.62);
           #include <dithering_fragment>
         `,
       );
