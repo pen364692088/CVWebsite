@@ -187,6 +187,10 @@ export interface AlcheLayerDebugState {
   prismFullOpacity: number | null;
   prismEdgeOpacity: number | null;
   prismLineOpacity: number | null;
+  prismRefractionCaptureCount: number;
+  prismRefractionTargetWidth: number | null;
+  prismRefractionTargetHeight: number | null;
+  prismRefractionLastCaptureMs: number | null;
 }
 
 export interface AlcheWorksIntroSceneState {

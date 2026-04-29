@@ -99,7 +99,7 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
           float alcheIceFbm(vec2 p) {
             float value = 0.0;
             float amplitude = 0.5;
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 3; i++) {
               value += alcheIceNoise(p) * amplitude;
               p = p * 2.07 + vec2(7.13, 3.71);
               amplitude *= 0.5;
@@ -125,10 +125,10 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
           #ifdef USE_MAP
             vec2 iceUv = vMapUv;
             float grainNoise = alcheIceNoise(iceUv * 124.0 + vec2(3.7, 8.2));
-            float broadNoise = alcheIceFbm(iceUv * 7.0 + vec2(2.1, 6.4));
+            float broadNoise = alcheIceFbm(iceUv * 6.6 + vec2(2.1, 6.4));
             vec2 noiseWarp = vec2(
-              alcheIceFbm(iceUv * 5.2 + vec2(11.0, 17.0)),
-              alcheIceFbm(iceUv * 5.8 + vec2(29.0, 5.0))
+              alcheIceNoise(iceUv * 9.0 + vec2(11.0 + broadNoise * 2.0, 17.0)),
+              alcheIceNoise(iceUv * 10.5 + vec2(29.0, 5.0 + broadNoise * 2.5))
             ) - 0.5;
             vec2 paneUv = iceUv - 0.5;
             float roundedBox = pow(abs(paneUv.x), 8.0) + pow(abs(paneUv.y), 8.0);
@@ -143,11 +143,9 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             vec2 lensUv = clamp((iceUv - 0.5) * (1.0 - lensStrength) + 0.5 + noiseWarp * 0.055, vec2(0.001), vec2(0.999));
             vec2 blurStep = vec2(1.0 / 1024.0);
             vec4 lensMap =
-              texture2D(map, lensUv) * 0.4 +
-              texture2D(map, clamp(lensUv + vec2(blurStep.x * 7.0, 0.0), vec2(0.001), vec2(0.999))) * 0.15 +
-              texture2D(map, clamp(lensUv - vec2(blurStep.x * 7.0, 0.0), vec2(0.001), vec2(0.999))) * 0.15 +
-              texture2D(map, clamp(lensUv + vec2(0.0, blurStep.y * 7.0), vec2(0.001), vec2(0.999))) * 0.15 +
-              texture2D(map, clamp(lensUv - vec2(0.0, blurStep.y * 7.0), vec2(0.001), vec2(0.999))) * 0.15;
+              texture2D(map, lensUv) * 0.58 +
+              texture2D(map, clamp(lensUv + vec2(blurStep.x * 6.0, blurStep.y * 2.0), vec2(0.001), vec2(0.999))) * 0.21 +
+              texture2D(map, clamp(lensUv - vec2(blurStep.x * 5.0, blurStep.y * 2.0), vec2(0.001), vec2(0.999))) * 0.21;
             float iceBand = smoothstep(
               0.76,
               0.985,
@@ -178,18 +176,15 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
               uRefractionStrength *
               refractMask;
             vec2 sceneUv = clamp(screenUv + sceneOffset, vec2(0.001), vec2(0.999));
-            vec2 nearSceneUv = clamp(screenUv + sceneOffset * 0.42, vec2(0.001), vec2(0.999));
             vec2 chromaOffset = normalize(sceneOffset + vec2(0.0001, -0.0002)) * uChromaticStrength * refractMask;
             float sceneRefractionMix = clamp(uSceneRefractionMix, 0.0, 1.0);
             vec3 sceneColor = lensMap.rgb;
             if (sceneRefractionMix > 0.001) {
-              vec3 nearSceneColor = texture2D(uSceneTexture, nearSceneUv).rgb;
-              vec3 farSceneColor = vec3(
+              sceneColor = vec3(
                 texture2D(uSceneTexture, clamp(sceneUv + chromaOffset, vec2(0.001), vec2(0.999))).r,
                 texture2D(uSceneTexture, sceneUv).g,
                 texture2D(uSceneTexture, clamp(sceneUv - chromaOffset, vec2(0.001), vec2(0.999))).b
               );
-              sceneColor = mix(nearSceneColor, farSceneColor, 0.36 + iceBand * 0.16 + glassBorder * 0.12);
             }
             vec3 lensColor = lensMap.rgb;
             lensColor = mix(lensColor, sceneColor, refractMask * 0.96 * sceneRefractionMix);

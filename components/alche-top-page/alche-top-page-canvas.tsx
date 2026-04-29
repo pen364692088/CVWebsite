@@ -184,6 +184,10 @@ export function AlcheTopPageCanvas({
     prismFullOpacity: null,
     prismEdgeOpacity: null,
     prismLineOpacity: null,
+    prismRefractionCaptureCount: 0,
+    prismRefractionTargetWidth: null,
+    prismRefractionTargetHeight: null,
+    prismRefractionLastCaptureMs: null,
   });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;

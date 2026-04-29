@@ -98,8 +98,9 @@ interface CenterHeroRenderState {
 }
 
 const ALCHE_TOP_PRISM_ICE_OPACITY = 0.66;
-const ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX = 768;
-const ALCHE_TOP_PRISM_REFRACTION_CAPTURE_INTERVAL = 1 / 8;
+const ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX = 512;
+const ALCHE_TOP_PRISM_REFRACTION_CHANGE_INTERVAL = 1 / 5;
+const ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL = 0.5;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -1069,6 +1070,7 @@ function CenterHeroModel({
   const drawingBufferSize = useMemo(() => new THREE.Vector2(1, 1), []);
   const lastRefractionCaptureTimeRef = useRef(-Infinity);
   const refractionCaptureCountRef = useRef(0);
+  const lastRefractionStateKeyRef = useRef("");
   const texturedScene = useMemo<CenterHeroRenderState>(() => {
     const shadedScene = gltf.scene.clone(true) as THREE.Group;
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
@@ -1415,14 +1417,31 @@ function CenterHeroModel({
       layerDebugRef.current.prismGroupScale = groupRef.current.scale.x;
     }
 
+    const refractionStateKey = [
+      sceneState.activeSection,
+      Math.round(sceneState.sectionProgress * 200),
+      Math.round(sceneState.worksCardsProgress * 200),
+      Math.round(sceneState.kv.wallFlatten * 200),
+      Math.round(sceneState.camera.fov * 100),
+      ...sceneState.camera.position.map((value) => Math.round(value * 100)),
+      ...sceneState.camera.target.map((value) => Math.round(value * 100)),
+    ].join(":");
+    const refractionStateChanged = refractionStateKey !== lastRefractionStateKeyRef.current;
+    const secondsSinceRefractionCapture = state.clock.elapsedTime - lastRefractionCaptureTimeRef.current;
+    const refractionCaptureInterval = refractionStateChanged
+      ? ALCHE_TOP_PRISM_REFRACTION_CHANGE_INTERVAL
+      : ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL;
+    const refractionVisibleEnough = iceVisibilityTarget > 0.04 || prismFullOpacity > 0.04;
     if (
       renderMode === "full" &&
       !splitEnabled &&
       shadedVisible &&
+      refractionVisibleEnough &&
       (!captureMode || refractionCaptureCountRef.current < 1) &&
-      state.clock.elapsedTime - lastRefractionCaptureTimeRef.current >= ALCHE_TOP_PRISM_REFRACTION_CAPTURE_INTERVAL
+      secondsSinceRefractionCapture >= refractionCaptureInterval
     ) {
       lastRefractionCaptureTimeRef.current = state.clock.elapsedTime;
+      lastRefractionStateKeyRef.current = refractionStateKey;
       refractionCaptureCountRef.current += 1;
       const targetScale = Math.min(
         1,
@@ -1453,6 +1472,14 @@ function CenterHeroModel({
       state.gl.shadowMap.autoUpdate = previousShadowAutoUpdate;
       texturedScene.shadedScene.visible = previousShadedVisible;
       texturedScene.prismIceUniforms.uSceneTexture.value = backgroundRenderTarget.texture;
+    }
+
+    if (layerDebugRef && renderMode === "full") {
+      const lastCaptureTime = lastRefractionCaptureTimeRef.current;
+      layerDebugRef.current.prismRefractionCaptureCount = refractionCaptureCountRef.current;
+      layerDebugRef.current.prismRefractionTargetWidth = backgroundRenderTarget.width;
+      layerDebugRef.current.prismRefractionTargetHeight = backgroundRenderTarget.height;
+      layerDebugRef.current.prismRefractionLastCaptureMs = Number.isFinite(lastCaptureTime) ? Math.round(lastCaptureTime * 1000) : null;
     }
   });
 
