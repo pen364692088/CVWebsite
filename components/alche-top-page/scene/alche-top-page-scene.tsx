@@ -84,6 +84,7 @@ export function AlcheTopPageScene({
         wallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
         cardDebugMode={cardDebugMode}
+        captureMode={captureMode}
         worksWordHandoff={worksWordHandoff}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}
@@ -120,6 +121,7 @@ export function AlcheTopPageScene({
         wallTexturePath={kvWallTexturePath}
         worksCardItems={worksCardItems}
         cardDebugMode={cardDebugMode}
+        captureMode={captureMode}
         worksWordHandoff={worksWordHandoff}
         pointerOverride={pointerOverride}
         pointerDebugRef={pointerDebugRef}

@@ -49,6 +49,7 @@ interface KvSceneSystemProps {
   wallTexturePath: string;
   worksCardItems: readonly { title: string; imageSrc: string }[];
   cardDebugMode: AlcheWorksCardDebugMode;
+  captureMode: boolean;
   worksWordHandoff: number;
   renderMode: "full" | "edge-overlay";
   pointerOverride?: { x: number; y: number } | null;
@@ -91,11 +92,14 @@ interface CenterHeroRenderState {
   shadedGeometries: Set<THREE.BufferGeometry>;
   edgeGeometries: THREE.EdgesGeometry[];
   prismIceUniforms: PrismIceUniforms;
+  sceneTextureFallback: THREE.DataTexture;
   maskedLineArtUniforms: MaskedPrismLineArtUniforms;
   rainbowUniforms: PrismSideRainbowUniforms;
 }
 
-const ALCHE_TOP_PRISM_ICE_OPACITY = 0.46;
+const ALCHE_TOP_PRISM_ICE_OPACITY = 0.66;
+const ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX = 768;
+const ALCHE_TOP_PRISM_REFRACTION_CAPTURE_INTERVAL = 1 / 8;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -1026,12 +1030,16 @@ function WorksCardPair({
 
 function CenterHeroModel({
   sceneState,
+  captureMode,
   reducedMotion: _reducedMotion,
   renderMode,
   pointerOverride: _pointerOverride,
   pointerDebugRef,
   layerDebugRef,
-}: Pick<KvSceneSystemProps, "sceneState" | "reducedMotion" | "wallTexturePath" | "renderMode" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef">) {
+}: Pick<
+  KvSceneSystemProps,
+  "sceneState" | "captureMode" | "reducedMotion" | "wallTexturePath" | "renderMode" | "pointerOverride" | "pointerDebugRef" | "layerDebugRef"
+>) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, assetPath(ALCHE_TOP_CENTER_MODEL.path));
   const effectiveRadius = ALCHE_TOP_MEDIA_WALL.radius / ALCHE_TOP_KV_WALL_ARC_STRENGTH;
@@ -1044,19 +1052,44 @@ function CenterHeroModel({
       ),
     [effectiveRadius],
   );
+  const backgroundRenderTarget = useMemo(() => {
+    const target = new THREE.WebGLRenderTarget(1, 1, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType,
+      depthBuffer: true,
+      stencilBuffer: false,
+      generateMipmaps: false,
+    });
+    target.texture.name = "alche-prism-background-refraction";
+    target.texture.colorSpace = THREE.SRGBColorSpace;
+    return target;
+  }, []);
+  const drawingBufferSize = useMemo(() => new THREE.Vector2(1, 1), []);
+  const lastRefractionCaptureTimeRef = useRef(-Infinity);
+  const refractionCaptureCountRef = useRef(0);
   const texturedScene = useMemo<CenterHeroRenderState>(() => {
     const shadedScene = gltf.scene.clone(true) as THREE.Group;
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
     const maskedLineArtScene = gltf.scene.clone(true) as THREE.Group;
     const rainbowScene = gltf.scene.clone(true) as THREE.Group;
     const iceTexture = createIcePrismTexture();
+    const sceneTextureFallback = new THREE.DataTexture(new Uint8Array([246, 250, 252, 255]), 1, 1, THREE.RGBAFormat);
+    sceneTextureFallback.colorSpace = THREE.SRGBColorSpace;
+    sceneTextureFallback.needsUpdate = true;
     const shadedMaterials: THREE.MeshStandardMaterial[] = [];
     const shadedGeometries = new Set<THREE.BufferGeometry>();
     const edgeGeometries: THREE.EdgesGeometry[] = [];
     const prismIceUniforms: PrismIceUniforms = {
+      uSceneTexture: { value: sceneTextureFallback },
       uViewportPx: { value: new THREE.Vector2(1, 1) },
       uMaskBoundary: { value: -1 },
       uClipMode: { value: 0 },
+      uRefractionStrength: { value: 0.24 },
+      uLensWarpStrength: { value: 1.65 },
+      uChromaticStrength: { value: 0.0035 },
+      uSceneRefractionMix: { value: 1 },
     };
     const maskedLineArtUniforms: MaskedPrismLineArtUniforms = {
       uOpacity: { value: 0 },
@@ -1168,6 +1201,7 @@ function CenterHeroModel({
       shadedGeometries,
       edgeGeometries,
       prismIceUniforms,
+      sceneTextureFallback,
       maskedLineArtUniforms,
       rainbowUniforms,
     };
@@ -1198,6 +1232,7 @@ function CenterHeroModel({
   useEffect(
     () => () => {
       texturedScene.iceTexture.dispose();
+      texturedScene.sceneTextureFallback.dispose();
       texturedScene.shadedMaterials.forEach((material) => material.dispose());
       texturedScene.hiddenMaterial.dispose();
       texturedScene.edgeMaterial.dispose();
@@ -1205,8 +1240,9 @@ function CenterHeroModel({
       texturedScene.rainbowMaterial.dispose();
       texturedScene.shadedGeometries.forEach((geometry) => geometry.dispose());
       texturedScene.edgeGeometries.forEach((geometry) => geometry.dispose());
+      backgroundRenderTarget.dispose();
     },
-    [texturedScene],
+    [backgroundRenderTarget, texturedScene],
   );
 
   useFrame((state, delta) => {
@@ -1227,8 +1263,10 @@ function CenterHeroModel({
       pointerDebugRef.current.r3fPointerY = state.pointer.y;
     }
 
-    texturedScene.prismIceUniforms.uViewportPx.value.set(state.size.width, state.size.height);
+    state.gl.getDrawingBufferSize(drawingBufferSize);
+    texturedScene.prismIceUniforms.uViewportPx.value.copy(drawingBufferSize);
     texturedScene.prismIceUniforms.uMaskBoundary.value = maskBoundary;
+    texturedScene.prismIceUniforms.uSceneRefractionMix.value = 1;
     texturedScene.rainbowUniforms.uTime.value = state.clock.elapsedTime;
 
     const iceVisibilityTarget = renderMode === "full" && !splitEnabled ? visibility : 0;
@@ -1357,6 +1395,46 @@ function CenterHeroModel({
       layerDebugRef.current.modelWorldZ = worldPosition.z;
       layerDebugRef.current.modelScale = texturedScene.modelScale * groupRef.current.scale.x;
       layerDebugRef.current.prismGroupScale = groupRef.current.scale.x;
+    }
+
+    if (
+      renderMode === "full" &&
+      !splitEnabled &&
+      shadedVisible &&
+      (!captureMode || refractionCaptureCountRef.current < 1) &&
+      state.clock.elapsedTime - lastRefractionCaptureTimeRef.current >= ALCHE_TOP_PRISM_REFRACTION_CAPTURE_INTERVAL
+    ) {
+      lastRefractionCaptureTimeRef.current = state.clock.elapsedTime;
+      refractionCaptureCountRef.current += 1;
+      const targetScale = Math.min(
+        1,
+        ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX / Math.max(drawingBufferSize.x, drawingBufferSize.y, 1),
+      );
+      const targetWidth = Math.max(1, Math.floor(drawingBufferSize.x * targetScale));
+      const targetHeight = Math.max(1, Math.floor(drawingBufferSize.y * targetScale));
+      if (backgroundRenderTarget.width !== targetWidth || backgroundRenderTarget.height !== targetHeight) {
+        backgroundRenderTarget.setSize(targetWidth, targetHeight);
+      }
+
+      const previousRenderTarget = state.gl.getRenderTarget();
+      const previousAutoClear = state.gl.autoClear;
+      const previousXrEnabled = state.gl.xr.enabled;
+      const previousShadowAutoUpdate = state.gl.shadowMap.autoUpdate;
+      const previousShadedVisible = texturedScene.shadedScene.visible;
+
+      texturedScene.shadedScene.visible = false;
+      state.gl.xr.enabled = false;
+      state.gl.shadowMap.autoUpdate = false;
+      state.gl.autoClear = true;
+      state.gl.setRenderTarget(backgroundRenderTarget);
+      state.gl.clear(true, true, true);
+      state.gl.render(state.scene, state.camera);
+      state.gl.setRenderTarget(previousRenderTarget);
+      state.gl.autoClear = previousAutoClear;
+      state.gl.xr.enabled = previousXrEnabled;
+      state.gl.shadowMap.autoUpdate = previousShadowAutoUpdate;
+      texturedScene.shadedScene.visible = previousShadedVisible;
+      texturedScene.prismIceUniforms.uSceneTexture.value = backgroundRenderTarget.texture;
     }
   });
 
