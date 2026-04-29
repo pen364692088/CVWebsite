@@ -91,6 +91,14 @@ const fixedStateShots = [
     search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.68&alcheIntro=1&alcheCapture=1"),
   },
   {
+    name: "works-outro-prism-bridge",
+    search: withIdentityCardDebug("?alcheSection=works_outro&alcheProgress=0.78&alcheIntro=1&alcheCapture=1"),
+  },
+  {
+    name: "mission-in-prism-bridge-early",
+    search: withIdentityCardDebug("?alcheSection=mission_in&alcheProgress=0.08&alcheIntro=1&alcheCapture=1"),
+  },
+  {
     name: "mission-turn-mid",
     search: withIdentityCardDebug("?alcheSection=mission_in&alcheProgress=1&alcheMissionTurnProgress=0.5&alcheCapture=1"),
   },
@@ -785,6 +793,14 @@ function assertRange(value, range, label) {
   }
 }
 
+function getPrismVisibleOpacity(layerState) {
+  return Math.max(
+    layerState?.prismFullOpacity ?? 0,
+    layerState?.prismEdgeOpacity ?? 0,
+    layerState?.prismLineOpacity ?? 0,
+  );
+}
+
 function assertCameraState(layerState, camera, tolerance, label) {
   assert(
     layerState.cameraPosition.every((value, index) => approxEqual(value, camera.position[index], tolerance)),
@@ -1357,9 +1373,22 @@ async function captureFixedStates(browser, shots, options = {}) {
           { timeout: 2500 },
         );
       }
+      if (["works-outro-prism-bridge", "mission-in-prism-bridge-early"].includes(shot.name)) {
+        await page.waitForFunction(
+          () => {
+            const state = window.__getAlcheLayerDebugState?.();
+            return Math.max(state?.prismFullOpacity ?? 0, state?.prismEdgeOpacity ?? 0, state?.prismLineOpacity ?? 0) >= 0.08;
+          },
+          undefined,
+          { timeout: 3500 },
+        );
+      }
       const layerState = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
       layerStates.set(shot.name, layerState);
       assert(layerState, `Missing layer debug state for ${shot.name}`);
+      if (["works-outro-prism-bridge", "mission-in-prism-bridge-early"].includes(shot.name)) {
+        assert(getPrismVisibleOpacity(layerState) >= 0.08, `Expected visible prism bridge during ${shot.name}.`);
+      }
 
       if (shot.name in expectedShotStates) {
         const expected = expectedShotStates[shot.name];
@@ -2064,6 +2093,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
   const captureFlattenState = options.captureFlattenState ?? true;
   const requireEntryState = options.requireEntryState ?? true;
   const requireFlattenState = options.requireFlattenState ?? true;
+  const requireMissionBridge = options.requireMissionBridge ?? requireMissionPanel;
   const pointerDebug = options.pointerDebug ?? true;
   const captureSearch = captureMode ? "&alcheCapture=1" : "";
   const pointerDebugSearch = pointerDebug ? "&alchePointerDebug=1" : "";
@@ -2127,6 +2157,9 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
           kvWallFlatten: layerState?.kvWallFlatten ?? null,
           missionPanelProgress: layerState?.missionPanelProgress ?? null,
           missionOutlineOpacity: layerState?.missionOutlineOpacity ?? null,
+          prismFullOpacity: layerState?.prismFullOpacity ?? null,
+          prismEdgeOpacity: layerState?.prismEdgeOpacity ?? null,
+          prismLineOpacity: layerState?.prismLineOpacity ?? null,
           card0ScreenLeft: layerState?.card0ScreenLeft ?? null,
           card0ScreenRight: layerState?.card0ScreenRight ?? null,
           card1ScreenLeft: layerState?.card1ScreenLeft ?? null,
@@ -2207,6 +2240,21 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
       }
 
       if (
+        !capturedStates.has("mission-in-wheel-bridge") &&
+        snapshot.active === "mission_in" &&
+        (snapshot.cardsOpacity ?? 0) <= 0.04 &&
+        (snapshot.missionPanelProgress ?? 0) >= 0.43 &&
+        (snapshot.missionPanelProgress ?? 0) <= 0.68
+      ) {
+        console.log(`Capturing mission-in-wheel-bridge${fileSuffix}...`);
+        await page.screenshot({
+          path: path.join(outputDir, `mission-in-wheel-bridge${fileSuffix}.png`),
+          fullPage: false,
+        });
+        capturedStates.set("mission-in-wheel-bridge", snapshot);
+      }
+
+      if (
         !capturedStates.has("mission-in-wheel-panel") &&
         snapshot.active === "mission_in" &&
         (snapshot.cardsOpacity ?? 0) <= 0.02 &&
@@ -2224,6 +2272,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
         (!captureEntryState || capturedStates.has("works-outro-wheel-entry")) &&
         (!captureFlattenState || capturedStates.has("works-outro-wheel-flatten")) &&
         (!captureEdgeState || capturedStates.has("works-outro-wheel-unroll-edge")) &&
+        (!requireMissionBridge || capturedStates.has("mission-in-wheel-bridge")) &&
         (!requireMissionPanel || capturedStates.has("mission-in-wheel-panel"))
       ) {
         break;
@@ -2233,6 +2282,7 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
     const worksOutroWheelEntry = capturedStates.get("works-outro-wheel-entry");
     const worksOutroWheelUnrollEdge = capturedStates.get("works-outro-wheel-unroll-edge");
     const worksOutroWheelFlatten = capturedStates.get("works-outro-wheel-flatten");
+    const missionInWheelBridge = capturedStates.get("mission-in-wheel-bridge");
     const missionInWheelPanel = capturedStates.get("mission-in-wheel-panel");
 
     if (requireEntryState) {
@@ -2259,6 +2309,15 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
       );
     }
 
+    if (requireMissionBridge) {
+      assert(missionInWheelBridge, "Expected focused scrolling to capture mission_in prism bridge.");
+      assert(
+        getPrismVisibleOpacity(missionInWheelBridge) >= 0.08,
+        "Expected at least one prism layer visible during focused mission bridge.",
+      );
+      assertRange(missionInWheelBridge.missionPanelProgress, { min: 0.43, max: 0.68 }, "focused mission bridge panel progress");
+    }
+
     if (requireMissionPanel) {
       assert(missionInWheelPanel, "Expected focused scrolling to capture mission_in panel takeover.");
       if (worksOutroWheelFlatten) {
@@ -2269,6 +2328,12 @@ async function captureWorksOutroWheelFocused(browser, options = {}) {
         assert(
           (worksOutroWheelFlatten.kvWallFlatten ?? 0) <= (missionInWheelPanel.kvWallFlatten ?? 0),
           "Expected focused mission_in flatten to inherit works_outro progress.",
+        );
+      }
+      if (missionInWheelBridge) {
+        assert(
+          missionInWheelBridge.step < missionInWheelPanel.step,
+          "Expected focused mission bridge to happen before mission panel takeover.",
         );
       }
       assertRange(missionInWheelPanel.missionOutlineOpacity, { min: 0, max: 0.001 }, "focused mission panel outline opacity");
@@ -2662,6 +2727,8 @@ async function run() {
             "works-outro-unroll-late",
             "works-outro-curvature-late",
             "works-outro-flatten",
+            "works-outro-prism-bridge",
+            "mission-in-prism-bridge-early",
           ].includes(shot.name),
         );
         const worksOutroFixedShots2000 = worksOutroFixedShots.filter((shot) =>
@@ -2671,6 +2738,8 @@ async function run() {
             "works-outro-unroll-mid",
             "works-outro-curvature-mid",
             "works-outro-curvature-late",
+            "works-outro-prism-bridge",
+            "mission-in-prism-bridge-early",
           ].includes(shot.name),
         );
         await closeBrowserIfOpen(browser);

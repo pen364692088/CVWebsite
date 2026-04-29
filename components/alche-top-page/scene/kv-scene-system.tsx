@@ -1266,61 +1266,79 @@ function CenterHeroModel({
     state.gl.getDrawingBufferSize(drawingBufferSize);
     texturedScene.prismIceUniforms.uViewportPx.value.copy(drawingBufferSize);
     texturedScene.prismIceUniforms.uMaskBoundary.value = maskBoundary;
-    texturedScene.prismIceUniforms.uSceneRefractionMix.value = 1;
     texturedScene.rainbowUniforms.uTime.value = state.clock.elapsedTime;
 
-    const iceVisibilityTarget = renderMode === "full" && !splitEnabled ? visibility : 0;
+    const missionPanelActive = missionPanelProgress > 0.001;
+    const splitFullFade = splitEnabled ? smoothstep(remapRange(missionPanelProgress, 0.62, 0.84)) : 0;
+    const fullBridgeVisibility = splitEnabled ? visibility * (1 - splitFullFade) : visibility;
+    const edgeBridgeVisibility =
+      renderMode === "edge-overlay" && missionPanelActive
+        ? splitEnabled
+          ? visibility
+          : sceneState.activeSection === "works_outro"
+          ? visibility * smoothstep(remapRange(missionPanelProgress, 0.08, 0.36))
+          : 0
+        : 0;
+    const edgeOverlayActive = renderMode === "edge-overlay" && edgeBridgeVisibility > 0.001;
+    const iceVisibilityTarget = renderMode === "full" ? fullBridgeVisibility : 0;
+    texturedScene.prismIceUniforms.uSceneRefractionMix.value = splitEnabled ? 0.28 : 1;
     texturedScene.shadedMaterials.forEach((material) => {
-      if (splitEnabled) {
-        material.opacity = 0;
-        material.emissiveIntensity = 0;
-        return;
-      }
-      material.opacity = THREE.MathUtils.damp(material.opacity, iceVisibilityTarget * ALCHE_TOP_PRISM_ICE_OPACITY, 4, delta);
-      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.18, 4, delta);
+      const iceDamp = splitEnabled ? 10 : 4;
+      material.opacity = THREE.MathUtils.damp(material.opacity, iceVisibilityTarget * ALCHE_TOP_PRISM_ICE_OPACITY, iceDamp, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.18, iceDamp, delta);
     });
+    const edgeDamp = missionPanelActive ? 10 : 4;
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
       texturedScene.edgeMaterial.opacity,
-      renderMode === "edge-overlay" && splitEnabled ? visibility * 1 : 0,
-      4,
+      edgeBridgeVisibility,
+      edgeDamp,
       delta,
     );
     texturedScene.maskedLineArtUniforms.uOpacity.value = THREE.MathUtils.damp(
       texturedScene.maskedLineArtUniforms.uOpacity.value,
-      renderMode === "edge-overlay" && splitEnabled ? visibility * 0.86 : 0,
-      4,
+      edgeBridgeVisibility * 0.86,
+      edgeDamp,
       delta,
     );
     texturedScene.rainbowUniforms.uOpacity.value = THREE.MathUtils.damp(
       texturedScene.rainbowUniforms.uOpacity.value,
-      renderMode === "edge-overlay" && splitEnabled ? visibility * sceneState.kv.prismRainbowMix * 0.92 : 0,
-      4,
+      splitEnabled ? edgeBridgeVisibility * sceneState.kv.prismRainbowMix * 0.92 : 0,
+      edgeDamp,
       delta,
     );
     texturedScene.rainbowUniforms.uRainbowMix.value = THREE.MathUtils.damp(
       texturedScene.rainbowUniforms.uRainbowMix.value,
-      renderMode === "edge-overlay" && splitEnabled ? sceneState.kv.prismRainbowMix : 0,
-      4,
+      splitEnabled ? sceneState.kv.prismRainbowMix : 0,
+      edgeDamp,
       delta,
     );
     texturedScene.rainbowUniforms.uBlackMix.value = THREE.MathUtils.damp(
       texturedScene.rainbowUniforms.uBlackMix.value,
-      renderMode === "edge-overlay" && splitEnabled ? sceneState.kv.prismRainbowBlackMix : 0,
-      4,
+      splitEnabled ? sceneState.kv.prismRainbowBlackMix : 0,
+      edgeDamp,
       delta,
     );
+
+    const prismFullOpacity = texturedScene.shadedMaterials.reduce((maxOpacity, material) => Math.max(maxOpacity, material.opacity), 0);
+    const prismEdgeOpacity = texturedScene.edgeMaterial.opacity;
+    const prismLineOpacity = texturedScene.maskedLineArtUniforms.uOpacity.value;
+    if (layerDebugRef) {
+      if (renderMode === "full") {
+        layerDebugRef.current.prismFullOpacity = prismFullOpacity;
+      } else {
+        layerDebugRef.current.prismEdgeOpacity = prismEdgeOpacity;
+        layerDebugRef.current.prismLineOpacity = prismLineOpacity;
+      }
+    }
 
     const shadedVisible =
       renderMode === "full" && (iceVisibilityTarget > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
     const edgeVisible =
       renderMode === "edge-overlay" &&
-      splitEnabled &&
-      (visibility > 0.001 ||
-        texturedScene.edgeMaterial.opacity > 0.001 ||
-        texturedScene.maskedLineArtUniforms.uOpacity.value > 0.001 ||
-        texturedScene.rainbowUniforms.uOpacity.value > 0.001);
+      (edgeOverlayActive || prismEdgeOpacity > 0.001 || prismLineOpacity > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001);
     const rainbowVisible =
       edgeVisible &&
+      splitEnabled &&
       (sceneState.kv.prismRainbowMix > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001);
     texturedScene.shadedScene.visible = shadedVisible;
     texturedScene.edgeScene.visible = edgeVisible;

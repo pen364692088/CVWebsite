@@ -184,6 +184,9 @@ export interface AlcheLayerDebugState {
   missionPanelProgress: number | null;
   missionOutlineOpacity: number | null;
   kvWallFlatten: number | null;
+  prismFullOpacity: number | null;
+  prismEdgeOpacity: number | null;
+  prismLineOpacity: number | null;
 }
 
 export interface AlcheWorksIntroSceneState {

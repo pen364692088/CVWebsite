@@ -181,6 +181,9 @@ export function AlcheTopPageCanvas({
     missionPanelProgress: null,
     missionOutlineOpacity: null,
     kvWallFlatten: null,
+    prismFullOpacity: null,
+    prismEdgeOpacity: null,
+    prismLineOpacity: null,
   });
 
   pointerDebugRef.current.enabled = pointerDebugEnabled;
@@ -239,7 +242,6 @@ export function AlcheTopPageCanvas({
   }, [canvasEventSource, pointerDebugEnabled, pointerDebugRef, renderMode]);
 
   useEffect(() => {
-    if (renderMode !== "full") return;
     if (typeof window === "undefined") return;
 
     const host = window as typeof window & {
@@ -248,7 +250,16 @@ export function AlcheTopPageCanvas({
       __clearAlchePointerOverride?: () => void;
       __getAlchePointerDebugState?: () => AlchePointerDebugState;
       __getAlcheLayerDebugState?: () => AlcheLayerDebugState;
+      __getAlcheEdgeOverlayLayerDebugState?: () => AlcheLayerDebugState;
     };
+
+    if (renderMode === "edge-overlay") {
+      host.__getAlcheEdgeOverlayLayerDebugState = () => ({ ...layerDebugRef.current });
+
+      return () => {
+        delete host.__getAlcheEdgeOverlayLayerDebugState;
+      };
+    }
 
     host.__setAlcheSceneOverride = (nextOverride) => {
       setCaptureOverride(nextOverride);
@@ -263,7 +274,14 @@ export function AlcheTopPageCanvas({
     };
 
     host.__getAlchePointerDebugState = () => ({ ...pointerDebugRef.current });
-    host.__getAlcheLayerDebugState = () => ({ ...layerDebugRef.current });
+    host.__getAlcheLayerDebugState = () => {
+      const edgeState = host.__getAlcheEdgeOverlayLayerDebugState?.();
+      return {
+        ...layerDebugRef.current,
+        prismEdgeOpacity: edgeState?.prismEdgeOpacity ?? layerDebugRef.current.prismEdgeOpacity,
+        prismLineOpacity: edgeState?.prismLineOpacity ?? layerDebugRef.current.prismLineOpacity,
+      };
+    };
 
     return () => {
       delete host.__setAlcheSceneOverride;
