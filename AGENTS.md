@@ -175,7 +175,7 @@ http://localhost:3000/CVWebsite
 高优先级入口：
 
 - handoff：
-  [`docs/handoff/alche-top-page-handoff-2026-04-17.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-17.md)
+  [`docs/handoff/alche-top-page-handoff-2026-04-29.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-29.md)
 - visual loop：
   [`docs/alche-cards-visual-loop.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/alche-cards-visual-loop.md)
 - skill：

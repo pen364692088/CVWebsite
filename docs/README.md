@@ -7,7 +7,7 @@ Current documentation is split into two layers:
 Use these first when the task is about the current homepage runtime:
 
 - current handoff:
-  [`handoff/alche-top-page-handoff-2026-04-17.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-17.md)
+  [`handoff/alche-top-page-handoff-2026-04-29.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-29.md)
 - focused visual loop:
   [`alche-cards-visual-loop.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/alche-cards-visual-loop.md)
 - maintenance lessons:

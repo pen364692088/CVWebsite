@@ -1,14 +1,17 @@
 ---
 name: alche-works-visual-loop
-description: Use when iterating on the ALCHE `works -> works_cards` choreography, card lanes, desktop aspect adaptation, identity A/B debugging, or remote GitHub Pages visual parity. Prefer this over generic visual tweaking when the task is specifically about the ALCHE top-page works program.
+description: Use when iterating on the MOONFLOW / ALCHE top-page visual program, including works cards, works-outro wall, prism glass, mission bridge, endmark, footer, desktop aspect adaptation, identity A/B debugging, or remote GitHub Pages visual parity.
 ---
 # alche-works-visual-loop
 
-Use this skill for the active ALCHE top-page `works -> works_cards` loop.
+Use this skill for the active MOONFLOW / ALCHE top-page visual loop.
 
 This is not a generic homepage skill. It is only for:
 
 - `works_intro -> works -> works_cards`
+- `works_outro -> mission_in`
+- early prism glass / refraction readability
+- endmark / footer live visual validation
 - A/B identity ordering
 - arc trajectory and radial facing
 - side-lane framing
@@ -17,7 +20,7 @@ This is not a generic homepage skill. It is only for:
 
 ## Read First
 
-1. [`docs/handoff/alche-top-page-handoff-2026-04-17.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-17.md)
+1. [`docs/handoff/alche-top-page-handoff-2026-04-29.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-29.md)
 2. [`docs/alche-cards-visual-loop.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/alche-cards-visual-loop.md)
 3. [`docs/experience/alche-works-maintenance-lessons.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/experience/alche-works-maintenance-lessons.md)
 
@@ -48,6 +51,9 @@ The active path is single-canvas, not DOM cards:
    - `npm run typecheck`
    - `npm run verify:static`
    - `npm run validate:playwright`
+   - `node scripts/validate-playwright.mjs --cards-only`
+   - `node scripts/validate-playwright.mjs --works-outro-live-only`
+   - `node scripts/validate-playwright.mjs --endmark-live-only`
 5. Inspect screenshots before claiming progress.
 6. If the user is looking at production, also verify remote GitHub Pages with fresh screenshots.
 

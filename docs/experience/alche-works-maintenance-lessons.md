@@ -178,3 +178,67 @@ Default rule for this program:
 - when validating staged live animations, capture early and late states in separate fresh runs if a single-session chain proves unstable
 - assert the real debug state at capture time
 - keep the screenshot authority tied to the same live path the user actually sees
+
+## `alche-exp-0015` Curved Walls Should Use Continuous Parameter Space, Not Cylinder Edge Repair
+
+The works-outro wall seam work showed that finite cylinder edges, `atan` angle recovery, side switching,
+and edge reveal patches create new failures while fixing black borders.
+
+The durable shape for this page is a single high-subdivision parameter-domain wall:
+
+- continuous `aWallU / aWallV`
+- monotonic X mapping
+- concave Z sag for the curved state
+- `uFlatten` reducing curvature to zero
+- grid lines derived from wall UV, not screen coordinates or wrapped angles
+
+Default rule for this program:
+
+- do not return to finite `CylinderGeometry` for the works wall
+- avoid `atan`, `fract(angle)`, and edge reveal logic for visible wall coverage
+- tune curvature, wall half-width, and grid density in the parameter-domain wall shader
+- validate with real wide-scroll screenshots before claiming wall coverage
+
+## `alche-exp-0016` Readable Glass Is Blur Plus Subtle Refraction, Not Maximum Distortion
+
+The early prism looked impressive with strong screen-space refraction, but the user-visible goal changed:
+letters behind the prism should remain slightly readable and mostly blurred.
+
+For this page, the prism glass has three independent contributors:
+
+- background scene sampling offset
+- scene blur / background mix
+- internal ice texture, bands, cracks, clouds, and chroma
+
+Default rule for this program:
+
+- do not tune readability only by lowering `uRefractionStrength`
+- reduce lens warp, chroma, internal bands, clouds, cracks, and texture mix together
+- keep true background scene sampling so letters and grid really pass through the prism
+- prefer "small offset plus blur" over liquid distortion
+- verify with fresh `cards-a-entry` or `works-out` screenshots
+
+## `alche-exp-0017` Refraction Capture Needs Active And Idle Modes
+
+The first performance fix reduced background capture frequency too much, which made scroll-time refraction visibly jump at a low frame rate.
+
+Current rule:
+
+- active scrolling / camera / prism motion should capture at about `1 / 30s` with a lower max target size
+- idle should fall back to a slower refresh and a clearer target
+- invisible prism, late split mission state, and fixed capture mode should skip unnecessary capture
+
+Do not solve performance by forcing all states into a low-frequency capture cadence.
+The perceived smoothness during scroll matters more than idle render-target sharpness.
+
+## `alche-exp-0018` Visible Brand Can Change Without Renaming Internal Reproduction Surfaces
+
+The site now presents `MOONFLOW` to users, but the implementation still contains many `ALCHE_*` constants,
+debug query params, filenames, and docs for the reproduction program.
+
+Default rule:
+
+- user-facing copy and visual artifacts should say `MOONFLOW`
+- internal constants, debug APIs, and historical reproduction names can remain `ALCHE` when renaming would risk breaking validators
+- do not treat an internal `ALCHE_*` identifier as a visible-brand regression
+- do treat visible `ALCHE` text in screenshots, exported HTML, or UI copy as a regression unless it is historical documentation

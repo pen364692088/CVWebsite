@@ -12,12 +12,13 @@ Current continuation chain is no longer only `works_cards`. The active visual lo
 6. `mission_in`
 7. `mission -> vision` prism turn
 8. `vision` full-cover and rainbow-to-black face fade
-9. post-cover `ALCHE` endmark SVG overlay
+9. post-cover `MOONFLOW` endmark SVG overlay
+10. settled endmark footer links
 
 Authority order is:
 
 1. latest handoff:
-   - [`docs/handoff/alche-top-page-handoff-2026-04-23.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-23.md)
+   - [`docs/handoff/alche-top-page-handoff-2026-04-29.md`](/mnt/d/Project/AIProject/MyProject/CVWebsite/docs/handoff/alche-top-page-handoff-2026-04-29.md)
 2. current runtime code:
    - [`lib/alche-top-page.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/lib/alche-top-page.ts)
    - [`components/alche-top-page/alche-top-page-shell.tsx`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/alche-top-page-shell.tsx)
@@ -38,8 +39,11 @@ Default order:
 Then pick the smallest decisive visual validator:
 
 - cards / works loop:
+  - `node scripts/validate-playwright.mjs --cards-only`
   - `npm run verify:alche-cards`
   - or `npm run validate:playwright`
+- works-outro wall / mission bridge:
+  - `node scripts/validate-playwright.mjs --works-outro-live-only`
 - wide live vision cover:
   - `node scripts/validate-playwright.mjs --vision-cover-live-only`
 - post-cover endmark:
@@ -53,9 +57,10 @@ Important:
 
 Current known suite fact:
 
-- full `npm run validate:playwright` still contains an older blocker:
-  - `Expected mission_in settled to occur after mission_in panel`
-- treat that as a separate cleanup task unless you are actively fixing the wheel-handoff path
+- latest focused cards validation is green at commit `47d93c5`
+- the latest `--works-outro-live-only` attempts closed headless Chromium after partial capture
+- treat that as `pending-validation`, not as a product assertion failure, unless a fresh rerun proves otherwise
+- full `npm run validate:playwright` should not be the only readiness authority until focused validators are stable
 
 ## Preferred Debug Entries
 
@@ -80,10 +85,28 @@ Use the later-phase overrides when the issue is no longer a cards problem:
 - `alcheMissionTurnProgress=...`
 - `alcheVisionCoverProgress=...`
 - `alcheEndmarkStage=black|guides|outline|fill|settled`
+- `alcheEndmarkFooterProgress=...`
 - `alcheEndmarkTimeScale=...`
 - `alcheDisableEndmark=1`
 
 Use them as diagnostics or fixed-state comparison only. Do not treat them as the final proof for live behavior.
+
+### Prism glass / refraction
+
+Use `__getAlcheLayerDebugState()` when checking the early cold-white glass prism:
+
+- `prismRefractionCaptureCount`
+- `prismRefractionTargetWidth`
+- `prismRefractionTargetHeight`
+- `prismRefractionLastCaptureMs`
+- `prismRefractionCaptureMode`
+- `prismRefractionActiveMotion`
+
+Current intended feel:
+
+- background letters and wall grid remain recognizable through the prism
+- they are blurred and softened, not strongly liquid-distorted
+- internal ice texture is a subtle material layer, not the dominant visible pattern
 
 ## What Must Be Proven
 
@@ -120,7 +143,9 @@ Live-scroll checks:
 - prism cover reaches terminal state first
 - black overlay really takes over before the SVG sequence starts
 - `grid -> guides -> outline -> fill -> settled` order is visible
-- final `ALCHE` geometry is present as a shell-level SVG overlay, not as a resurrected Three scene
+- final `MOONFLOW` geometry is present as a shell-level SVG overlay, not as a resurrected Three scene
+- after footer scroll, the left header brand is hidden while the right controls stay visible
+- footer items are visual placeholders, not real links
 
 ## Desktop Validation Baselines
 
@@ -141,6 +166,9 @@ Primary artifacts under `.playwright-artifacts/alche-top-page/`:
 
 ### Cards / works
 
+- `works-out.png`
+- `cards-a-entry.png`
+- `cards-a-center.png`
 - `cards-b-queue.png`
 - `cards-handoff-mid.png`
 - `cards-settled.png`
@@ -167,6 +195,7 @@ Primary artifacts under `.playwright-artifacts/alche-top-page/`:
 - `endmark-outline-desktop-2000x1080.png`
 - `endmark-fill-desktop-2000x1080.png`
 - `endmark-settled-desktop-2000x1080.png`
+- `endmark-footer-settled-desktop-2000x1080.png`
 - `endmark-live-black-desktop-2000x1080.png`
 - `endmark-live-settled-desktop-2000x1080.png`
 
@@ -186,6 +215,14 @@ If the issue is in later phases:
 
 Do **not** start by reopening old `vision / service / outro` Three branches.
 
+If the issue is early prism glass readability:
+
+1. `uRefractionStrength`, `uLensWarpStrength`, and `uChromaticStrength` defaults in [`components/alche-top-page/scene/kv-scene-system.tsx`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/scene/kv-scene-system.tsx)
+2. scene blur radius and scene/internal mix in [`components/alche-top-page/scene/alche-top-page-materials.ts`](/mnt/d/Project/AIProject/MyProject/CVWebsite/components/alche-top-page/scene/alche-top-page-materials.ts)
+3. internal `iceBand`, `iceCloud`, `iceCrack`, and chroma weights
+
+Do **not** move the camera or prism model just to make letters more readable.
+
 ## Known Traps
 
 1. Do not claim live success from `alcheVisionCoverProgress=1` or `alcheEndmarkStage=settled` fixed-state alone.
@@ -193,3 +230,5 @@ Do **not** start by reopening old `vision / service / outro` Three branches.
 3. Do not start with global `baseRadius` for wide-screen cover problems.
 4. Do not claim remote success for endmark or vision cover without fresh GitHub Pages screenshots.
 5. Do not let a full-suite failure in the old wheel-handoff assertion erase targeted live evidence for later-phase work.
+6. Do not tune glass readability only by lowering refraction strength; internal texture and chroma can still dominate.
+7. Do not change refraction capture back to low-frequency-only; that caused scroll-time jumpiness.
