@@ -98,9 +98,11 @@ interface CenterHeroRenderState {
 }
 
 const ALCHE_TOP_PRISM_ICE_OPACITY = 0.66;
-const ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX = 512;
-const ALCHE_TOP_PRISM_REFRACTION_CHANGE_INTERVAL = 1 / 5;
+const ALCHE_TOP_PRISM_REFRACTION_IDLE_TARGET_MAX = 512;
+const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_TARGET_MAX = 384;
+const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_INTERVAL = 1 / 30;
 const ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL = 0.5;
+const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_HOLD = 0.18;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -1071,6 +1073,7 @@ function CenterHeroModel({
   const lastRefractionCaptureTimeRef = useRef(-Infinity);
   const refractionCaptureCountRef = useRef(0);
   const lastRefractionStateKeyRef = useRef("");
+  const lastRefractionMotionTimeRef = useRef(-Infinity);
   const texturedScene = useMemo<CenterHeroRenderState>(() => {
     const shadedScene = gltf.scene.clone(true) as THREE.Group;
     const edgeScene = gltf.scene.clone(true) as THREE.Group;
@@ -1357,6 +1360,10 @@ function CenterHeroModel({
         layerDebugRef.current.modelWorldZ = null;
         layerDebugRef.current.modelScale = null;
         layerDebugRef.current.prismGroupScale = null;
+        if (renderMode === "full") {
+          layerDebugRef.current.prismRefractionCaptureMode = "skipped";
+          layerDebugRef.current.prismRefractionActiveMotion = false;
+        }
       }
       return;
     }
@@ -1425,27 +1432,47 @@ function CenterHeroModel({
       Math.round(sceneState.camera.fov * 100),
       ...sceneState.camera.position.map((value) => Math.round(value * 100)),
       ...sceneState.camera.target.map((value) => Math.round(value * 100)),
+      Math.round(groupRef.current.position.x * 100),
+      Math.round(groupRef.current.position.y * 100),
+      Math.round(groupRef.current.position.z * 100),
+      Math.round(groupRef.current.rotation.x * 1000),
+      Math.round(groupRef.current.rotation.y * 1000),
+      Math.round(groupRef.current.rotation.z * 1000),
+      Math.round(groupRef.current.scale.x * 1000),
     ].join(":");
     const refractionStateChanged = refractionStateKey !== lastRefractionStateKeyRef.current;
+    if (refractionStateChanged) {
+      lastRefractionMotionTimeRef.current = state.clock.elapsedTime;
+    }
     const secondsSinceRefractionCapture = state.clock.elapsedTime - lastRefractionCaptureTimeRef.current;
-    const refractionCaptureInterval = refractionStateChanged
-      ? ALCHE_TOP_PRISM_REFRACTION_CHANGE_INTERVAL
+    const refractionActiveMotion =
+      state.clock.elapsedTime - lastRefractionMotionTimeRef.current <= ALCHE_TOP_PRISM_REFRACTION_ACTIVE_HOLD;
+    const refractionCaptureInterval = refractionActiveMotion
+      ? ALCHE_TOP_PRISM_REFRACTION_ACTIVE_INTERVAL
       : ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL;
     const refractionVisibleEnough = iceVisibilityTarget > 0.04 || prismFullOpacity > 0.04;
-    if (
+    const refractionCaptureEnabled =
       renderMode === "full" &&
       !splitEnabled &&
       shadedVisible &&
       refractionVisibleEnough &&
-      (!captureMode || refractionCaptureCountRef.current < 1) &&
-      secondsSinceRefractionCapture >= refractionCaptureInterval
-    ) {
+      (!captureMode || refractionCaptureCountRef.current < 1);
+    const refractionCaptureMode = refractionCaptureEnabled
+      ? refractionActiveMotion
+        ? "active"
+        : "idle"
+      : "skipped";
+    if (refractionCaptureEnabled && secondsSinceRefractionCapture >= refractionCaptureInterval) {
       lastRefractionCaptureTimeRef.current = state.clock.elapsedTime;
       lastRefractionStateKeyRef.current = refractionStateKey;
       refractionCaptureCountRef.current += 1;
+      const refractionTargetMax =
+        refractionCaptureCountRef.current === 1 || !refractionActiveMotion
+          ? ALCHE_TOP_PRISM_REFRACTION_IDLE_TARGET_MAX
+          : ALCHE_TOP_PRISM_REFRACTION_ACTIVE_TARGET_MAX;
       const targetScale = Math.min(
         1,
-        ALCHE_TOP_PRISM_REFRACTION_TARGET_MAX / Math.max(drawingBufferSize.x, drawingBufferSize.y, 1),
+        refractionTargetMax / Math.max(drawingBufferSize.x, drawingBufferSize.y, 1),
       );
       const targetWidth = Math.max(1, Math.floor(drawingBufferSize.x * targetScale));
       const targetHeight = Math.max(1, Math.floor(drawingBufferSize.y * targetScale));
@@ -1480,6 +1507,8 @@ function CenterHeroModel({
       layerDebugRef.current.prismRefractionTargetWidth = backgroundRenderTarget.width;
       layerDebugRef.current.prismRefractionTargetHeight = backgroundRenderTarget.height;
       layerDebugRef.current.prismRefractionLastCaptureMs = Number.isFinite(lastCaptureTime) ? Math.round(lastCaptureTime * 1000) : null;
+      layerDebugRef.current.prismRefractionCaptureMode = refractionCaptureMode;
+      layerDebugRef.current.prismRefractionActiveMotion = refractionActiveMotion && refractionCaptureEnabled;
     }
   });
 

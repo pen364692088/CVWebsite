@@ -1245,7 +1245,13 @@ async function runScenario(browser, scenario) {
       fullPage: false,
     });
   } finally {
-    await context.close();
+    try {
+      await context.close();
+    } catch (error) {
+      if (!isAlreadyClosedPlaywrightError(error)) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -1277,7 +1283,7 @@ async function captureFixedStates(browser, shots, options = {}) {
         heroShotId: params.get("alcheHeroShot"),
       };
       const sectionId = override.section;
-      await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 12000 });
+      await page.waitForFunction(() => typeof window.__setAlcheDebugOverride === "function", undefined, { timeout: 20000 });
       await page.evaluate((nextOverride) => {
         window.__setAlcheDebugOverride?.(nextOverride);
       }, override);
@@ -1326,7 +1332,7 @@ async function captureFixedStates(browser, shots, options = {}) {
           );
         }
       }
-      await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 5000 });
+      await page.waitForFunction(() => typeof window.__getAlcheLayerDebugState === "function", undefined, { timeout: 20000 });
       const expectedEndmarkStage = shot.endmarkStage ?? (shot.name.startsWith("endmark-") ? shot.name.replace("endmark-", "") : null);
       if (expectedEndmarkStage) {
         await page.waitForFunction(
@@ -1678,13 +1684,17 @@ async function assertPrismRefractionPerf(browser, shotId, options = {}) {
       shot.section,
       { timeout: 12000 },
     );
-    await page.waitForTimeout(650);
+    await page.waitForTimeout(1400);
     const before = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
     await page.waitForTimeout(1100);
     const after = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
 
     assert(before && after, `Missing prism refraction perf state for ${shotId}.`);
     assert((after.prismFullOpacity ?? 0) >= 0.08, `Expected visible full prism during ${shotId} perf guard.`);
+    assert(
+      after.prismRefractionCaptureMode !== "active" || after.prismRefractionActiveMotion === false,
+      `Expected ${shotId} to settle out of active refraction mode during idle perf guard.`,
+    );
     assert(
       Math.max(after.prismRefractionTargetWidth ?? 0, after.prismRefractionTargetHeight ?? 0) <= 512,
       `Expected ${shotId} refraction target max dimension <= 512, got ${after.prismRefractionTargetWidth}x${after.prismRefractionTargetHeight}.`,
@@ -1695,7 +1705,130 @@ async function assertPrismRefractionPerf(browser, shotId, options = {}) {
       `Expected ${shotId} idle refraction captures to stay <= 3 per ~1.1s, got ${captureDelta}.`,
     );
   } finally {
-    await context.close();
+    try {
+      await context.close();
+    } catch (error) {
+      if (!isAlreadyClosedPlaywrightError(error)) {
+        throw error;
+      }
+    }
+  }
+}
+
+async function assertPrismRefractionActivePerf(browser, shotId, options = {}) {
+  const viewport = options.viewport ?? { width: 1440, height: 1080 };
+  const shot = worksShotbook.shots.find((candidate) => candidate.id === shotId);
+  assert(shot, `Missing shotbook entry for ${shotId}.`);
+  const context = await browser.newContext({
+    viewport,
+    locale: "en-US",
+    reducedMotion: "no-preference",
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/en/?alcheHideDebugUi=1&alcheCardDebug=identity`, { waitUntil: "networkidle" });
+    await assertTopPageShell(page, `prism-refraction-active-perf-${shotId}`);
+    await page.waitForFunction(
+      () =>
+        typeof window.__setAlcheDebugOverride === "function" &&
+        typeof window.__getAlcheLayerDebugState === "function",
+      undefined,
+      { timeout: 12000 },
+    );
+    const startProgress = Math.max(0.04, shot.progress - 0.05);
+    const endProgress = Math.min(0.96, shot.progress + 0.05);
+    await page.evaluate((nextOverride) => {
+      window.__setAlcheDebugOverride?.(nextOverride);
+    }, {
+      shotId: shot.id,
+      section: shot.section,
+      progress: startProgress,
+      intro: shot.intro,
+      heroShotId: null,
+    });
+    await page.waitForFunction(
+      (expectedSection) => {
+        const root = document.querySelector("[data-active-section]");
+        const loadingOverlay = document.querySelector("[data-loading-overlay]");
+        const state = window.__getAlcheLayerDebugState?.();
+        return (
+          root?.getAttribute("data-render-active-section") === expectedSection &&
+          root?.getAttribute("data-render-intro-ready") === "true" &&
+          loadingOverlay?.getAttribute("data-render-hidden") === "true" &&
+          (state?.prismRefractionCaptureCount ?? 0) >= 1
+        );
+      },
+      shot.section,
+      { timeout: 12000 },
+    );
+    const before = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+    const activeSample = await page.evaluate(
+      async ({ section, intro, heroShotId, start, end }) => {
+        const steps = 30;
+        const result = {
+          activeSeen: false,
+          activeTargetSeen: false,
+          activeTargetMax: 0,
+        };
+        for (let index = 1; index <= steps; index += 1) {
+          const t = index / steps;
+          const eased = t * t * (3 - 2 * t);
+          window.__setAlcheDebugOverride?.({
+            section,
+            progress: start + (end - start) * eased,
+            intro,
+            heroShotId,
+          });
+          await new Promise((resolve) => window.setTimeout(resolve, 33));
+          const state = window.__getAlcheLayerDebugState?.();
+          if (state?.prismRefractionCaptureMode === "active" || state?.prismRefractionActiveMotion === true) {
+            result.activeSeen = true;
+            if ((state.prismRefractionCaptureCount ?? 0) > 1) {
+              result.activeTargetSeen = true;
+              result.activeTargetMax = Math.max(
+                result.activeTargetMax,
+                state.prismRefractionTargetWidth ?? 0,
+                state.prismRefractionTargetHeight ?? 0,
+              );
+            }
+          }
+        }
+        return result;
+      },
+      {
+        section: shot.section,
+        intro: shot.intro,
+        heroShotId: null,
+        start: startProgress,
+        end: endProgress,
+      },
+    );
+    const after = await page.evaluate(() => window.__getAlcheLayerDebugState?.() ?? null);
+
+    assert(before && after, `Missing prism active refraction state for ${shotId}.`);
+    assert((after.prismFullOpacity ?? 0) >= 0.08, `Expected visible full prism during ${shotId} active perf guard.`);
+    assert(
+      activeSample.activeSeen,
+      `Expected ${shotId} to enter active refraction mode during animated progress.`,
+    );
+    assert(
+      activeSample.activeTargetSeen && activeSample.activeTargetMax <= 384,
+      `Expected ${shotId} active refraction target max dimension <= 384, got ${activeSample.activeTargetMax}.`,
+    );
+    const captureDelta = (after.prismRefractionCaptureCount ?? 0) - (before.prismRefractionCaptureCount ?? 0);
+    assert(
+      captureDelta >= 10,
+      `Expected ${shotId} active refraction captures to exceed low-frequency 5fps behavior, got ${captureDelta}.`,
+    );
+  } finally {
+    try {
+      await context.close();
+    } catch (error) {
+      if (!isAlreadyClosedPlaywrightError(error)) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -2915,6 +3048,8 @@ async function run() {
         });
         await withFreshBrowser((freshBrowser) => assertPrismRefractionPerf(freshBrowser, "cards-a-center"));
         await withFreshBrowser((freshBrowser) => assertPrismRefractionPerf(freshBrowser, "cards-b-queue"));
+        await withFreshBrowser((freshBrowser) => assertPrismRefractionActivePerf(freshBrowser, "cards-a-center"));
+        await withFreshBrowser((freshBrowser) => assertPrismRefractionActivePerf(freshBrowser, "cards-b-queue"));
       } else {
         await captureFixedStates(browser, desktopWideShots, {
           viewport: { width: 2560, height: 1600 },

@@ -191,6 +191,8 @@ export interface AlcheLayerDebugState {
   prismRefractionTargetWidth: number | null;
   prismRefractionTargetHeight: number | null;
   prismRefractionLastCaptureMs: number | null;
+  prismRefractionCaptureMode: "active" | "idle" | "skipped";
+  prismRefractionActiveMotion: boolean;
 }
 
 export interface AlcheWorksIntroSceneState {
