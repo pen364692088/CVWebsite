@@ -103,6 +103,9 @@ const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_TARGET_MAX = 384;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_INTERVAL = 1 / 30;
 const ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL = 0.5;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_HOLD = 0.18;
+const ALCHE_TOP_PRISM_READABLE_REFRACTION_STRENGTH = 0.045;
+const ALCHE_TOP_PRISM_READABLE_LENS_WARP_STRENGTH = 0.75;
+const ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH = 0.0012;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -1091,9 +1094,9 @@ function CenterHeroModel({
       uViewportPx: { value: new THREE.Vector2(1, 1) },
       uMaskBoundary: { value: -1 },
       uClipMode: { value: 0 },
-      uRefractionStrength: { value: 0.12 },
-      uLensWarpStrength: { value: 1.65 },
-      uChromaticStrength: { value: 0.0035 },
+      uRefractionStrength: { value: ALCHE_TOP_PRISM_READABLE_REFRACTION_STRENGTH },
+      uLensWarpStrength: { value: ALCHE_TOP_PRISM_READABLE_LENS_WARP_STRENGTH },
+      uChromaticStrength: { value: ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH },
       uSceneRefractionMix: { value: 1 },
     };
     const maskedLineArtUniforms: MaskedPrismLineArtUniforms = {

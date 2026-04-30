@@ -107,6 +107,18 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             return value;
           }
 
+          vec3 alcheSceneBlur(vec2 uv, vec2 viewportPx, float radiusPx) {
+            vec2 pixel = vec2(radiusPx) / max(viewportPx, vec2(1.0));
+            vec2 minUv = vec2(0.001);
+            vec2 maxUv = vec2(0.999);
+            vec3 color = texture2D(uSceneTexture, uv).rgb * 0.42;
+            color += texture2D(uSceneTexture, clamp(uv + vec2(pixel.x, 0.0), minUv, maxUv)).rgb * 0.145;
+            color += texture2D(uSceneTexture, clamp(uv - vec2(pixel.x, 0.0), minUv, maxUv)).rgb * 0.145;
+            color += texture2D(uSceneTexture, clamp(uv + vec2(0.0, pixel.y), minUv, maxUv)).rgb * 0.145;
+            color += texture2D(uSceneTexture, clamp(uv - vec2(0.0, pixel.y), minUv, maxUv)).rgb * 0.145;
+            return color;
+          }
+
           void main() {
             float screenY = gl_FragCoord.y / max(uViewportPx.y, 1.0);
             float epsilon = 0.75 / max(uViewportPx.y, 1.0);
@@ -139,8 +151,8 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             float glassShadow =
               clamp((1.5 - roundedBox * 210.0) * 1.35, 0.0, 1.0) -
               clamp((1.0 - roundedBox * 210.0) * 1.35, 0.0, 1.0);
-            float lensStrength = clamp((1.0 - roundedBox * 58.0) * 0.34, -0.36, 0.36);
-            vec2 lensUv = clamp((iceUv - 0.5) * (1.0 - lensStrength) + 0.5 + noiseWarp * 0.055, vec2(0.001), vec2(0.999));
+            float lensStrength = clamp((1.0 - roundedBox * 58.0) * 0.16, -0.18, 0.18);
+            vec2 lensUv = clamp((iceUv - 0.5) * (1.0 - lensStrength) + 0.5 + noiseWarp * 0.018, vec2(0.001), vec2(0.999));
             vec2 blurStep = vec2(1.0 / 1024.0);
             vec4 lensMap =
               texture2D(map, lensUv) * 0.58 +
@@ -164,7 +176,7 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             float lensTransition = smoothstep(0.0, 1.0, glassBody + glassBorder);
             float refractionCaustic = smoothstep(0.42, 0.95, broadNoise + grainNoise * 0.25) * glassBody;
             vec2 screenUv = clamp(gl_FragCoord.xy / max(uViewportPx, vec2(1.0)), vec2(0.001), vec2(0.999));
-            vec2 radialWarp = (paneUv + noiseWarp * 0.08) * (1.35 - roundedBox * 18.0);
+            vec2 radialWarp = (paneUv + noiseWarp * 0.035) * (1.35 - roundedBox * 18.0);
             radialWarp = clamp(radialWarp, vec2(-0.82), vec2(0.82));
             vec2 bandWarp = vec2(
               sin((iceUv.y + broadNoise * 0.09) * 18.0 + iceUv.x * 5.5),
@@ -172,38 +184,42 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             );
             float refractMask = lensTransition * (0.35 + glassBody * 0.65);
             vec2 sceneOffset =
-              (radialWarp * uLensWarpStrength * 1.18 + noiseWarp * 0.82 + bandWarp * iceBand * 0.32) *
+              (radialWarp * uLensWarpStrength * 1.18 + noiseWarp * 0.24 + bandWarp * iceBand * 0.08) *
               uRefractionStrength *
               refractMask;
+            sceneOffset = clamp(sceneOffset, vec2(-0.035), vec2(0.035));
             vec2 sceneUv = clamp(screenUv + sceneOffset, vec2(0.001), vec2(0.999));
-            vec2 chromaOffset = normalize(sceneOffset + vec2(0.0001, -0.0002)) * uChromaticStrength * refractMask;
+            float chromaMask = clamp((glassBorder * 0.7 + iceFresnel * 0.35) * refractMask, 0.0, 1.0);
+            vec2 chromaOffset = normalize(sceneOffset + vec2(0.0001, -0.0002)) * uChromaticStrength * chromaMask;
             float sceneRefractionMix = clamp(uSceneRefractionMix, 0.0, 1.0);
             vec3 sceneColor = lensMap.rgb;
             if (sceneRefractionMix > 0.001) {
-              sceneColor = vec3(
+              vec3 blurredScene = alcheSceneBlur(sceneUv, uViewportPx, mix(5.2, 3.4, glassBorder));
+              vec3 chromaScene = vec3(
                 texture2D(uSceneTexture, clamp(sceneUv + chromaOffset, vec2(0.001), vec2(0.999))).r,
-                texture2D(uSceneTexture, sceneUv).g,
+                blurredScene.g,
                 texture2D(uSceneTexture, clamp(sceneUv - chromaOffset, vec2(0.001), vec2(0.999))).b
               );
+              sceneColor = mix(blurredScene, chromaScene, chromaMask * 0.28);
             }
             vec3 lensColor = lensMap.rgb;
-            lensColor = mix(lensColor, sceneColor, refractMask * 0.96 * sceneRefractionMix);
-            lensColor += vec3(0.94, 0.98, 1.0) * glassBody * 0.14;
-            lensColor += vec3(0.88, 0.94, 0.98) * glassBorder * 0.42;
-            lensColor += vec3(0.28, 0.31, 0.33) * glassShadow * 0.2;
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, lensColor, lensTransition * 0.42);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, sceneColor, refractMask * iceBaseAlpha * 1.08 * sceneRefractionMix);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.31, 0.33, 0.34), iceCloud * 0.15);
-            gl_FragColor.rgb += vec3(0.94, 0.985, 1.0) * iceBand * 0.34;
-            gl_FragColor.rgb += vec3(0.84, 0.91, 0.96) * iceBand * iceFresnel * 0.18;
-            gl_FragColor.rgb += vec3(0.86, 0.95, 1.0) * refractionCaustic * iceFresnel * 0.16;
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.16, 0.18, 0.2), iceCrack * 0.2);
+            lensColor = mix(lensColor, sceneColor, refractMask * 0.88 * sceneRefractionMix);
+            lensColor += vec3(0.94, 0.98, 1.0) * glassBody * 0.08;
+            lensColor += vec3(0.88, 0.94, 0.98) * glassBorder * 0.28;
+            lensColor += vec3(0.28, 0.31, 0.33) * glassShadow * 0.08;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, lensColor, lensTransition * 0.24);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, sceneColor, refractMask * iceBaseAlpha * 0.88 * sceneRefractionMix);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.31, 0.33, 0.34), iceCloud * 0.055);
+            gl_FragColor.rgb += vec3(0.94, 0.985, 1.0) * iceBand * 0.11;
+            gl_FragColor.rgb += vec3(0.84, 0.91, 0.96) * iceBand * iceFresnel * 0.07;
+            gl_FragColor.rgb += vec3(0.86, 0.95, 1.0) * refractionCaustic * iceFresnel * 0.08;
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.16, 0.18, 0.2), iceCrack * 0.055);
             gl_FragColor.rgb += (grainNoise - 0.5) * vec3(0.018) * iceBaseAlpha;
-            gl_FragColor.a = min(iceBaseAlpha + iceBaseAlpha * (iceCloud * 0.14 + iceBand * 0.18 + glassBorder * 0.25 + refractMask * 0.32), 0.86);
+            gl_FragColor.a = min(iceBaseAlpha + iceBaseAlpha * (iceCloud * 0.055 + iceBand * 0.07 + glassBorder * 0.18 + refractMask * 0.2), 0.82);
           #endif
-          gl_FragColor.rgb += vec3(0.45, 0.55, 0.62) * iceFresnel * 0.16;
-          gl_FragColor.rgb += vec3(0.94, 0.98, 1.0) * iceFresnel * 0.24;
-          gl_FragColor.a = min(gl_FragColor.a + iceBaseAlpha * iceFresnel * 0.2, 0.86);
+          gl_FragColor.rgb += vec3(0.45, 0.55, 0.62) * iceFresnel * 0.08;
+          gl_FragColor.rgb += vec3(0.94, 0.98, 1.0) * iceFresnel * 0.16;
+          gl_FragColor.a = min(gl_FragColor.a + iceBaseAlpha * iceFresnel * 0.14, 0.82);
           #include <dithering_fragment>
         `,
       );
