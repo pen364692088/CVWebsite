@@ -1091,7 +1091,7 @@ function CenterHeroModel({
       uViewportPx: { value: new THREE.Vector2(1, 1) },
       uMaskBoundary: { value: -1 },
       uClipMode: { value: 0 },
-      uRefractionStrength: { value: 0.24 },
+      uRefractionStrength: { value: 0.12 },
       uLensWarpStrength: { value: 1.65 },
       uChromaticStrength: { value: 0.0035 },
       uSceneRefractionMix: { value: 1 },
