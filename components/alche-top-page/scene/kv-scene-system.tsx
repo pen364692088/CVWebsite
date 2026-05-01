@@ -97,15 +97,15 @@ interface CenterHeroRenderState {
   rainbowUniforms: PrismSideRainbowUniforms;
 }
 
-const ALCHE_TOP_PRISM_ICE_OPACITY = 0.66;
+const ALCHE_TOP_PRISM_ICE_OPACITY = 0.54;
 const ALCHE_TOP_PRISM_REFRACTION_IDLE_TARGET_MAX = 512;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_TARGET_MAX = 384;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_INTERVAL = 1 / 30;
 const ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL = 0.5;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_HOLD = 0.18;
-const ALCHE_TOP_PRISM_READABLE_REFRACTION_STRENGTH = 0.045;
-const ALCHE_TOP_PRISM_READABLE_LENS_WARP_STRENGTH = 0.75;
-const ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH = 0.0012;
+const ALCHE_TOP_PRISM_READABLE_REFRACTION_STRENGTH = 0.062;
+const ALCHE_TOP_PRISM_READABLE_LENS_WARP_STRENGTH = 1.05;
+const ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH = 0.0024;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -1293,7 +1293,7 @@ function CenterHeroModel({
     texturedScene.shadedMaterials.forEach((material) => {
       const iceDamp = splitEnabled ? 10 : 4;
       material.opacity = THREE.MathUtils.damp(material.opacity, iceVisibilityTarget * ALCHE_TOP_PRISM_ICE_OPACITY, iceDamp, delta);
-      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.18, iceDamp, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.26, iceDamp, delta);
     });
     const edgeDamp = missionPanelActive ? 10 : 4;
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
