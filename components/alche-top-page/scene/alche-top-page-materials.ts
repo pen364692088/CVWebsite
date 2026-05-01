@@ -52,10 +52,11 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
     side: THREE.DoubleSide,
     transparent: true,
     opacity: 0,
-    depthWrite: false,
+    depthWrite: true,
     depthTest: true,
     toneMapped: false,
   });
+  material.forceSinglePass = true;
 
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uViewportPx = uniforms.uViewportPx;
@@ -163,20 +164,19 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
             vec2 chromaOffset = normalize(sceneOffset + vec2(0.0001, -0.0002)) * uChromaticStrength * chromaMask;
             float sceneRefractionMix = clamp(uSceneRefractionMix, 0.0, 1.0);
             vec3 directScene = texture2D(uSceneTexture, sceneUv).rgb;
-            vec3 sceneColor = directScene;
+            vec3 chromaScene = directScene;
             if (sceneRefractionMix > 0.001) {
-              vec3 chromaScene = vec3(
+              chromaScene = vec3(
                 texture2D(uSceneTexture, clamp(sceneUv + chromaOffset, vec2(0.001), vec2(0.999))).r,
                 directScene.g,
                 texture2D(uSceneTexture, clamp(sceneUv - chromaOffset, vec2(0.001), vec2(0.999))).b
               );
-              sceneColor = mix(directScene, chromaScene, chromaMask * 0.5);
             }
-            vec3 lensColor = sceneColor;
+            vec3 lensColor = gl_FragColor.rgb;
             lensColor += vec3(0.98, 0.995, 1.0) * glassBody * 0.055;
             lensColor += vec3(0.9, 0.98, 1.0) * glassBorder * 0.56;
             gl_FragColor.rgb = mix(gl_FragColor.rgb, lensColor, lensTransition * 0.14);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, sceneColor, refractMask * iceBaseAlpha * 1.08 * sceneRefractionMix);
+            gl_FragColor.rgb += (chromaScene - directScene) * chromaMask * sceneRefractionMix * 0.48;
             gl_FragColor.rgb += vec3(0.98, 1.0, 1.0) * iceBand * 0.08;
             gl_FragColor.rgb += vec3(0.9, 0.97, 1.0) * iceBand * iceFresnel * 0.1;
             gl_FragColor.rgb += vec3(0.9, 0.985, 1.0) * refractionCaustic * iceFresnel * 0.22;
@@ -190,7 +190,7 @@ export function createPrismIceMaterial(map: THREE.Texture, uniforms: PrismIceUni
         `,
       );
   };
-  material.customProgramCacheKey = () => `alche-prism-ice:${uniforms.uClipMode.value}`;
+  material.customProgramCacheKey = () => `alche-prism-ice:single-clear:${uniforms.uClipMode.value}`;
   material.needsUpdate = true;
 
   return material;
