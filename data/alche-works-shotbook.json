@@ -23,6 +23,12 @@
       "radiusOffset": 0.5,
       "yOffset": 0.22,
       "scale": 0.82
+    },
+    "exit-left-offscreen": {
+      "angle": -1.2,
+      "radiusOffset": 0.88,
+      "yOffset": 0.24,
+      "scale": 0.82
     }
   },
   "shots": [
@@ -104,7 +110,7 @@
       "intro": 1,
       "card0": {
         "visible": true,
-        "poseId": "support-left-upper"
+        "poseId": "exit-left-offscreen"
       },
       "card1": {
         "visible": true,
@@ -121,7 +127,7 @@
       "intro": 1,
       "card0": {
         "visible": true,
-        "poseId": "support-left-upper"
+        "poseId": "exit-left-offscreen"
       },
       "card1": {
         "visible": true,
@@ -139,7 +145,7 @@
       "intro": 1,
       "card0": {
         "visible": true,
-        "poseId": "support-left-upper"
+        "poseId": "exit-left-offscreen"
       },
       "card1": {
         "visible": true,
@@ -156,7 +162,7 @@
       "intro": 1,
       "card0": {
         "visible": true,
-        "poseId": "support-left-upper"
+        "poseId": "exit-left-offscreen"
       },
       "card1": {
         "visible": true,

@@ -287,6 +287,7 @@ const expectedShotStates = {
     card1Visible: true,
     card0Opacity: { min: 0.98, max: 1.01 },
     card1Opacity: { min: 0.98, max: 1.01 },
+    card0MayBeOffscreenLeft: true,
   },
 };
 
@@ -851,6 +852,14 @@ function getCardScreenWidth(layerState, cardIndex) {
   const right = layerState[`card${cardIndex}ScreenRight`];
   assert(left !== null && right !== null, `Missing card${cardIndex} screen width`);
   return right - left;
+}
+
+function assertCardOffscreenLeft(layerState, cardIndex, maxRightRatio, label) {
+  const right = layerState[`card${cardIndex}ScreenRight`];
+  assert(
+    right === null || right / getViewportWidth(layerState) <= maxRightRatio,
+    `Expected ${label} card${cardIndex} offscreen left, got right=${right}`,
+  );
 }
 
 function assertCardQueueEntryParity(entryState, queueState) {
@@ -1433,12 +1442,20 @@ async function captureFixedStates(browser, shots, options = {}) {
           assertCardVisibility(layerState, 1, expected.card1Visible, shot.name);
           assertRange(layerState.card0Opacity, expected.card0Opacity, `${shot.name} card0 opacity`);
           assertRange(layerState.card1Opacity, expected.card1Opacity, `${shot.name} card1 opacity`);
-          assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
+          if (expected.card0MayBeOffscreenLeft) {
+            assertCardOffscreenLeft(layerState, 0, 0.03, shot.name);
+          } else {
+            assert((layerState.card0ScreenLeft ?? 0) < (layerState.card0ScreenRight ?? 0), `Expected ${shot.name} card0 screen bounds`);
+          }
           assert((layerState.card1ScreenLeft ?? 0) < (layerState.card1ScreenRight ?? 0), `Expected ${shot.name} card1 screen bounds`);
-          assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
+          if (!expected.card0MayBeOffscreenLeft) {
+            assertCardAheadOfModel(layerState, layerState.card0WorldZ, `${shot.name} card0`);
+          }
           assertCardAheadOfModel(layerState, layerState.card1WorldZ, `${shot.name} card1`);
           assertCardAheadOfModel(layerState, layerState.cardsLeadWorldZ, `${shot.name} lead card`);
-          assertCardAheadOfModel(layerState, layerState.cardsSupportWorldZ, `${shot.name} support card`);
+          if (!expected.card0MayBeOffscreenLeft) {
+            assertCardAheadOfModel(layerState, layerState.cardsSupportWorldZ, `${shot.name} support card`);
+          }
           assertFacingError(layerState, 0, 0.06, shot.name);
           assertFacingError(layerState, 1, 0.06, shot.name);
         } else if (expected.cardsLeadIndex !== undefined) {
@@ -1531,22 +1548,27 @@ async function captureFixedStates(browser, shots, options = {}) {
     assertCardInLane(cardsBQueueState, 0, laneTargets.leadCenter, "cards-b-queue");
     assertCardInLane(cardsBQueueState, 1, laneTargets.queueRight, "cards-b-queue");
     assertCardQueueEntryParity(cardsAEntryState, cardsBQueueState);
-    assertCardInLane(cardsSettledState, 0, laneTargets.supportLeft, "cards-settled");
     assertCardInLane(cardsSettledState, 1, laneTargets.leadCenter, "cards-settled");
     assertCardSeparation(cardsBQueueState, 12, "cards-b-queue");
     assertCardSeparation(cardsHandoffMidState, 12, "cards-handoff-mid");
-    assertCardSeparation(cardsSettledState, 12, "cards-settled");
+    assertCardOffscreenLeft(cardsSettledState, 0, 0.03, "cards-settled");
     assert(getCardScreenCenterX(cardsAEntryState, 0) > getCardScreenCenterX(cardsACenterState, 0), "Expected card A to move from right toward center first.");
     assert(getCardScreenCenterX(cardsACenterState, 0) > getCardScreenCenterX(cardsHandoffMidState, 0), "Expected card A to move left only after reaching center.");
-    assert(getCardScreenCenterX(cardsHandoffMidState, 0) > getCardScreenCenterX(cardsSettledState, 0), "Expected card A to finish in the left-upper support slot.");
+    assert((cardsHandoffMidState.card0ScreenRight ?? 0) > (cardsSettledState.card0ScreenRight ?? 0), "Expected card A to continue moving left until it exits.");
     assert(getCardScreenCenterY(cardsAEntryState, 0) > getCardScreenCenterY(cardsACenterState, 0), "Expected card A to move upward from right-lower into center.");
-    assert(getCardScreenCenterY(cardsSettledState, 0) < getCardScreenCenterY(cardsACenterState, 0), "Expected card A to end above center in the left-upper slot.");
     assert(getCardScreenCenterX(cardsBQueueState, 1) > getCardScreenCenterX(cardsHandoffMidState, 1), "Expected card B to move left from queue into center.");
     assert(getCardScreenCenterX(cardsHandoffMidState, 1) > getCardScreenCenterX(cardsSettledState, 1), "Expected card B to continue left into the lead slot.");
     assert(getCardScreenCenterY(cardsBQueueState, 1) > getCardScreenCenterY(cardsHandoffMidState, 1), "Expected card B to move upward from right-lower into center.");
     assert(getCardScreenCenterY(cardsHandoffMidState, 1) > getCardScreenCenterY(cardsSettledState, 1), "Expected card B to keep moving upward into the center slot.");
-    assert((cardsSettledState.card0ScreenRight ?? 0) >= 120, "Expected settled A to remain meaningfully visible in frame.");
-    assert((cardsSettledState.card0ScreenLeft ?? 0) >= 0 && (cardsSettledState.card0ScreenRight ?? 0) <= 1440, "Expected settled A to remain fully in frame.");
+    assert(
+      (cardsHandoffMidState.card0ScreenRight ?? 0) < (cardsBQueueState.card0ScreenRight ?? 0) - 180,
+      "Expected handoff-mid A to have moved substantially left from B queue.",
+    );
+    assertRange(
+      (cardsHandoffMidState.card0ScreenRight ?? 0) / getViewportWidth(cardsHandoffMidState),
+      { min: 0.06, max: 0.32 },
+      "cards-handoff-mid card0 right ratio",
+    );
     const stableModelReference = holdState ?? outState;
     const modelTracked =
       stableModelReference &&
@@ -1580,9 +1602,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assert((worksOutroEntryState.cardsOpacity ?? 0) >= 0.82, "Expected cards to still dominate at works_outro entry.");
     assertCardVisibility(worksOutroEntryState, 0, true, "works-outro-entry");
     assertCardVisibility(worksOutroEntryState, 1, true, "works-outro-entry");
-    assertRange((worksOutroEntryState.card0ScreenLeft ?? 0) / getViewportWidth(worksOutroEntryState), { min: 0, max: 0.02 }, "works-outro-entry card0 left ratio");
-    assertRange((worksOutroEntryState.card0ScreenRight ?? 0) / getViewportWidth(worksOutroEntryState), { min: 0.14, max: 0.3 }, "works-outro-entry card0 right ratio");
-    assertRange(getCardScreenWidth(worksOutroEntryState, 0) / getViewportWidth(worksOutroEntryState), { min: 0.14, max: 0.24 }, "works-outro-entry card0 width ratio");
+    assertCardOffscreenLeft(worksOutroEntryState, 0, 0.03, "works-outro-entry");
     assertCardInLane(worksOutroEntryState, 1, laneTargets.leadCenter, "works-outro-entry");
     assertFacingError(worksOutroEntryState, 0, 0.06, "works-outro-entry");
     assertFacingError(worksOutroEntryState, 1, 0.06, "works-outro-entry");
@@ -1594,8 +1614,7 @@ async function captureFixedStates(browser, shots, options = {}) {
     assert((worksOutroFlattenState.cardsOpacity ?? 0) >= 0.12 && (worksOutroFlattenState.cardsOpacity ?? 0) <= 0.42, "Expected cards to be clearing during works_outro flatten.");
     assertCardVisibility(worksOutroFlattenState, 0, true, "works-outro-flatten");
     assertCardVisibility(worksOutroFlattenState, 1, true, "works-outro-flatten");
-    assertRange((worksOutroFlattenState.card0ScreenLeft ?? 0) / getViewportWidth(worksOutroFlattenState), { min: 0, max: 0.02 }, "works-outro-flatten card0 left ratio");
-    assertRange((worksOutroFlattenState.card0ScreenRight ?? 0) / getViewportWidth(worksOutroFlattenState), { min: 0.12, max: 0.28 }, "works-outro-flatten card0 right ratio");
+    assertCardOffscreenLeft(worksOutroFlattenState, 0, 0.03, "works-outro-flatten");
     assertFacingError(worksOutroFlattenState, 0, 0.06, "works-outro-flatten");
     assertFacingError(worksOutroFlattenState, 1, 0.06, "works-outro-flatten");
     assertRange(worksOutroFlattenState.worksOutroClearMix, { min: 0.8, max: 0.95 }, "works-outro-flatten clear mix");

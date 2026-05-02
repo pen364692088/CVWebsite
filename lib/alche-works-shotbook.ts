@@ -5,6 +5,7 @@ export const ALCHE_WORKS_CARD_POSE_IDS = [
   "queue-right-lower-offscreen",
   "queue-right-lower",
   "support-left-upper",
+  "exit-left-offscreen",
 ] as const;
 
 export type AlcheWorksCardPoseId = (typeof ALCHE_WORKS_CARD_POSE_IDS)[number];
@@ -157,6 +158,14 @@ export function getCompensatedAlcheWorksCardPoseDefinition(
   if (compensation <= 0) return pose;
 
   if (poseId === "support-left-upper") {
+    return {
+      ...pose,
+      angle: pose.angle + lerp(0, -0.3, compensation),
+      radiusOffset: pose.radiusOffset + lerp(0, 0.24, compensation),
+    };
+  }
+
+  if (poseId === "exit-left-offscreen") {
     return {
       ...pose,
       angle: pose.angle + lerp(0, -0.3, compensation),

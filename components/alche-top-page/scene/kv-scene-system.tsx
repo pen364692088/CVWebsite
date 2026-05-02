@@ -677,6 +677,11 @@ function WorksCardPair({
       state.size.width,
       state.size.height,
     );
+    const compensatedExitLeftOffscreenPose = getCompensatedAlcheWorksCardPoseDefinition(
+      "exit-left-offscreen",
+      state.size.width,
+      state.size.height,
+    );
     const compensatedWorksOutroLeftClearPose = {
       ...compensatedSupportLeftUpperPose,
       angle: compensatedSupportLeftUpperPose.angle - 0.18,
@@ -707,14 +712,14 @@ function WorksCardPair({
     const supportIndex = !card1Visible || leadIndex === null ? null : leadIndex === 0 ? 1 : 0;
     const card0Pose =
       inWorksOutro
-        ? compensatedSupportLeftUpperPose
+        ? compensatedExitLeftOffscreenPose
         : resolveWorksCardTrackPose({
             progress,
             timing: card0Timing,
             queueOffscreenPose: compensatedQueueRightLowerOffscreenPose,
             queuePose: compensatedQueueRightLowerPose,
             leadPose: leadCenterPose,
-            supportPose: compensatedSupportLeftUpperPose,
+            supportPose: compensatedExitLeftOffscreenPose,
           });
     const card1Pose =
       inWorksOutro
