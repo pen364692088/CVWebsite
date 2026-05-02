@@ -97,7 +97,10 @@ interface CenterHeroRenderState {
   rainbowUniforms: PrismSideRainbowUniforms;
 }
 
-const ALCHE_TOP_PRISM_ICE_OPACITY = 0.44;
+const ALCHE_TOP_PRISM_ICE_OPACITY = 0.42;
+const ALCHE_TOP_PRISM_CRYSTAL_EDGE_OPACITY = 0.24;
+const ALCHE_TOP_PRISM_CRYSTAL_EDGE_COLOR = "#e8fbff";
+const ALCHE_TOP_PRISM_EDGE_OVERLAY_COLOR = "#707985";
 const ALCHE_TOP_PRISM_REFRACTION_IDLE_TARGET_MAX = 512;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_TARGET_MAX = 384;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_INTERVAL = 1 / 30;
@@ -105,7 +108,7 @@ const ALCHE_TOP_PRISM_REFRACTION_IDLE_INTERVAL = 0.5;
 const ALCHE_TOP_PRISM_REFRACTION_ACTIVE_HOLD = 0.18;
 const ALCHE_TOP_PRISM_READABLE_REFRACTION_STRENGTH = 0.07;
 const ALCHE_TOP_PRISM_READABLE_LENS_WARP_STRENGTH = 1.18;
-const ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH = 0.003;
+const ALCHE_TOP_PRISM_READABLE_CHROMATIC_STRENGTH = 0.0042;
 
 const leadCenterPose = getAlcheWorksCardPoseDefinition("lead-center");
 const cardForwardAxis = new THREE.Vector3(0, 0, 1);
@@ -999,7 +1002,7 @@ function CenterHeroModel({
       side: THREE.DoubleSide,
     });
     const edgeMaterial = new THREE.LineBasicMaterial({
-      color: "#707985",
+      color: ALCHE_TOP_PRISM_EDGE_OVERLAY_COLOR,
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -1165,16 +1168,21 @@ function CenterHeroModel({
         : 0;
     const edgeOverlayActive = renderMode === "edge-overlay" && edgeBridgeVisibility > 0.001;
     const iceVisibilityTarget = renderMode === "full" ? fullBridgeVisibility : 0;
+    const crystalEdgeVisibility = renderMode === "full" ? iceVisibilityTarget * ALCHE_TOP_PRISM_CRYSTAL_EDGE_OPACITY : 0;
+    const edgeVisibilityTarget = renderMode === "full" ? crystalEdgeVisibility : edgeBridgeVisibility;
     texturedScene.prismIceUniforms.uSceneRefractionMix.value = splitEnabled ? 0.28 : 1;
     texturedScene.shadedMaterials.forEach((material) => {
       const iceDamp = splitEnabled ? 10 : 4;
       material.opacity = THREE.MathUtils.damp(material.opacity, iceVisibilityTarget * ALCHE_TOP_PRISM_ICE_OPACITY, iceDamp, delta);
-      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.32, iceDamp, delta);
+      material.emissiveIntensity = THREE.MathUtils.damp(material.emissiveIntensity, iceVisibilityTarget * 0.44, iceDamp, delta);
     });
     const edgeDamp = missionPanelActive ? 10 : 4;
+    texturedScene.hiddenMaterial.depthWrite = renderMode === "edge-overlay";
+    texturedScene.hiddenMaterial.polygonOffset = renderMode === "edge-overlay";
+    texturedScene.edgeMaterial.color.set(renderMode === "full" ? ALCHE_TOP_PRISM_CRYSTAL_EDGE_COLOR : ALCHE_TOP_PRISM_EDGE_OVERLAY_COLOR);
     texturedScene.edgeMaterial.opacity = THREE.MathUtils.damp(
       texturedScene.edgeMaterial.opacity,
-      edgeBridgeVisibility,
+      edgeVisibilityTarget,
       edgeDamp,
       delta,
     );
@@ -1217,16 +1225,19 @@ function CenterHeroModel({
 
     const shadedVisible =
       renderMode === "full" && (iceVisibilityTarget > 0.001 || texturedScene.shadedMaterials.some((material) => material.opacity > 0.001));
+    const fullEdgeVisible = renderMode === "full" && (crystalEdgeVisibility > 0.001 || prismEdgeOpacity > 0.001);
     const edgeVisible =
-      renderMode === "edge-overlay" &&
-      (edgeOverlayActive || prismEdgeOpacity > 0.001 || prismLineOpacity > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001);
+      fullEdgeVisible ||
+      (renderMode === "edge-overlay" &&
+        (edgeOverlayActive || prismEdgeOpacity > 0.001 || prismLineOpacity > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001));
+    const lineArtVisible = renderMode === "edge-overlay" && edgeVisible;
     const rainbowVisible =
-      edgeVisible &&
+      lineArtVisible &&
       splitEnabled &&
       (sceneState.kv.prismRainbowMix > 0.001 || texturedScene.rainbowUniforms.uOpacity.value > 0.001);
     texturedScene.shadedScene.visible = shadedVisible;
     texturedScene.edgeScene.visible = edgeVisible;
-    texturedScene.maskedLineArtScene.visible = edgeVisible;
+    texturedScene.maskedLineArtScene.visible = lineArtVisible;
     texturedScene.rainbowScene.visible = rainbowVisible;
     groupRef.current.visible = shadedVisible || edgeVisible;
     if (!groupRef.current.visible) {
